@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ボキバトル 1級</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e1424;--panel:#172036;--panel2:#1f2a44;--line:#2c3a5c;--ink:#eef3ff;--mute:#8d9bbd;
+--neon:#39ff9a;--gold:#ffd23f;--red:#ff5d6c;--blue:#4da3ff;--pink:#ff6ec7}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"M PLUS Rounded 1c",system-ui,sans-serif}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button{font-family:inherit;cursor:pointer}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+.wrap{max-width:560px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+/* title */
+.title{padding:28px 20px 30px}
+.logo{text-align:center;margin:10px 0 6px}
+.logo h1{margin:0;font-size:40px;font-weight:800;letter-spacing:.04em;background:linear-gradient(90deg,var(--neon),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo p{margin:4px 0 0;color:var(--mute);font-weight:700;font-size:13px;letter-spacing:.2em}
+.mode{display:block;width:100%;text-align:left;border:2px solid var(--line);background:var(--panel);border-radius:18px;padding:16px 18px;margin-top:14px;color:var(--ink);position:relative;overflow:hidden}
+.mode:active{transform:scale(.985)}
+.mode b{display:block;font-size:20px}
+.mode span{font-size:13px;color:var(--mute);line-height:1.6;display:block;margin-top:2px}
+.mode .best{position:absolute;right:16px;top:16px;font-size:13px;color:var(--gold)}
+.mode.ta{border-color:#2f6b55}.mode.ta b{color:var(--neon)}
+.mode.sa{border-color:#6b2f5f}.mode.sa b{color:var(--pink)}
+.code{margin-top:22px;background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:14px 16px}
+.code label{font-size:13px;color:var(--mute);font-weight:700}
+.code .row{display:flex;gap:10px;margin-top:8px;align-items:center}
+.code input{flex:1;min-width:0;background:var(--bg);border:2px solid var(--line);border-radius:12px;color:var(--ink);font:800 22px "JetBrains Mono",monospace;padding:8px 12px;letter-spacing:.2em}
+.code small{display:block;color:var(--mute);font-size:12px;margin-top:8px;line-height:1.6}
+.sbtn{border:2px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:12px;padding:10px 12px;font-weight:800;font-size:13px}
+.recs{margin-top:22px}
+.recs h3{font-size:14px;color:var(--mute);margin:0 0 8px}
+.rec{display:flex;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--line);font-size:14px}
+.rec .r{font-weight:800}
+.empty{color:var(--mute);font-size:13px;padding:8px 0}
+.rules{margin-top:22px;color:var(--mute);font-size:12px;line-height:1.8}
+/* countdown */
+.cd{flex:1;display:flex;align-items:center;justify-content:center;font:800 120px "JetBrains Mono",monospace;color:var(--neon)}
+.cd span{animation:cdp .9s ease-out}
+@keyframes cdp{0%{transform:scale(2);opacity:0}30%{opacity:1}100%{transform:scale(.9);opacity:.6}}
+/* game */
+.game{display:flex;flex-direction:column;height:100vh;height:100dvh}
+.game,.game *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.game textarea{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+.game button,.game canvas{touch-action:manipulation}
+.game #cv{touch-action:none}
+.hud{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#0a0f1c;border-bottom:2px solid var(--line)}
+.hud .t{font:800 30px "JetBrains Mono",monospace;color:var(--neon);letter-spacing:.02em}
+.hud .t.warn{color:var(--red)}
+.hud .p{font-weight:800;color:var(--mute);font-size:14px;text-align:right;line-height:1.3}
+.hud .p b{color:var(--ink);font-size:18px}
+.hud .x{background:none;border:none;color:var(--mute);font-size:22px;padding:0 6px}
+.pen{color:var(--red);font-size:12px}
+.prob{flex:1;overflow-y:auto;padding:12px 14px 8px;-webkit-overflow-scrolling:touch}
+.cat{display:inline-block;font-size:12px;font-weight:800;padding:3px 10px;border-radius:99px;background:var(--panel2);color:var(--blue);margin-bottom:6px}
+.ptitle{font-size:16px;font-weight:800;margin:2px 0 10px;line-height:1.5;white-space:pre-line}
+.data{width:100%;border-collapse:collapse;background:var(--panel);border-radius:12px;overflow:hidden;font-size:14px;margin-bottom:12px}
+.data td{padding:7px 10px;border-bottom:1px solid var(--line)}
+.data td:last-child{text-align:right;font-family:"JetBrains Mono",monospace;font-weight:600}
+.data tr:last-child td{border-bottom:none}
+.sheet{background:#fdfcf6;color:#1e2433;border-radius:12px;padding:6px 12px}
+.ln{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px dashed #d9d4bd;font-weight:700;font-size:14px;flex-wrap:wrap}
+.ln:last-child{border-bottom:none}
+.ln .lab{flex:1 1 auto}
+.blank{min-width:120px;min-height:38px;border:2px solid #b9c3d8;background:#fff;border-radius:8px;font:800 17px "JetBrains Mono",monospace;color:#1e2433;text-align:right;padding:4px 10px;display:inline-flex;flex-direction:column;align-items:flex-end;justify-content:center}
+.blank.ch{min-width:72px;text-align:center;align-items:center;font-family:"M PLUS Rounded 1c",sans-serif}
+.blank.on{border-color:var(--blue);box-shadow:0 0 0 3px rgba(77,163,255,.35)}
+.blank .pv{font-size:11px;color:#6b7590;font-weight:600}
+.blank.ok{border-color:#1fbf6c;background:#e6fff1}
+.blank.ng{border-color:var(--red);background:#ffecee}
+.blank .ca{font-size:12px;color:#1fbf6c;font-weight:800}
+.unit{font-size:12px;color:#6b7590;margin-left:2px}
+.note{font-size:11.5px;color:var(--mute);margin:8px 2px 0;line-height:1.6}
+/* keypad */
+.pad{background:#0a0f1c;border-top:2px solid var(--line);padding:8px 8px 10px}
+.keys{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.k{border:none;border-radius:10px;background:var(--panel2);color:var(--ink);font:800 20px "JetBrains Mono",monospace;padding:11px 0}
+.k:active{background:var(--line)}
+.k.op{color:var(--blue);background:#18233c}
+.k.fn{font-size:14px;font-family:"M PLUS Rounded 1c",sans-serif;color:var(--mute)}
+.acts{display:flex;gap:6px;margin-top:6px}
+.acts .k{flex:1;font-size:15px;font-family:"M PLUS Rounded 1c",sans-serif}
+.k.go{background:var(--neon);color:#062413}
+.k.nx{background:#24365d;color:var(--ink)}
+.chs{display:flex;gap:8px;margin-bottom:6px}
+.chs .k{flex:1;font-family:"M PLUS Rounded 1c",sans-serif;font-size:17px;background:#2a3554}
+/* feedback */
+.fb{position:fixed;inset:auto 0 0 0;max-width:560px;margin:0 auto;background:var(--panel);border-top:3px solid var(--neon);border-radius:20px 20px 0 0;padding:16px 18px 22px;z-index:20;animation:up .25s ease-out;max-height:70vh;overflow-y:auto}
+.fb.bad{border-color:var(--red)}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.fb h3{margin:0 0 6px;font-size:20px}
+.fb.good h3{color:var(--neon)}.fb.bad h3{color:var(--red)}
+.fb .meta{font-size:13px;color:var(--mute);margin-bottom:8px}
+.fb pre{white-space:pre-wrap;font:600 13px/1.7 "M PLUS Rounded 1c",sans-serif;color:var(--ink);background:var(--bg);border-radius:10px;padding:10px 12px;margin:0 0 12px}
+.big{display:block;width:100%;border:none;border-radius:14px;padding:15px;font-size:17px;font-weight:800;background:var(--neon);color:#062413}
+.big.sec{background:var(--panel2);color:var(--ink);border:2px solid var(--line)}
+.pop{position:fixed;left:50%;top:84px;transform:translateX(-50%);font:800 22px "JetBrains Mono",monospace;pointer-events:none;z-index:30;animation:pp 1s ease-out forwards}
+@keyframes pp{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-30px)}}
+/* result */
+.res{padding:30px 20px;text-align:center}
+.rank{font:800 110px "JetBrains Mono",monospace;line-height:1;margin:6px 0;animation:rk .6s cubic-bezier(.2,1.6,.4,1)}
+@keyframes rk{from{transform:scale(.2) rotate(-20deg);opacity:0}to{transform:none;opacity:1}}
+.rank.S{color:var(--gold);text-shadow:0 0 30px rgba(255,210,63,.5)}.rank.A{color:var(--neon)}.rank.B{color:var(--blue)}.rank.C{color:var(--mute)}
+.final{font:800 44px "JetBrains Mono",monospace;margin:4px 0}
+.nb{display:inline-block;background:var(--gold);color:#2b2100;font-weight:800;font-size:13px;padding:4px 12px;border-radius:99px;margin-bottom:8px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}
+.st{background:var(--panel);border-radius:14px;padding:12px}
+.st span{display:block;font-size:12px;color:var(--mute);font-weight:700}
+.st b{font:800 20px "JetBrains Mono",monospace}
+.share{width:100%;height:110px;background:var(--panel);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:10px;font:600 13px/1.6 "M PLUS Rounded 1c",sans-serif;resize:none;margin-bottom:10px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:13px;font-weight:800;opacity:0;transition:opacity .3s;pointer-events:none;z-index:40}
+.toast.on{opacity:1}
+
+/* ===== layout: 問題 | 右:メモ+電卓 ===== */
+.gbody{flex:1;display:flex;min-height:0}
+.gleft{flex:1;min-width:0;display:flex;flex-direction:column}
+.gleft .prob{flex:1}
+.gright{width:44%;max-width:300px;display:flex;flex-direction:column;background:#0a0f1c;border-left:2px solid var(--line);min-height:0}
+.abar{display:flex;gap:6px;padding:8px;background:#0a0f1c;border-top:2px solid var(--line)}
+.ab{flex:1;border:none;border-radius:10px;padding:12px 4px;font-weight:800;font-size:14px}
+.ab.nx{background:#24365d;color:var(--ink)}.ab.go{background:var(--neon);color:#062413}
+.memo2{flex:1;display:flex;flex-direction:column;min-height:90px;padding:6px 6px 0}
+.mhead{display:flex;gap:4px;margin-bottom:4px}
+.mhead button{flex:1;border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:8px;padding:4px 0;font-size:12px;font-weight:800}
+.mhead button.on{background:var(--blue);border-color:var(--blue)}
+#cv,#mt{flex:1;width:100%;min-height:0;border-radius:8px;background:#fdfcf6;touch-action:none;
+  background-image:linear-gradient(#ece6cc 1px,transparent 1px);background-size:100% 22px}
+#mt{display:none;border:none;padding:6px;font:600 13px/22px "M PLUS Rounded 1c",sans-serif;color:#1e2433;resize:none}
+.calc{padding:6px;background:linear-gradient(#2b2f38,#1d2027);border-top:2px solid var(--line)}
+.cdisp{background:#c9d3b8;border-radius:6px;padding:3px 8px 4px;margin-bottom:6px;box-shadow:inset 0 2px 4px rgba(0,0,0,.35)}
+.cind{display:flex;gap:8px;height:12px;font:800 10px "JetBrains Mono",monospace;color:#2b3324}
+.cnum{text-align:right;font-size:22px;color:#1d2418;line-height:1.15;overflow:hidden;white-space:nowrap}
+.ckeys2{display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:minmax(34px,1fr);gap:4px}
+.ck{border:none;border-radius:6px;background:#eceef2;color:#1d2027;font:800 16px "JetBrains Mono",monospace;padding:0;box-shadow:0 2px 0 #9aa0ab;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.ck.dn{transform:translateY(2px);box-shadow:none;filter:brightness(.9)}
+.ck.op{background:#5b6170;color:#fff;box-shadow:0 2px 0 #34383f}
+.ck.eq{background:#5b6170;color:#fff;box-shadow:0 2px 0 #34383f}
+.ck.fn{background:#454a55;color:#e6e9ef;font-size:13px;box-shadow:0 2px 0 #2a2d33}
+.ck.mem{background:#454a55;color:#cfd5df;font-size:11px;box-shadow:0 2px 0 #2a2d33}
+.ck.clr{background:#e8584f;color:#fff;font-size:13px;box-shadow:0 2px 0 #9b2f29}
+.ck.in{background:var(--neon);color:#062413;font:800 13px "M PLUS Rounded 1c",sans-serif;box-shadow:0 2px 0 #1c8a52}
+.blank.flash{animation:fl .4s}
+@keyframes fl{0%{background:#c9ffe0}100%{background:#fff}}
+.chrow{flex-basis:100%;display:flex;gap:6px;justify-content:flex-end}
+.cho{border:2px solid #b9c3d8;background:#fff;border-radius:8px;padding:5px 14px;font-weight:800;font-size:14px;color:#1e2433}
+.cho.sel{border-color:var(--blue);background:#e8f2ff}
+.ln{gap:6px}
+.blank{min-width:96px}
+@media (max-width:560px){
+  .ptitle{font-size:14px}.data{font-size:12px}.data td{padding:5px 7px}
+  .ln{font-size:12.5px}.blank{min-width:84px;font-size:15px;min-height:34px;padding:3px 7px}
+  .gright{width:47%}
+  .ck{font-size:15px}
+}
+@media (min-width:900px){ .wrap:has(.game){max-width:1100px} .gright{max-width:380px;width:36%} .ckeys2{grid-auto-rows:minmax(46px,1fr)} .ck{font-size:20px} .cnum{font-size:30px} }
+
+.sw{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:8px;font-size:16px;font-weight:800;padding:3px 8px}
+.hand{margin-top:22px;display:flex;align-items:center;justify-content:space-between;background:var(--panel);border:2px solid var(--line);border-radius:18px;padding:12px 16px;font-weight:800;font-size:14px;color:var(--mute)}
+.seg{display:flex;background:var(--bg);border-radius:12px;padding:3px;gap:3px}
+.seg button{border:none;background:none;color:var(--mute);font-weight:800;font-size:14px;padding:7px 16px;border-radius:9px}
+.seg button.on{background:var(--neon);color:#062413}
+/* 左手モード:電卓とメモを左へ */
+.gbody.lefty{flex-direction:row-reverse}
+.gbody.lefty .gright{border-left:none;border-right:2px solid var(--line)}
+/* 広い画面の左手モード:電卓(左)|問題(中)|メモ(右)→右手で書ける */
+@media (min-width:900px){
+  .gbody.lefty{flex-direction:row}
+  .gbody.lefty .gright{display:contents}
+  .gbody.lefty .calc{order:0;width:330px;border-top:none;border-right:2px solid var(--line);display:flex;flex-direction:column;justify-content:flex-end}
+  .gbody.lefty .gleft{order:1}
+  .gbody.lefty .memo2{order:2;width:300px;flex:none;background:#0a0f1c;border-left:2px solid var(--line);padding:8px}
+}
+
+.mode.vs{border-color:#6b5a2f}.mode.vs b{color:var(--gold)}
+.back{background:none;border:none;color:var(--mute);font-weight:800;font-size:15px;padding:4px 0}
+.howto{background:var(--panel);border-radius:16px;padding:12px 14px;font-size:13px;line-height:1.7;margin-top:12px}
+.howto b{color:var(--gold)}
+.itemlist{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.il{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border-radius:14px;padding:10px 12px;font-size:14px}
+.il .ii{font-size:26px;line-height:1}
+.il em{font-style:normal;font-size:11px;background:#1f4d3a;color:var(--neon);padding:2px 7px;border-radius:99px;margin-left:6px}
+.il em.atk{background:#4d1f2a;color:var(--red)}
+.il small{color:var(--mute);font-size:12px}
+.h3{margin:22px 0 8px;font-size:15px}
+.cpus{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cpu{border:2px solid var(--line);background:var(--panel);color:var(--ink);border-radius:14px;padding:12px 4px}
+.cpu b{display:block;font-size:15px}.cpu small{color:var(--mute);font-size:12px}
+.lobby{text-align:center;margin-top:20px}
+.lc{color:var(--mute);font-weight:800}.lc b{color:var(--ink);font-size:28px;letter-spacing:.15em;margin-left:6px}
+.ls{color:var(--mute);font-size:13px;margin-top:16px;line-height:1.7}
+.pl{display:flex;align-items:center;gap:10px;margin:20px 0}
+.pc{flex:1;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:14px 6px;display:flex;flex-direction:column;gap:2px;min-height:110px;justify-content:center}
+.pc.rd{border-color:var(--neon)}
+.pc b{font-size:18px}.pc small{color:var(--mute);font-size:11px}.pc span{font-size:12px;font-weight:800;color:var(--gold)}
+.vsx{font:800 22px "JetBrains Mono",monospace;color:var(--red)}
+.big:disabled{opacity:.4}
+/* battle HUD */
+.vsh{gap:8px}
+.hpwrap{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
+.hpl{display:flex;align-items:center;gap:6px}
+.hpn{width:64px;font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mute)}
+.hpbar{flex:1;height:12px;background:#2a1520;border-radius:99px;overflow:hidden}
+.hpbar i{display:block;height:100%;border-radius:99px;transition:width .4s}
+.hpbar.me i{background:linear-gradient(90deg,#28c76f,var(--neon))}
+.hpbar.op i{background:linear-gradient(90deg,#ff9f43,var(--gold))}
+.hpbar i.low{background:var(--red)!important}
+.hpv{width:38px;text-align:right;font-size:12px}
+.stk{font-size:11px;color:var(--gold);white-space:nowrap}.stk b{color:var(--ink)}
+.itembar{display:flex;gap:6px;padding:6px 10px;background:#0a0f1c;border-bottom:2px solid var(--line);align-items:center}
+.slot{width:64px;height:46px;border-radius:10px;border:2px solid var(--gold);background:#2a2412;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;}
+.slot.new{animation:sl .3s}
+.slot span{font-size:18px;line-height:1}.slot small{font-size:9px;font-weight:800;white-space:nowrap}
+.slot.empty{border:2px dashed var(--line);background:none;color:var(--line);animation:none}
+@keyframes sl{from{transform:scale(.5)}to{transform:none}}
+.fxs{flex:1;text-align:right;font-size:11px;font-weight:800;color:var(--blue);line-height:1.4}
+.cat.messy{background:#4d1f2a;color:var(--red);margin-left:6px}
+.guide{display:none;background:#10223d;border:1px solid var(--blue);border-radius:8px;padding:5px 7px;margin-bottom:6px}
+.gh{font-size:11px;font-weight:800;color:var(--blue);display:flex;justify-content:space-between}
+.gt{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;font:700 12px "JetBrains Mono",monospace}
+.gt span{padding:1px 5px;border-radius:5px;background:#1d2b46;color:#9fb3d6}
+.gt span.dn{opacity:.35}
+.gt span.cu{background:var(--blue);color:#fff}
+.goff{font-size:11px;color:var(--red);font-weight:800;margin-top:3px}
+.ck.hint{outline:3px solid var(--blue);outline-offset:-1px;box-shadow:0 0 14px var(--blue)!important;animation:hb .7s infinite alternate}
+@keyframes hb{to{filter:brightness(1.25)}}
+.ck.shuf{background:#ffe7a8;color:#5a3b00}
+.shufb{display:none;text-align:center;font-size:11px;font-weight:800;color:var(--gold);margin-top:4px}
+.banner{position:fixed;left:50%;top:120px;transform:translateX(-50%);z-index:50;padding:12px 18px;border-radius:14px;font-weight:800;font-size:15px;white-space:nowrap;box-shadow:0 10px 30px rgba(0,0,0,.4);animation:bn .3s cubic-bezier(.2,1.5,.4,1);transition:opacity .4s}
+.banner.hit{background:var(--red);color:#fff}.banner.atk{background:var(--gold);color:#2b2100}
+.banner.self{background:var(--blue);color:#fff}.banner.info{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+.banner.out{opacity:0}
+@keyframes bn{from{transform:translate(-50%,-20px) scale(.8);opacity:0}to{transform:translateX(-50%);opacity:1}}
+.wl{font:800 84px "JetBrains Mono",monospace;line-height:1;margin:20px 0 8px;animation:rk .6s cubic-bezier(.2,1.6,.4,1)}
+.wl.w{color:var(--gold);text-shadow:0 0 30px rgba(255,210,63,.5)}.wl.l{color:var(--mute)}
+@media (max-width:560px){.hpn{width:44px}.slot{width:58px}}
+
+.cnum.egg{letter-spacing:.35em;font-weight:800;animation:egg .25s steps(2) 3}
+@keyframes egg{50%{opacity:.15}}
+
+.ab.sk{flex:0 0 56px;background:#3a2a4d;color:#e0ccff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 0;line-height:1.1}.ab.sk small{font-size:9px}
+.ab{white-space:nowrap}
+.pp,.shot{position:fixed;border-radius:50%;pointer-events:none;z-index:60;box-shadow:inset -3px -3px 0 rgba(0,0,0,.18),inset 3px 3px 0 rgba(255,255,255,.45)}
+.shot{z-index:61;box-shadow:inset -4px -4px 0 rgba(0,0,0,.2),inset 4px 4px 0 rgba(255,255,255,.5),0 0 18px currentColor}
+.ring{position:fixed;width:40px;height:40px;border:4px solid;border-radius:50%;pointer-events:none;z-index:61}
+.chtxt{position:fixed;z-index:62;pointer-events:none;font-weight:800;white-space:nowrap;-webkit-text-stroke:2px #0e1424;paint-order:stroke fill;text-shadow:0 3px 0 #0e1424,0 0 18px rgba(255,255,255,.35);font-style:italic}
+.chtxt b{font-family:"JetBrains Mono",monospace;font-size:1.25em;margin-right:2px}
+.chtxt.brk{font-size:16px;color:var(--mute);font-style:normal}
+.fz{position:fixed;z-index:62;pointer-events:none;color:var(--red);font-size:34px;font-weight:800}
+.hpbar.hit{animation:hbh .35s}
+@keyframes hbh{0%,100%{transform:none}25%{transform:translateX(-4px) scaleY(1.5)}75%{transform:translateX(4px) scaleY(1.3)}}
+#gb.shake{animation:shk .4s}
+@keyframes shk{0%,100%{transform:none}20%{transform:translate(-7px,2px)}40%{transform:translate(6px,-3px)}60%{transform:translate(-4px,1px)}80%{transform:translate(3px,0)}}
+#gb.flash{animation:fl1 .5s}#gb.flash2{animation:fl2 .7s}
+@keyframes fl1{30%{box-shadow:inset 0 0 60px rgba(255,210,63,.45)}}
+@keyframes fl2{20%{box-shadow:inset 0 0 90px rgba(255,110,199,.6)}50%{box-shadow:inset 0 0 50px rgba(77,163,255,.5)}}
+.redflash{position:fixed;inset:0;background:rgba(255,60,80,.28);pointer-events:none;z-index:59;animation:rf .45s forwards}
+@keyframes rf{to{opacity:0}}
+.toast{bottom:auto;top:132px}
+
+.cat.quick{background:#3b3412;color:var(--gold);margin-right:6px}
+.phs{color:var(--mute);font-size:10px}
+.hpbar.heal{animation:hbl .45s}
+@keyframes hbl{0%{filter:brightness(2.2)}100%{filter:none}}
+#gb.danger{box-shadow:inset 0 0 0 3px rgba(255,93,108,.7);animation:dg 1s infinite}
+@keyframes dg{50%{box-shadow:inset 0 0 26px 3px rgba(255,93,108,.55)}}
+
+.hpbar.boost{box-shadow:0 0 0 2px #ff7a2f,0 0 12px #ff7a2f;animation:bst .4s infinite alternate}
+@keyframes bst{to{box-shadow:0 0 0 2px #ffd23f,0 0 18px #ff3d3d}}
+.chtxt.opp{font-size:16px;font-style:normal}
+.atkfx{position:fixed;inset:0;pointer-events:none;z-index:58;background:radial-gradient(circle at 50% 30%,rgba(255,150,40,.45),transparent 60%);animation:rf .7s forwards}
+.cnum.tp{animation:tpa .6s}
+@keyframes tpa{0%,100%{color:inherit}30%{color:#c0392b;transform:translateX(-3px)}60%{transform:translateX(3px)}}
+
+/* ===== 計算テープ ===== */
+.tape{background:#fbf8ec;color:#26323a;border-top:2px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.thead{display:flex;align-items:center;gap:6px;padding:3px 8px;font-size:11px;font-weight:800;color:#8a7d55;background:#f1ead2}
+.thead span{flex:1}
+.thead button{border:1px solid #d8cfb0;background:#fff;border-radius:6px;font-size:11px;font-weight:800;padding:2px 7px;color:#5b5236}
+.thead .dtog{display:none}
+.tbody{overflow-y:auto;max-height:76px;padding:2px 8px 4px;font:600 12px/1.55 "JetBrains Mono",monospace;text-align:right}
+.tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px dotted #e5dcbd}
+.tl.in{color:#1f8a52;font-family:"M PLUS Rounded 1c",sans-serif}
+.tl.sep{color:#b9ad86;text-align:center;font-size:10px;border:none}
+.tl.cur{color:#8a7d55}
+.cind .tgt{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-family:"M PLUS Rounded 1c",sans-serif;font-size:10px}
+.gright{min-height:0}
+.gright .memo2{min-height:0}
+/* ===== スマホモード(縦長・幅狭) ===== */
+@media (max-width:600px) and (orientation:portrait){
+  .gbody,.gbody.lefty{flex-direction:column}
+  .gbody .gleft{flex:1 1 auto;min-height:0}
+  .gbody .gright,.gbody.lefty .gright{width:100%;max-width:none;flex:0 0 auto;border-left:none;border-right:none;border-top:2px solid var(--line);display:flex}
+  .gright .memo2{display:none}
+  .gright.drawmode .memo2{display:flex;height:300px;flex:none;padding:6px}
+  .gright.drawmode .calc .cdisp,.gright.drawmode .calc .ckeys2,.gright.drawmode .calc .guide{display:none!important}
+  .thead .dtog{display:inline-block}
+  .tbody{max-height:40px;font-size:11.5px;line-height:1.5}
+  .calc{padding:5px 6px 6px}
+  .cdisp{margin-bottom:5px;padding:2px 8px}
+  .cnum{font-size:22px}
+  .ckeys2{grid-auto-rows:44px;gap:5px}
+  .ck{font-size:19px}.ck.mem,.ck.fn,.ck.clr{font-size:13px}
+  .sw{display:none}
+  .hud{padding:6px 10px}
+  .hud .t{font-size:22px}
+  .prob{padding:8px 10px 6px}
+  .cat{font-size:11px;padding:2px 8px;margin-bottom:4px}
+  .ptitle{font-size:13.5px;margin:0 0 6px}
+  .data{display:block;background:none;margin-bottom:8px}
+  .data tbody{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+  .data tr{display:flex;flex-direction:column;background:var(--panel);border-radius:8px;padding:4px 7px}
+  .data td{padding:0;border:none;font-size:10.5px;color:var(--mute);line-height:1.3}
+  .data td:last-child{font-size:14px;color:var(--ink);text-align:right}
+  .sheet{padding:2px 10px}
+  .ln{padding:5px 0;font-size:12px;flex-wrap:nowrap}
+  .ln .lab{flex:1 1 auto;min-width:0}
+  .blank{min-width:110px;min-height:32px;font-size:15px;padding:2px 8px}
+  .note{font-size:10.5px;margin-top:4px}
+  .abar{padding:5px 8px;gap:5px}
+  .ab{padding:9px 4px;font-size:13px}
+  .ab.sk{flex:0 0 50px}
+  .itembar{padding:4px 10px;gap:5px}
+  .slot{width:auto;height:30px;flex-direction:row;gap:3px;padding:0 8px;border-width:1.5px}
+  .slot span{font-size:15px}.slot small{font-size:10px}
+  .slot.empty{width:46px}
+  .fxs{font-size:10px}
+  .chrow{justify-content:flex-start}
+}
+
+@media (max-width:600px) and (orientation:portrait){
+  .thead{padding:0 6px 0 8px}
+  .thead span{display:none}
+  .tape{flex-direction:row-reverse;align-items:center}
+  .thead{background:none;flex:0 0 auto;gap:4px}
+  .tbody{flex:1;max-height:22px;padding:1px 4px 1px 8px;font-size:11px;line-height:20px}
+  .tbody .tl{border:none}
+  .ckeys2{grid-auto-rows:40px;gap:4px}
+  .cdisp{padding:1px 8px}
+  .cnum{font-size:20px}
+  .cind{height:11px}
+  .abar .itembar.inbar{background:none;border:none;padding:0;flex:0 0 auto;gap:4px}
+  .abar .itembar.inbar .slot{padding:0 6px;height:38px}
+  .abar .itembar.inbar .slot small{display:none}
+  .abar .itembar.inbar .slot span{font-size:18px}
+  .abar .itembar.inbar .slot.empty{width:34px}
+  .abar .itembar.inbar .fxs{display:none}
+  .abar .ab.nx{flex:1}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ================================================================
+   ボキバトル 1級  —  タイムアタック / スコアアタック / 対戦(CPU・オンライン)
+   ================================================================ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashStr(s){let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+const yen=n=>Number(n).toLocaleString("ja-JP");
+const sgn=n=>(n>0?"+":n<0?"−":"±")+yen(Math.abs(n));
+const OFF=(n)=>{const a=[];for(let i=-n;i<=n;i++)if(i)a.push(i);return a};
+
+/* ---------- 問題を作るための乱数コンテキスト ----------
+   構造(比率・方向など)は sr、数字の「細かさ」だけ mr で変える。
+   → 端数地獄で同じ問題のまま数字だけ細かくできる */
+function ctx(seed,messySeed,mu){
+  const sr=mulberry32(seed),mr=messySeed?mulberry32(messySeed):null;
+  const c={
+    messy:!!mr,
+    ri:(a,b)=>a+Math.floor(sr()*(b-a+1)),
+    pick:a=>a[Math.floor(sr()*a.length)],
+    rnd:()=>sr(),
+    M:(a,b,k)=>{const base=a+Math.floor(sr()*(b-a+1));if(!mr)return base*k;
+      let v=base*k+Math.round((mr()-.5)*Math.abs(k)*.9);v=Math.round(v/mu)*mu;return v===0?mu:v},
+    R:(x,u)=>mr?Math.round(x):Math.round(x/u)*u,
+    ok:true
+  };
+  return c;
+}
+const K=(...a)=>a;
+
+/* ---------- 問題ジェネレーター ----------
+   blank: {t:"num",ans,g:[電卓ガイド]} / {t:"ch",opts,ans} */
+const GENS=[
+function consA(c){
+  const r=c.pick([60,70,75,80,90]),C=c.M(5,15,1000),E=c.M(1,6,1000),T=C+E,g=c.M(1,10,100),PI=T*r/100,P=PI+g,nci=T*(100-r)/100;
+  return{cat:"連結会計",title:`P社はS社の発行済株式の${r}%を${yen(P)}で取得し、支配を獲得した。\n支配獲得日の連結修正について答えなさい。`,
+  data:[["S社 資本金",C],["S社 利益剰余金",E],["取得原価(S社株式)",P],["P社の持分比率",r+"%"]],
+  lines:[["のれん",0],["非支配株主持分",1]],
+  blanks:[{t:"num",ans:g,g:K("AC",T,"*",r,"%","NEG","+",P,"=")},{t:"num",ans:nci,g:K("AC",T,"*",100-r,"%")}],
+  ex:`S社資本 ${yen(T)}\nP社持分 ${yen(T)}×${r}%=${yen(PI)}\nのれん ${yen(P)}−${yen(PI)}=${yen(g)}\n非支配株主持分 ${yen(T)}×${100-r}%=${yen(nci)}`,chk:[PI]};
+},
+function consB(c){
+  const r=c.pick([60,70,75,80,90]),C=c.M(5,15,1000),E=c.M(1,6,1000),T=C+E,g=c.M(1,10,200),P=T*r/100+g,NI=c.M(4,30,100);
+  const am=g/20,ncNI=NI*(100-r)/100,nci=(T+NI)*(100-r)/100;
+  return{cat:"連結会計",title:`前期末にP社はS社株式の${r}%を${yen(P)}で取得した。\n当期のS社の当期純利益は${yen(NI)}(配当なし)。のれんは20年で定額償却する。`,
+  data:[["取得時 S社資本金",C],["取得時 S社利益剰余金",E],["取得原価",P],["S社 当期純利益",NI]],
+  lines:[["のれん償却額",0],["非支配株主に帰属する当期純利益",1],["当期末の非支配株主持分",2]],
+  blanks:[{t:"num",ans:am,g:K("AC",T,"*",r,"%","NEG","+",P,"=","/",20,"=")},{t:"num",ans:ncNI,g:K("AC",NI,"*",100-r,"%")},{t:"num",ans:nci,g:K("AC",T,"+",NI,"=","*",100-r,"%")}],
+  ex:`のれん ${yen(P)}−${yen(T)}×${r}%=${yen(g)} → ÷20=${yen(am)}\n非支配株主に帰属 ${yen(NI)}×${100-r}%=${yen(ncNI)}\n期末非支配株主持分 (${yen(T)}+${yen(NI)})×${100-r}%=${yen(nci)}`,chk:[P]};
+},
+function consC(c){
+  const r=c.pick([60,70,75,80]),S=c.M(1,10,2000),p=c.pick([20,25,30]),up=c.rnd()<.6,U=S*p/100,nc=up?U*(100-r)/100:0;
+  return{cat:"連結会計",title:`${up?"S社(子会社)がP社(親会社)":"P社(親会社)がS社(子会社)"}に商品を販売している。\n売上総利益率は売価の${p}%。P社のS社に対する持分比率は${r}%。`,
+  data:[[up?"P社の期末商品(S社から仕入)":"S社の期末商品(P社から仕入)",S],["売上総利益率",p+"%"],["期首商品の未実現利益","なし"]],
+  lines:[["期末商品に含まれる未実現利益",0],["非支配株主持分への負担額",1]],
+  blanks:[{t:"num",ans:U,g:K("AC",S,"*",p,"%")},{t:"num",ans:nc,g:up?K("AC",S,"*",p,"%","*",100-r,"%"):K("AC",0)}],
+  ex:`未実現利益 ${yen(S)}×${p}%=${yen(U)}\n${up?`アップストリームなので非支配株主も負担:${yen(U)}×${100-r}%=${yen(nc)}`:"ダウンストリームなので全額親会社負担。非支配株主の負担は0"}`};
+},
+function taxA(c){
+  const X=c.M(5,30,1000),Kx=c.M(1,9,100),A=c.M(1,9,100),tax=(X+Kx+A)*30/100,adj=A*30/100,NI=X-tax+adj;
+  return{cat:"税効果会計",title:"次の資料から、損益計算書の金額を求めなさい。\n法定実効税率は30%。",
+  data:[["税引前当期純利益",X],["交際費の損金不算入額",Kx],["貸倒引当金の繰入限度超過額(当期発生)",A]],
+  lines:[["法人税、住民税及び事業税",0],["法人税等調整額(△で表示)",1],["当期純利益",2]],
+  blanks:[{t:"num",ans:tax,g:K("AC",X,"+",Kx,"+",A,"=","*",30,"%")},{t:"num",ans:-adj,g:K("AC",A,"*",30,"%","NEG")},{t:"num",ans:NI,g:K("AC",X,"+",Kx,"=","*",30,"%","NEG","+",X,"=")}],
+  ex:`課税所得 ${yen(X)}+${yen(Kx)}+${yen(A)}=${yen(X+Kx+A)} → ×30%=${yen(tax)}\n法人税等調整額 ${yen(A)}×30%=△${yen(adj)}(交際費は永久差異なので対象外)\n当期純利益 ${yen(X)}−${yen(tax)}+${yen(adj)}=${yen(NI)}`,note:"△はマイナス(電卓の +/−)で入力"};
+},
+function taxB(c){
+  const s=c.rnd()<.65?1:-1,cost=s>0?c.M(10,50,100):c.M(20,50,100),dm=s>0?c.M(1,15,100):c.M(1,6,100),d=dm*s,fv=cost+d,dt=dm*30/100,oci=d*70/100;
+  if(fv<=0||dm<=0)c.ok=false;
+  return{cat:"税効果会計",title:"その他有価証券を期末に時価評価する(全部純資産直入法)。\n法定実効税率は30%。",
+  data:[["取得原価",cost],["期末時価",fv]],
+  lines:[["計上する繰延税金",0],["その金額",1],["その他有価証券評価差額金(借方なら−)",2]],
+  blanks:[{t:"ch",opts:["資産","負債"],ans:d>0?"負債":"資産"},{t:"num",ans:dt,g:d>0?K("AC",fv,"-",cost,"=","*",30,"%"):K("AC",cost,"-",fv,"=","*",30,"%")},{t:"num",ans:oci,g:K("AC",fv,"-",cost,"=","*",70,"%")}],
+  ex:`評価差額 ${yen(fv)}−${yen(cost)}=${d>0?"":"△"}${yen(dm)}\n${d>0?"評価差益→将来加算一時差異→繰延税金負債":"評価差損→将来減算一時差異→繰延税金資産"} ${yen(dm)}×30%=${yen(dt)}\n評価差額金 ${sgn(oci)}(70%分)`};
+},
+function ret(c){
+  const PBO=c.M(10,50,1000),dr=c.pick([1,1.5,2]),PA=c.M(5,9,1000),er=c.pick([2,2.5,3]),SC=c.M(5,20,100),Kc=c.M(3,15,100);
+  const it=PBO*dr/100,ex=PA*er/100,cost=SC+it-ex,end=PBO-PA+cost-Kc;
+  if(PA>=PBO)c.ok=false;
+  return{cat:"退職給付会計",title:"次の資料から当期の金額を求めなさい。\n未認識の差異はない。",
+  data:[["期首 退職給付債務",PBO],["期首 年金資産",PA],["勤務費用",SC],["割引率",dr+"%"],["長期期待運用収益率",er+"%"],["年金掛金の拠出額",Kc]],
+  lines:[["利息費用",0],["期待運用収益",1],["退職給付費用",2],["期末 退職給付引当金",3]],
+  blanks:[{t:"num",ans:it,g:K("AC",PBO,"*",dr,"%")},{t:"num",ans:ex,g:K("AC",PA,"*",er,"%")},
+    {t:"num",ans:cost,g:K("MC","AC",PBO,"*",dr,"%","M+",SC,"M+",PA,"*",er,"%","M-","MR")},
+    {t:"num",ans:end,g:K("MC","AC",PBO,"M+",PA,"M-",PBO,"*",dr,"%","M+",SC,"M+",PA,"*",er,"%","M-",Kc,"M-","MR")}],
+  ex:`利息費用 ${yen(PBO)}×${dr}%=${yen(it)}\n期待運用収益 ${yen(PA)}×${er}%=${yen(ex)}\n退職給付費用 ${yen(SC)}+${yen(it)}−${yen(ex)}=${yen(cost)}\n期末引当金 (${yen(PBO)}−${yen(PA)})+${yen(cost)}−${yen(Kc)}=${yen(end)}`};
+},
+function imp(c){
+  const BV=c.M(10,60,1000),impd=c.rnd()<.75;
+  let a,b,d;if(impd){a=c.ri(70,95);b=c.ri(35,65);d=c.ri(40,68)}else{a=c.ri(102,130);b=c.ri(50,85);d=c.ri(55,90)}
+  if(d===b)d++;
+  const CF=c.R(BV*a/100,100),N=c.R(BV*b/100,100),V=c.R(BV*d/100,100),RA=Math.max(N,V),loss=CF<BV?BV-RA:0;
+  return{cat:"減損会計",title:"減損の兆候がある固定資産について答えなさい。",
+  data:[["帳簿価額",BV],["割引前将来キャッシュ・フロー",CF],["正味売却価額",N],["使用価値",V]],
+  lines:[["回収可能価額",0],["減損損失",1]],
+  blanks:[{t:"num",ans:RA,g:K("AC",RA)},{t:"num",ans:loss,g:CF<BV?K("AC",BV,"-",RA,"="):K("AC",0)}],
+  ex:`回収可能価額=max(${yen(N)}, ${yen(V)})=${yen(RA)}\n${CF<BV?`割引前CF ${yen(CF)}<帳簿価額 ${yen(BV)} → 認識\n減損損失 ${yen(BV)}−${yen(RA)}=${yen(loss)}`:`割引前CF ${yen(CF)}≧帳簿価額 ${yen(BV)} → 認識しない(減損損失0)`}`};
+},
+function fx(c){
+  const D=c.M(1,20,100),HR=c.ri(100,150),CR=HR+c.pick(OFF(10)),ar=c.rnd()<.5,item=ar?"売掛金":"買掛金";
+  const yenCR=D*CR,diff=(CR-HR)*D,gain=ar?diff>0:diff<0;
+  return{cat:"外貨換算",title:`決算にあたり、外貨建の${item}を換算替えする。`,
+  data:[[item,yen(D)+"ドル"],["取引時の為替相場",HR+"円"],["決算時の為替相場",CR+"円"]],
+  lines:[["貸借対照表価額",0],["為替差",1],["その金額",2]],
+  blanks:[{t:"num",ans:yenCR,g:K("AC",D,"*",CR,"=")},{t:"ch",opts:["益","損"],ans:gain?"益":"損"},{t:"num",ans:Math.abs(diff),g:K("AC",Math.max(CR,HR),"-",Math.min(CR,HR),"=","*",D,"=")}],
+  ex:`B/S価額 ${yen(D)}ドル×${CR}=${yen(yenCR)}\n差額 ${yen(D)}×(${CR}−${HR})=${sgn(diff)}\n${item}が${diff>0?"増える":"減る"}→${ar?(diff>0?"資産増=差益":"資産減=差損"):(diff>0?"負債増=差損":"負債減=差益")}`};
+},
+function mat(c){
+  const SP=c.M(10,50,10),AP=SP+c.pick(OFF(5))*10,SQ=c.M(5,20,100),AQ=SQ+c.pick(OFF(10))*10;
+  const pv=(SP-AP)*AQ,qv=(SQ-AQ)*SP,tv=pv+qv;
+  if(AP<=0)c.ok=false;
+  return{cat:"標準原価計算",title:"直接材料費の差異を分析しなさい。",
+  data:[["標準価格(kg)",SP],["実際価格(kg)",AP],["標準消費量",yen(SQ)+"kg"],["実際消費量",yen(AQ)+"kg"]],
+  lines:[["価格差異",0],["数量差異",1],["直接材料費差異(合計)",2]],
+  blanks:[{t:"num",ans:pv,g:K("AC",SP,"-",AP,"=","*",AQ,"=")},{t:"num",ans:qv,g:K("AC",SQ,"-",AQ,"=","*",SP,"=")},
+    {t:"num",ans:tv,g:K("MC","AC",SP,"-",AP,"=","*",AQ,"=","M+",SQ,"-",AQ,"=","*",SP,"=","M+","MR")}],
+  note:"有利差異は+、不利差異は−(電卓の +/−)で入力",
+  ex:`価格差異 (${SP}−${AP})×${yen(AQ)}=${sgn(pv)}\n数量差異 (${yen(SQ)}−${yen(AQ)})×${SP}=${sgn(qv)}\n合計 ${sgn(tv)}`};
+},
+function oh(c){
+  const N=c.M(8,20,100),v=c.pick([200,300,400,500]),f=c.pick([300,400,500,600]),F=f*N,A=N+c.pick([-4,-3,-2,-1,0,1,2])*50,S=A+c.pick([-4,-3,-2,-1,0,1,2])*25,AC=v*A+F+c.M(-10,10,1000);
+  const bv=v*A+F-AC,ev=(S-A)*(v+f),vv=(A-N)*f;
+  return{cat:"標準原価計算",title:"製造間接費の差異を分析しなさい(公式法変動予算)。\n能率差異は変動費と固定費の両方から計算する。",
+  data:[["基準操業度",yen(N)+"h"],["変動費率",v],["固定費予算額",F],["実際操業度",yen(A)+"h"],["標準操業度",yen(S)+"h"],["実際発生額",AC]],
+  lines:[["予算差異",0],["能率差異",1],["操業度差異",2]],
+  blanks:[{t:"num",ans:bv,g:K("AC",v,"*",A,"=","+",F,"=","-",AC,"=")},{t:"num",ans:ev,g:K("AC",S,"-",A,"=","*",v+f,"=")},{t:"num",ans:vv,g:K("AC",A,"-",N,"=","*",f,"=")}],
+  note:"有利差異は+、不利差異は−(電卓の +/−)で入力",
+  ex:`固定費率 ${yen(F)}÷${yen(N)}h=@${f}\n予算差異 (${v}×${yen(A)}+${yen(F)})−${yen(AC)}=${sgn(bv)}\n能率差異 (${yen(S)}−${yen(A)})×@${v+f}=${sgn(ev)}\n操業度差異 (${yen(A)}−${yen(N)})×@${f}=${sgn(vv)}`};
+},
+function cvp(c){
+  const p=c.M(5,30,100),vr=c.pick([40,50,60,70]),vc=p*vr/100,cm=p-vc,q=c.M(2,20,100),FC=cm*q,j=c.M(1,10,100),TP=cm*j;
+  return{cat:"CVP分析",title:"次の資料から答えなさい。",
+  data:[["販売単価",p],["単位あたり変動費",vc],["固定費",FC],["目標営業利益",TP]],
+  lines:[["損益分岐点販売量(個)",0],["損益分岐点売上高",1],["目標営業利益を達成する販売量(個)",2]],
+  blanks:[{t:"num",ans:q,g:K("MC","AC",p,"-",vc,"=","M+",FC,"/","MR","=")},{t:"num",ans:q*p,g:K("MC","AC",p,"-",vc,"=","M+",FC,"/","MR","=","*",p,"=")},{t:"num",ans:q+j,g:K("MC","AC",p,"-",vc,"=","M+",FC,"+",TP,"=","/","MR","=")}],
+  ex:`単位貢献利益 ${yen(p)}−${yen(vc)}=${yen(cm)}\n損益分岐点 ${yen(FC)}÷${yen(cm)}=${yen(q)}個 → 売上高 ${yen(q*p)}\n目標 (${yen(FC)}+${yen(TP)})÷${yen(cm)}=${yen(q+j)}個`,chk:[vc]};
+},
+function mix(c){
+  const ha=c.pick([1,2,3,4]),hb=c.pick([1,2,3,4]),ra=c.ri(10,40)*10;let rb=c.ri(10,40)*10;if(rb===ra)rb+=10;
+  const cmA=ha*ra,cmB=hb*rb,dA=c.M(2,8,100),dB=c.M(2,8,100),firstA=ra>rb,fr=c.ri(1,3);
+  const [hX,dX,hY,dY]=firstA?[ha,dA,hb,dB]:[hb,dB,ha,dA];
+  const qY=c.messy?Math.round(dY*fr/4):fr*50,cap=dX*hX+qY*hY;
+  if(qY<=0||qY>=dY)c.ok=false;
+  const qA=firstA?dX:qY,qB=firstA?qY:dX,mx=qA*cmA+qB*cmB;
+  const gX=K("AC",dX),gY=K("AC",dX,"*",hX,"=","NEG","+",cap,"=","/",hY,"=");
+  return{cat:"最適セールスミックス",title:"機械作業時間に制約がある。\n貢献利益が最大になる生産量を求めなさい。",
+  data:[["製品A 単位貢献利益",cmA],["製品A 機械時間/個",ha+"h"],["製品A 需要上限",yen(dA)+"個"],["製品B 単位貢献利益",cmB],["製品B 機械時間/個",hb+"h"],["製品B 需要上限",yen(dB)+"個"],["機械時間の上限",yen(cap)+"h"]],
+  lines:[["製品Aの生産量(個)",0],["製品Bの生産量(個)",1],["最大の貢献利益",2]],
+  blanks:[{t:"num",ans:qA,g:firstA?gX:gY},{t:"num",ans:qB,g:firstA?gY:gX},{t:"num",ans:mx,g:K("MC","AC",qA,"*",cmA,"=","M+",qB,"*",cmB,"=","M+","MR")}],
+  ex:`1hあたり貢献利益 A:${yen(cmA)}÷${ha}=${ra} / B:${yen(cmB)}÷${hb}=${rb}\n→${firstA?"A":"B"}を優先して需要上限${yen(dX)}個(${yen(dX*hX)}h)\n残り${yen(cap-dX*hX)}h÷${hY}h=${firstA?"B":"A"} ${yen(qY)}個\n貢献利益 ${yen(qA)}×${yen(cmA)}+${yen(qB)}×${yen(cmB)}=${yen(mx)}`};
+}
+];
+
+/* ---------- 対戦用 速攻問題(1欄だけ・短い計算) ---------- */
+const QGENS=[
+function qGoodwill(c){const r=c.pick([60,70,75,80,90]),C=c.M(5,15,1000),E=c.M(1,6,1000),T=C+E,g=c.M(1,10,100),PI=T*r/100,P=PI+g;
+  return{quick:1,cat:"連結会計",title:`S社株式の${r}%を${yen(P)}で取得した。のれんは?`,data:[["S社 資本金",C],["S社 利益剰余金",E],["取得原価",P]],
+  lines:[["のれん",0]],blanks:[{t:"num",ans:g,g:K("AC",T,"*",r,"%","NEG","+",P,"=")}],ex:`${yen(P)}−(${yen(C)}+${yen(E)})×${r}%=${yen(g)}`,chk:[PI]}},
+function qNci(c){const r=c.pick([60,70,75,80,90]),C=c.M(5,15,1000),E=c.M(1,6,1000),T=C+E,n=T*(100-r)/100;
+  return{quick:1,cat:"連結会計",title:`P社のS社に対する持分比率は${r}%。非支配株主持分は?`,data:[["S社 資本金",C],["S社 利益剰余金",E]],
+  lines:[["非支配株主持分",0]],blanks:[{t:"num",ans:n,g:K("AC",T,"*",100-r,"%")}],ex:`(${yen(C)}+${yen(E)})×${100-r}%=${yen(n)}`}},
+function qUnreal(c){const S=c.M(1,10,2000),p=c.pick([20,25,30]),U=S*p/100;
+  return{quick:1,cat:"連結会計",title:`期末商品のうち連結会社から仕入れた分に含まれる未実現利益は?(売上総利益率は売価の${p}%)`,data:[["連結会社から仕入れた期末商品",S]],
+  lines:[["未実現利益",0]],blanks:[{t:"num",ans:U,g:K("AC",S,"*",p,"%")}],ex:`${yen(S)}×${p}%=${yen(U)}`}},
+function qFx(c){const D=c.M(1,20,100),HR=c.ri(100,150),CR=HR+c.pick(OFF(10)),a=Math.abs((CR-HR)*D);
+  return{quick:1,cat:"外貨換算",title:"売掛金の換算替えで生じる為替差損益の金額は?",data:[["売掛金",yen(D)+"ドル"],["取引時の為替相場",HR+"円"],["決算時の為替相場",CR+"円"]],
+  lines:[["為替差損益の金額",0]],blanks:[{t:"num",ans:a,g:K("AC",Math.max(CR,HR),"-",Math.min(CR,HR),"=","*",D,"=")}],ex:`${yen(D)}×|${CR}−${HR}|=${yen(a)}(${CR>HR?"差益":"差損"})`}},
+function qInt(c){const PBO=c.M(10,50,1000),dr=c.pick([1,1.5,2]),it=PBO*dr/100;
+  return{quick:1,cat:"退職給付会計",title:"利息費用は?",data:[["期首 退職給付債務",PBO],["割引率",dr+"%"]],
+  lines:[["利息費用",0]],blanks:[{t:"num",ans:it,g:K("AC",PBO,"*",dr,"%")}],ex:`${yen(PBO)}×${dr}%=${yen(it)}`}},
+function qExp(c){const PA=c.M(5,40,1000),er=c.pick([2,2.5,3]),ex=PA*er/100;
+  return{quick:1,cat:"退職給付会計",title:"期待運用収益は?",data:[["期首 年金資産",PA],["長期期待運用収益率",er+"%"]],
+  lines:[["期待運用収益",0]],blanks:[{t:"num",ans:ex,g:K("AC",PA,"*",er,"%")}],ex:`${yen(PA)}×${er}%=${yen(ex)}`}},
+function qImp(c){const BV=c.M(10,60,1000),a=c.ri(70,95),b=c.ri(35,65);let d=c.ri(40,68);if(d===b)d++;
+  const CF=c.R(BV*a/100,100),N=c.R(BV*b/100,100),V=c.R(BV*d/100,100),RA=Math.max(N,V),loss=BV-RA;if(CF>=BV)c.ok=false;
+  return{quick:1,cat:"減損会計",title:"減損損失は?",data:[["帳簿価額",BV],["割引前将来CF",CF],["正味売却価額",N],["使用価値",V]],
+  lines:[["減損損失",0]],blanks:[{t:"num",ans:loss,g:K("AC",BV,"-",RA,"=")}],ex:`CF<帳簿価額→認識。${yen(BV)}−max(${yen(N)},${yen(V)})=${yen(loss)}`}},
+function qBep(c){const cm=c.M(2,15,100),q=c.M(2,20,100),FC=cm*q;
+  return{quick:1,cat:"CVP分析",title:"損益分岐点販売量(個)は?",data:[["単位あたり貢献利益",cm],["固定費",FC]],
+  lines:[["損益分岐点販売量(個)",0]],blanks:[{t:"num",ans:q,g:K("AC",FC,"/",cm,"=")}],ex:`${yen(FC)}÷${yen(cm)}=${yen(q)}個`}},
+function qBepS(c){const p=c.M(5,30,100),vr=c.pick([40,50,60,70]),q=c.M(2,20,100),FC=p*(100-vr)/100*q,S=p*q;
+  return{quick:1,cat:"CVP分析",title:"損益分岐点売上高は?",data:[["変動費率",vr+"%"],["固定費",FC]],
+  lines:[["損益分岐点売上高",0]],blanks:[{t:"num",ans:S,g:K("AC",FC,"/",100-vr,"%")}],ex:`${yen(FC)}÷(1−${vr}%)=${yen(S)}`,chk:[FC]}},
+function qPrice(c){const SP=c.M(10,50,10),AP=SP+c.pick(OFF(5))*10,AQ=c.M(5,20,100),pv=(SP-AP)*AQ;if(AP<=0)c.ok=false;
+  return{quick:1,cat:"標準原価計算",title:"直接材料費の価格差異は?",data:[["標準価格(kg)",SP],["実際価格(kg)",AP],["実際消費量",yen(AQ)+"kg"]],
+  lines:[["価格差異",0]],blanks:[{t:"num",ans:pv,g:K("AC",SP,"-",AP,"=","*",AQ,"=")}],note:"有利は+、不利は−(+/−)",ex:`(${SP}−${AP})×${yen(AQ)}=${sgn(pv)}`}},
+function qVol(c){const N=c.M(8,20,100),f=c.pick([300,400,500,600]),A=N+c.pick([-4,-3,-2,-1,1,2])*50,vv=(A-N)*f;
+  return{quick:1,cat:"標準原価計算",title:"製造間接費の操業度差異は?",data:[["基準操業度",yen(N)+"h"],["固定費率",f],["実際操業度",yen(A)+"h"]],
+  lines:[["操業度差異",0]],blanks:[{t:"num",ans:vv,g:K("AC",A,"-",N,"=","*",f,"=")}],note:"有利は+、不利は−(+/−)",ex:`(${yen(A)}−${yen(N)})×@${f}=${sgn(vv)}`}},
+function qDta(c){const A=c.M(1,30,100),d=A*30/100;
+  return{quick:1,cat:"税効果会計",title:"計上する繰延税金資産は?(実効税率30%)",data:[["将来減算一時差異(当期発生)",A]],
+  lines:[["繰延税金資産",0]],blanks:[{t:"num",ans:d,g:K("AC",A,"*",30,"%")}],ex:`${yen(A)}×30%=${yen(d)}`}}
+];
+function genIndexL(key,i,n){const cyc=Math.floor(i/n),r=mulberry32(hashStr(key+":perm:"+cyc)),o=[];for(let k=0;k<n;k++)o.push(k);
+  for(let k=n-1;k>0;k--){const j=Math.floor(r()*(k+1));[o[k],o[j]]=[o[j],o[k]]}return o[i%n]}
+function pickGen(base,i){
+  if(base.startsWith("vs:")){const q=i%2===0,list=q?QGENS:GENS;return list[genIndexL(base+(q?":q":":g"),Math.floor(i/2),list.length)]}
+  return GENS[genIndex(base,i)];
+}
+/* 問題 i を作る(messyN>0 なら端数地獄版) */
+function validP(p,c){
+  if(!c.ok)return false;
+  if((p.chk||[]).some(v=>!Number.isInteger(v)))return false;
+  return p.blanks.every(b=>b.t!=="num"||(Number.isInteger(b.ans)&&isFinite(b.ans)));
+}
+function genIndex(base,i){
+  const n=GENS.length,cyc=Math.floor(i/n),r=mulberry32(hashStr(base+":perm:"+cyc)),o=GENS.map((_,k)=>k);
+  for(let k=n-1;k>0;k--){const j=Math.floor(r()*(k+1));[o[k],o[j]]=[o[j],o[k]]}
+  return o[i%n];
+}
+function makeProblem(base,i,messyN){
+  const gen=pickGen(base,i),seed=hashStr(base+":"+i);
+  let p=null;
+  if(!messyN){const c=ctx(seed,0,1);p=gen(c);if(!validP(p,c)){/* 念のため */for(let a=1;a<50;a++){const c2=ctx(hashStr(seed+":"+a),0,1);p=gen(c2);if(validP(p,c2))break}}}
+  else{
+    for(let a=0;a<6000;a++){const mu=a<2000?1:a<4000?10:100;const c=ctx(seed,hashStr(seed+":m"+messyN+":"+a),mu);const q=gen(c);if(validP(q,c)){p=q;p.messy=true;break}}
+    if(!p)return null;
+  }
+  p.base=base;p.idx=i;p.messyN=messyN||0;p.judged=[];p.vals=p.blanks.map(()=>"");p.active=0;
+  return p;
+}
+
+/* ================= 保存・共通 ================= */
+const KEY="bokibattle_v1";
+let REC={ta:[],sa:[]};
+try{const s=JSON.parse(localStorage.getItem(KEY));if(s)REC=s}catch(e){}
+REC.ta=REC.ta||[];REC.sa=REC.sa||[];REC.win=REC.win||{cpu:0,cpuL:0,on:0,onL:0};
+function saveRec(){try{localStorage.setItem(KEY,JSON.stringify(REC))}catch(e){}}
+const $=s=>document.querySelector(s),app=$("#app");
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("on"),1800)}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function fmtT(ms){ms=Math.max(0,ms);const m=Math.floor(ms/60000),s=Math.floor(ms/1000)%60,d=Math.floor(ms/100)%10;return`${m}:${String(s).padStart(2,"0")}.${d}`}
+function newCode(){return String(1000+Math.floor(Math.random()*9000))}
+let CODE=newCode();
+const TA_N=8,SA_MS=180000,PEN_MS=10000,MAXHP=40,HP0=30,AUTO_MS=45000;
+const DRAIN=[.10,.15,.22,.32,.45,.65,.9];
+const PHASE=["第1四半期","第2四半期","第3四半期","第4四半期","決算期末","延長戦","延長戦+"];
+function rateAt(ms){return DRAIN[Math.min(DRAIN.length-1,Math.floor(ms/60000))]}
+function phaseAt(ms){return Math.min(PHASE.length-1,Math.floor(ms/60000))}
+function rankTA(ms){return ms<240000?"S":ms<420000?"A":ms<660000?"B":"C"}
+function rankSA(p){return p>=1500?"S":p>=1000?"A":p>=500?"B":"C"}
+
+/* ================= アイテム ================= */
+const ITEMS={
+  guide:{i:"🧮",n:"検算ガイド",self:true,d:"20秒間、今の問題の電卓の打ち方を1キーずつガイド"},
+  shield:{i:"🛡️",n:"内部統制",self:true,d:"次に受けるおじゃまを1回ブロック"},
+  messy:{i:"🔢",n:"端数地獄",d:"相手の今の問題の数字を細かくする(入力済みの正解は新しい数字に自動で直る)"},
+  shuffle:{i:"🔀",n:"電卓シャッフル",d:"10秒間、相手の電卓の数字キーの並びをバラバラにする"},
+  typo:{i:"✏️",n:"転記ミス",d:"相手の電卓に出ている数字の桁を、こっそり入れ替える"}
+};
+const ITEM_POOL=["guide","guide","shield","messy","messy","shuffle","shuffle","typo","typo"];
+const MAX_ITEMS=3;
+function dmgFor(chain){return Math.min(8,chain)}
+
+/* ================= オンライン(room) ================= */
+let ROOM=null;
+/* ===== オンライン設定(GitHub Pages版)=====
+   Supabase の Project URL と anon(public)キーを貼る。空ならオンライン対戦はオフ。 */
+const SB_URL="";
+const SB_KEY="";
+function makeSbRoom(){
+  const client=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{params:{eventsPerSecond:10}}});
+  const myKey=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+  return{join:(name)=>new Promise((res,rej)=>{
+    const ch=client.channel(name,{config:{presence:{key:myKey}}});
+    let pres={},fns=[],last=0,timer=null;
+    const peers=()=>{const st=ch.presenceState()||{};const out=[];
+      for(const k in st){const arr=st[k]||[];const p=arr[arr.length-1]||{};const o={};for(const f in p)if(f!=="presence_ref")o[f]=p[f];
+        out.push({peer:k,sameTab:k===myKey,isMe:k===myKey,presence:k===myKey?pres:o})}
+      if(!out.some(p=>p.sameTab))out.push({peer:myKey,sameTab:true,isMe:true,presence:pres});return out};
+    ch.on("presence",{event:"sync"},()=>{const ps=peers();fns.forEach(f=>{try{f({peers:ps})}catch(e){}})});
+    const flush=()=>{timer=null;last=Date.now();Promise.resolve(ch.track(pres)).catch(()=>{})};
+    const api={
+      presence:async(patch)=>{pres=Object.assign({},pres,patch);for(const k in patch)if(patch[k]===null)delete pres[k];
+        if(!timer)timer=setTimeout(flush,Math.max(0,250-(Date.now()-last)))},
+      onPeers:(f)=>{fns.push(f);setTimeout(()=>f({peers:peers()}),0);return()=>{fns=fns.filter(x=>x!==f)}},
+      leave:async()=>{try{await ch.untrack()}catch(e){}try{client.removeChannel(ch)}catch(e){}}
+    };
+    let done=false;
+    ch.subscribe(st=>{if(st==="SUBSCRIBED"&&!done){done=true;res(api)}else if((st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED")&&!done){done=true;rej({code:st})}});
+    setTimeout(()=>{if(!done){done=true;rej({code:"timeout"})}},10000);
+  })};
+}
+(async()=>{try{
+  if(SB_URL&&SB_KEY&&window.supabase){ROOM=makeSbRoom();return}
+  if(window.claude&&window.claude.use)ROOM=await window.claude.use("room");
+}catch(e){ROOM=null}})();
+
+/* ================= タイトル ================= */
+function title(){
+  stopTimer();stopCpu();
+  const bt=REC.ta[0],bs=REC.sa[0];
+  const list=(arr,f)=>arr.length?arr.slice(0,3).map((r,i)=>`<div class="rec"><span>${i+1}. ${f(r)}</span><span class="r">${r.rank} <small style="color:var(--mute);font-weight:500">#${r.code}</small></span></div>`).join(""):`<div class="empty">まだ記録なし</div>`;
+  app.innerHTML=`<div class="title">
+   <div class="logo"><h1>ボキバトル</h1><p>簿記1級 スピード競技</p></div>
+   <button class="mode vs" id="vs"><b>⚔️ 対戦(HPバトル)</b><span>正解した欄の数だけ相手にダメージ。連続正解でダメージアップ。おじゃまアイテムあり。</span><em class="best mono">${REC.win.cpu+REC.win.on}勝</em></button>
+   <button class="mode ta" id="ta"><b>⏱ タイムアタック</b><span>${TA_N}題を最速で解く。まちがえた欄は1つにつき+10秒。</span>${bt?`<em class="best mono">BEST ${fmtT(bt.ms)}</em>`:""}</button>
+   <button class="mode sa" id="sa"><b>⚡ スコアアタック</b><span>3分間でできるだけ多く解く。全欄正解が続くとコンボボーナス。</span>${bs?`<em class="best mono">BEST ${bs.pts}pt</em>`:""}</button>
+   <div class="hand"><span>電卓を打つ手</span><div class="seg"><button data-h="0" class="${REC.lefty?"":"on"}">右手</button><button data-h="1" class="${REC.lefty?"on":""}">左手</button></div></div>
+   <div class="hand"><span>お助けガイド(${AUTO_MS/1000}秒止まると自動表示)</span><div class="seg" id="ag"><button data-a="1" class="${REC.noAuto?"":"on"}">ON</button><button data-a="0" class="${REC.noAuto?"on":""}">OFF</button></div></div>
+   <div class="hand"><span>次の問題で電卓をリセット(AC・MC)</span><div class="seg"><button data-r="1" class="${REC.noReset?"":"on"}">ON</button><button data-r="0" class="${REC.noReset?"on":""}">OFF</button></div></div>
+   <div class="code"><label>対戦コード(ソロモード用)</label>
+    <div class="row"><input id="code" class="mono" inputmode="numeric" maxlength="6" value="${CODE}"><button class="sbtn" id="nc">🎲 新しく</button></div>
+    <small>同じコードなら全員まったく同じ問題が出るよ。タイムを送り合って勝負もできる。</small></div>
+   <div class="recs"><h3>⏱ タイムアタック 自己ベスト</h3>${list(REC.ta,r=>`<span class="mono">${fmtT(r.ms)}</span>`)}</div>
+   <div class="recs"><h3>⚡ スコアアタック 自己ベスト</h3>${list(REC.sa,r=>`<span class="mono">${r.pts}pt</span>`)}</div>
+   <div class="rules">● 出題範囲:連結会計/税効果/退職給付/減損/外貨換算/標準原価計算/CVP分析/最適セールスミックス<br>● 電卓とメモは右側(左手モードなら左側)。プレイ中も⇄で入れ替えOK。電卓の「入力」で答えを欄に入れる<br>● PCなら数字キー=電卓、Tab=入力、Ctrl+Enter=解答<br>● 記録はこの端末のブラウザに保存されます</div>
+  </div>`;
+  const ci=$("#code");ci.oninput=()=>{ci.value=ci.value.replace(/\D/g,"");CODE=ci.value};
+  $("#nc").onclick=()=>{CODE=newCode();ci.value=CODE};
+  app.querySelectorAll(".seg button[data-h]").forEach(b=>b.onclick=()=>{REC.lefty=b.dataset.h==="1";saveRec();app.querySelectorAll(".seg button[data-h]").forEach(x=>x.classList.toggle("on",x===b))});
+  app.querySelectorAll(".seg button[data-r]").forEach(b=>b.onclick=()=>{REC.noReset=b.dataset.r==="0";saveRec();app.querySelectorAll(".seg button[data-r]").forEach(x=>x.classList.toggle("on",x===b))});
+  app.querySelectorAll(".seg button[data-a]").forEach(b=>b.onclick=()=>{REC.noAuto=b.dataset.a==="0";saveRec();app.querySelectorAll(".seg button[data-a]").forEach(x=>x.classList.toggle("on",x===b))});
+  $("#ta").onclick=()=>startSolo("ta");$("#sa").onclick=()=>startSolo("sa");$("#vs").onclick=vsMenu;
+  window.scrollTo(0,0);
+}
+
+/* ================= 対戦メニュー ================= */
+function vsMenu(){
+  stopCpu();leaveNet();
+  app.innerHTML=`<div class="title">
+   <button class="back" id="bk">← もどる</button>
+   <div class="logo"><h1 style="font-size:32px">⚔️ HPバトル</h1><p>正解で攻撃・おじゃまで妨害</p></div>
+   <div class="howto">
+    <div>⏳ 体力は${HP0}からスタートして<b>じわじわ減っていく</b>。1分ごとに減るスピードが上がる(第1四半期→第2四半期→…→決算期末)</div>
+    <div>💚 欄を1つ正解するごとに<b>体力が回復</b>。先に体力が0になった方の負け</div>
+    <div>🔗 正解が続くと<b>連鎖</b>!回復量は 1連鎖=1、2連鎖=2、3連鎖=3…最大<b>8</b>。まちがえる・スキップすると連鎖は0に(体力の上限は${MAXHP})</div>
+    <div>⚡ 対戦では1欄だけの<b>速攻問題</b>と大問が交互に出る。欄は「入力」した瞬間に判定</div>
+    <div>🔥 <b>5連鎖・8連鎖・11連鎖…</b>で連鎖アタック!相手の体力の減りが10秒間2倍</div>
+    <div>🎁 1題まるごと全欄正解するとアイテムを1つゲット(最大${MAX_ITEMS}個)</div>
+   </div>
+   <div class="itemlist">${Object.entries(ITEMS).map(([k,v])=>`<div class="il"><span class="ii">${v.i}</span><div><b>${v.n}</b>${v.self?`<em>自分</em>`:`<em class="atk">おじゃま</em>`}<br><small>${v.d}</small></div></div>`).join("")}</div>
+   <h3 class="h3">🤖 CPUと対戦</h3>
+   <div class="cpus">
+    <button class="cpu" data-l="0"><b>見習い</b><small>のんびり</small></button>
+    <button class="cpu" data-l="1"><b>経理部員</b><small>ふつう</small></button>
+    <button class="cpu" data-l="2"><b>公認会計士</b><small>つよい</small></button>
+   </div>
+   <h3 class="h3">🌐 友達とオンライン対戦</h3>
+   <div class="code">
+    <label>名前</label><div class="row"><input id="nm" maxlength="10" value="${esc(REC.name||"")}" placeholder="なまえ" style="letter-spacing:0;font-family:inherit;font-size:18px"></div>
+    <label style="display:block;margin-top:10px">部屋コード(相手と同じ数字を入れる)</label>
+    <div class="row"><input id="rc" class="mono" inputmode="numeric" maxlength="6" value="${esc(REC.room||newCode())}"><button class="sbtn" id="join">入室する</button></div>
+    <small>2人とも同じ部屋コードで入室すると対戦できるよ。相手もこのアプリを開ける(共有されている)必要がある。</small>
+   </div></div>`;
+  $("#bk").onclick=title;
+  app.querySelectorAll(".cpu").forEach(b=>b.onclick=()=>{const lv=+b.dataset.l;startBattle("cpu",{lv,seed:newCode()+":"+Date.now(),oppName:CPU_LV[lv].n})});
+  const rc=$("#rc");rc.oninput=()=>rc.value=rc.value.replace(/\D/g,"");
+  $("#join").onclick=()=>{const nm=$("#nm").value.trim()||"プレイヤー";REC.name=nm;REC.room=rc.value||newCode();saveRec();lobby(REC.room,nm)};
+  window.scrollTo(0,0);
+}
+
+/* ================= ゲーム状態 ================= */
+let G=null,timerId=null,P=null;
+const MEMO={tab:"draw",text:"",img:null};
+function resetDesk(){MEMO.text="";MEMO.img=null;MEMO.drawMode=false;TAPE.lines=[];TAPE.cur="";Object.assign(C,{disp:"0",acc:null,op:null,fresh:true,mem:0,lastOp:null,lastArg:null,err:false,k:null,lastKey:"",hist:[],egg:0})}
+function startSolo(mode){
+  if(!CODE)CODE=newCode();resetDesk();
+  G={mode,code:CODE,base:mode+":"+CODE,qi:0,elapsed:0,running:false,t0:0,pen:0,missBlanks:0,okBlanks:0,perfect:0,pts:0,combo:0,maxCombo:0,fx:{}};
+  countdown(()=>{G.running=true;G.t0=performance.now();nextProblem();startTimer()});
+}
+function countdown(cb){
+  let n=3;const tick=()=>{if(!G)return;if(n===0){cb();return}app.innerHTML=`<div class="cd"><span>${n}</span></div>`;n--;setTimeout(tick,800)};tick();
+}
+function now(){return G.elapsed+(G.running?performance.now()-G.t0:0)}
+function pause(){if(G.running){G.elapsed+=performance.now()-G.t0;G.running=false}}
+function resume(){if(!G.running){G.t0=performance.now();G.running=true}}
+function startTimer(){stopTimer();timerId=setInterval(tick,100)}
+function stopTimer(){if(timerId)clearInterval(timerId);timerId=null}
+const isVS=()=>G&&(G.mode==="cpu"||G.mode==="online");
+function tick(){
+  if(!G)return;
+  drawHud();
+  autoGuideTick();
+  drainTick();
+  fxTick();
+}
+function autoGuideTick(){
+  if(!G||!P||P.locked||G.ended||REC.noAuto)return;
+  if(G.fx.auto===P.active)return;
+  const bl=P.blanks[P.active];if(!bl||bl.t!=="num"||!bl.g||P.vals[P.active]!=="")return;
+  if(now()-(G.lastProg||0)>AUTO_MS){G.fx.auto=P.active;G.fx.gstep={b:-1,s:0};toast("🧮 お助けガイドを表示");paintGuide()}
+}
+function progress(){if(G){G.lastProg=now();G.fx.auto=-1}}
+function drawHud(){
+  if(!G)return;const t=$("#hudt");
+  if(G.mode==="ta"){if(t)t.textContent=fmtT(now()+G.pen)}
+  else if(G.mode==="sa"){const left=SA_MS-now();if(t){t.textContent=fmtT(left);t.classList.toggle("warn",left<30000)}if(left<=0&&!G.ended){G.ended=true;pause();finishSolo()}}
+  else{if(t)t.textContent=fmtT(now());paintHP()}
+}
+function deskReset(){if(TAPE.lines.length&&!TAPE.lines[TAPE.lines.length-1].startsWith("──"))tapePush("── 次の問題 ──");TAPE.cur="";if(REC.noReset)return;Object.assign(C,{disp:"0",acc:null,op:null,fresh:true,mem:0,lastOp:null,lastArg:null,err:false,k:null,lastKey:"",hist:[]})}
+function nextProblem(){deskReset();P=makeProblem(G.base,G.qi);G.qi++;G.fx.gstep={b:-1,s:0};progress();if(G.fx.guideNext){G.fx.guideNext=false;G.fx.guideUntil=now()+20000}if(isVS()&&G.fx.messyNext){G.fx.messyNext=false;const m=makeProblem(P.base,P.idx,1);if(m)P=m}renderGame()}
+function skipProblem(){
+  if(!G||!P||P.locked||G.ended)return;
+  G.skips=(G.skips||0)+1;
+  const np=makeProblem(G.base+":skip"+G.skips,G.qi);if(!np)return;
+  const lost=isVS()?G.streak:G.mode==="sa"?G.combo:0;
+  if(isVS())G.streak=0;if(G.mode==="sa")G.combo=0;
+  deskReset();P=np;G.fx.gstep={b:-1,s:0};progress();renderGame();
+  toast(lost>0?`⏭ スキップ!${isVS()?"連鎖":"コンボ"}は0に`:"⏭ 問題を引き直した");
+}
+
+/* ================= 問題画面 ================= */
+function hudHTML(){
+  const sw=`<div style="display:flex;align-items:center;gap:4px"><button class="x" id="quit">✕</button><button class="sw" id="sw" title="電卓の左右を入れ替え">⇄</button></div>`;
+  if(G.mode==="ta")return`<div class="hud">${sw}<div class="t mono" id="hudt">0:00.0</div><div class="p"><b>${G.qi}</b> / ${TA_N}<br>${G.pen?`<span class="pen">+${G.pen/1000}s</span>`:"&nbsp;"}</div></div>`;
+  if(G.mode==="sa")return`<div class="hud">${sw}<div class="t mono" id="hudt">0:00.0</div><div class="p"><b class="mono">${G.pts}</b>pt<br>${G.combo>1?`<span style="color:var(--gold)">🔥${G.combo}コンボ</span>`:"&nbsp;"}</div></div>`;
+  return`<div class="hud vsh">${sw}
+    <div class="hpwrap">
+     <div class="hpl"><span class="hpn">${esc(G.myName)}</span><div class="hpbar me"><i id="hpme"></i></div><span class="hpv mono" id="hpmev"></span></div>
+     <div class="hpl"><span class="hpn">${esc(G.oppName)}</span><div class="hpbar op"><i id="hpop"></i></div><span class="hpv mono" id="hpopv"></span></div>
+    </div>
+    <div class="p"><span class="t mono" id="hudt" style="font-size:14px;color:var(--mute)"></span><br><span id="stk" class="stk"></span></div></div>
+   <div class="itembar" id="itembar"></div>`;
+}
+function renderGame(){
+  const vs=isVS();
+  app.innerHTML=`<div class="game">${hudHTML()}
+   <div class="gbody ${REC.lefty?"lefty":""}" id="gb">
+    <div class="gleft">
+     <div class="prob" id="prob">
+      ${P.quick?`<span class="cat quick">⚡ 速攻</span>`:""}<span class="cat">${P.cat}</span>${P.messy?`<span class="cat messy">🔢 端数地獄</span>`:""}
+      <div class="ptitle">${P.title}</div>
+      <table class="data">${P.data.map(([k,v])=>`<tr><td>${k}</td><td>${typeof v==="number"?yen(v):v}</td></tr>`).join("")}</table>
+      <div class="sheet">${P.lines.map(([lab,bi])=>`<div class="ln"><span class="lab">${lab}</span><button class="blank ${P.blanks[bi].t==="ch"?"ch":""}" data-b="${bi}"></button>${P.blanks[bi].t==="ch"?`<div class="chrow" data-cr="${bi}">${P.blanks[bi].opts.map(o=>`<button class="cho" data-b="${bi}" data-c="${o}">${o}</button>`).join("")}</div>`:""}</div>`).join("")}</div>
+      ${P.note?`<div class="note">※${P.note}</div>`:""}
+      <div class="note">電卓で計算 →「入力」で選択中の欄に入る</div>
+     </div>
+     <div class="abar" id="abar"><button class="ab sk" id="bsk"><span style="font-size:16px">⏭</span><small>スキップ</small></button><button class="ab nx" id="bnx">次の欄 ▶</button><button class="ab go" id="bgo">解答する</button></div>
+    </div>
+    <div class="gright" id="gr">
+     <div class="tape" id="tape"><div class="thead"><span>🧾 計算テープ</span><button id="tclr">消す</button><button id="dtog" class="dtog">✍️ 手書き</button></div><div class="tbody" id="tbody"></div></div>
+     <div class="memo2">
+      <div class="mhead"><button data-t="draw" class="on">✍️</button><button data-t="text">📝</button><button id="mclr">全消し</button></div>
+      <canvas id="cv"></canvas><textarea id="mt" placeholder="メモ"></textarea>
+     </div>
+     <div class="calc" id="calc">
+      <div class="guide" id="guide"></div>
+      <div class="cdisp"><div class="cind" id="cind"></div><div class="cnum mono" id="cnum">0</div></div>
+      <div class="ckeys2" id="ckeys"></div>
+      <div class="shufb" id="shufb"></div>
+     </div>
+    </div>
+   </div></div>`;
+  $("#quit").onclick=()=>{if(confirmQuit()){if(G&&G.mode==="online"){netForfeit()}G=null;stopCpu();title()}};
+  $("#sw").onclick=()=>{REC.lefty=!REC.lefty;saveRec();$("#gb").classList.toggle("lefty",REC.lefty);setTimeout(fitCv,60);toast(REC.lefty?"左手モード:電卓を左に":"右手モード:電卓を右に")};
+  app.querySelectorAll(".blank").forEach(b=>b.onclick=()=>{if(P.locked)return;const i=+b.dataset.b;if(P.judged&&P.judged[i]!==undefined)return;P.active=i;paintBlanks();paintGuide()});
+  app.querySelectorAll(".cho").forEach(b=>b.onclick=()=>{if(P.locked)return;const i=+b.dataset.b;if(P.judged&&P.judged[i]!==undefined)return;P.active=i;P.vals[i]=b.dataset.c;progress();if(isVS())judgeBlank(i);advance()});
+  $("#bnx").onclick=()=>advance(true);$("#bgo").onclick=submit;if(vs)$("#bgo").style.display="none";$("#bsk").onclick=()=>{if(skipArm()){skipProblem()}};
+  renderCalcKeys();initMemo();paintTape();
+  $("#tclr").onclick=()=>{TAPE.lines=[];TAPE.cur="";paintTape()};
+  $("#dtog").onclick=()=>{MEMO.drawMode=!MEMO.drawMode;$("#gr").classList.toggle("drawmode",MEMO.drawMode);$("#dtog").textContent=MEMO.drawMode?"🧮 電卓":"✍️ 手書き";setTimeout(fitCv,50)};
+  if(MEMO.drawMode){$("#gr").classList.add("drawmode");$("#dtog").textContent="🧮 電卓"}
+  if(isPhone()&&vs){const ib=$("#itembar"),ab=$("#abar");if(ib&&ab){ab.appendChild(ib);ib.classList.add("inbar")}}
+  paintBlanks();paintCalc();drawHud();
+  if(vs){paintItems();paintHP();paintGuide()}
+}
+let quitArmed=0,skipArmed=0;
+function skipArm(){const n=Date.now();if(n-skipArmed<2000){skipArmed=0;return true}skipArmed=n;toast(isVS()&&G.streak>0?`もう一度押すとスキップ(${G.streak}連鎖が0になる)`:"もう一度押すとスキップ");return false}
+function confirmQuit(){const n=Date.now();if(n-quitArmed<2000)return true;quitArmed=n;toast("もう一度✕で中断");return false}
+function evalExpr(s){
+  if(s==null)return NaN;
+  const e=String(s).replace(/,/g,"").replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-");
+  if(!e.trim()||!/^[0-9+\-*/().\s]+$/.test(e))return NaN;
+  try{const v=Function('"use strict";return ('+e+')')();return typeof v==="number"&&isFinite(v)?v:NaN}catch(_){return NaN}
+}
+function paintBlanks(){
+  app.querySelectorAll(".blank").forEach(b=>{
+    const i=+b.dataset.b,bl=P.blanks[i],v=P.vals[i];
+    b.classList.toggle("on",i===P.active&&!P.locked);
+    if(i===P.active&&!P.locked&&isPhone()&&b._was!==true){try{b.scrollIntoView({block:"nearest"})}catch(e){}}
+    b._was=(i===P.active);
+    if(bl.t==="ch")b.innerHTML=v||"<span style='color:#aab'>選択</span>";
+    else{const n=evalExpr(v);b.innerHTML=`<span>${v===""?"&nbsp;":(isNaN(n)?esc(v):yen(n))}</span>`}
+    const jr=P.locked?P.res[i]:(P.judged?P.judged[i]:undefined);
+    if(jr!==undefined){const ok=jr;b.classList.add(ok?"ok":"ng");
+      if(!ok)b.insertAdjacentHTML("beforeend",`<span class="ca">正:${bl.t==="ch"?bl.ans:yen(bl.ans)}</span>`)}
+  });
+  paintCalc();
+  app.querySelectorAll(".chrow").forEach(r=>{const i=+r.dataset.cr;r.style.display=(!P.locked&&!(P.judged&&P.judged[i]!==undefined)&&(i===P.active||!P.vals[i]))?"flex":"none";
+    r.querySelectorAll(".cho").forEach(c=>c.classList.toggle("sel",P.vals[i]===c.dataset.c))});
+}
+function advance(wrap){
+  const n=P.blanks.length;
+  for(let s=1;s<=n;s++){const j=(P.active+s)%n;if(!P.vals[j]&&!(P.judged&&P.judged[j]!==undefined)){P.active=j;paintBlanks();paintGuide();return}}
+  if(wrap)P.active=(P.active+1)%n;
+  paintBlanks();paintGuide();
+}
+
+/* ================= カシオ配列電卓 ================= */
+const CALC_KEYS=[
+ {k:"MC",c:"mem"},{k:"MR",c:"mem"},{k:"M-",l:"M−",c:"mem"},{k:"M+",c:"mem"},{k:"AC",c:"clr"},
+ {k:"BS",l:"▶",c:"fn"},{k:"C",c:"clr"},{k:"NEG",l:"+/−",c:"fn"},{k:"SQ",l:"√",c:"fn"},{k:"/",l:"÷",c:"op"},
+ {k:"7"},{k:"8"},{k:"9"},{k:"%",c:"fn"},{k:"*",l:"×",c:"op"},
+ {k:"4"},{k:"5"},{k:"6"},{k:"IN",l:"入力",c:"in"},{k:"-",l:"−",c:"op"},
+ {k:"1"},{k:"2"},{k:"3"},{k:"+",c:"op"},
+ {k:"0"},{k:"00"},{k:".",l:"・"},{k:"=",c:"eq"}
+];
+const CALC_POS={"IN":"grid-column:4;grid-row:4 / span 2","+":"grid-column:5;grid-row:5 / span 2","=":"grid-column:4;grid-row:6"};
+const C={disp:"0",acc:null,op:null,fresh:true,mem:0,lastOp:null,lastArg:null,err:false,k:null,lastKey:"",hist:[],egg:0};
+const HELD=new Set();
+function shufActive(){return G&&G.fx&&G.fx.shufUntil&&now()<G.fx.shufUntil}
+function renderCalcKeys(){
+  const box=$("#ckeys");if(!box)return;
+  const sh=shufActive(),perm=sh?G.fx.perm:null;
+  box.innerHTML=CALC_KEYS.map(k=>{let key=k.k,lab=k.l||k.k;if(sh&&/^\d$/.test(key)){key=String(perm[+key]);lab=key}
+    return`<button class="ck ${k.c||""} ${sh&&/^\d$/.test(k.k)?"shuf":""}" data-k="${key}" style="${CALC_POS[k.k]||""}">${lab}</button>`}).join("");
+  box.querySelectorAll(".ck").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();b.classList.add("dn");HELD.add(b.dataset.k);calcKey(b.dataset.k)});
+    ["pointerup","pointerleave","pointercancel"].forEach(t=>b.addEventListener(t,()=>{b.classList.remove("dn");HELD.delete(b.dataset.k)}))});
+  paintGuide();
+}
+function cur(){return Number(C.disp)}
+function setNum(v){if(!isFinite(v)||Math.abs(v)>=1e12){C.err=true;C.disp="0";return}v=Math.round(v*1e8)/1e8;C.disp=String(v)}
+function apply(a,op,b){return op==="+"?a+b:op==="-"?a-b:op==="*"?a*b:b===0?NaN:a/b}
+function finish_eq(){
+  if(C.k){const a=C.k.a,x=cur(),o=C.k.op;setNum(o==="*"?a*x:o==="+"?x+a:o==="-"?x-a:(a===0?NaN:x/a));C.fresh=true;return}
+  if(C.op){const arg=C.fresh&&C.lastArg!==null&&C.acc===null?C.lastArg:cur();
+    const r=apply(C.acc,C.op,arg);C.lastOp=C.op;C.lastArg=arg;setNum(r);C.acc=null;C.op=null}
+  else if(C.lastOp){setNum(apply(cur(),C.lastOp,C.lastArg))}
+  C.fresh=true;
+}
+/* ===== 計算テープ ===== */
+const PHONE_MQ=window.matchMedia?matchMedia("(max-width:600px) and (orientation:portrait)"):null;
+function isPhone(){return !!(PHONE_MQ&&PHONE_MQ.matches)}
+if(PHONE_MQ&&PHONE_MQ.addEventListener)PHONE_MQ.addEventListener("change",()=>{if(G&&P&&!G.ended&&$("#calc")){const ib=$("#itembar");if(ib)ib.classList.remove("inbar");renderGame();if(P.locked){const ab=$("#abar");if(ab)ab.style.visibility="hidden"}}});
+const TAPE={lines:[],cur:""};
+const SYM={"+":"+","-":"−","*":"×","/":"÷"};
+function fnum(v){if(!isFinite(v))return"E";const neg=v<0;let s=String(Math.abs(Math.round(v*1e8)/1e8));let[ip,fp]=s.split(".");ip=Number(ip).toLocaleString("en-US");return(neg?"−":"")+ip+(fp?"."+fp:"")}
+function tapePush(s){TAPE.lines.push(s);if(TAPE.lines.length>60)TAPE.lines.shift()}
+function calcKey(k){
+  if(!P)return;
+  const preD=cur(),preF=C.fresh,preK=!!C.k,preV=P.vals[P.active],pa=P.active,preM=C.mem;
+  calcKey0(k);
+  try{
+    if("+-*/".includes(k)&&k.length===1){
+      if(C.k&&!preK){TAPE.cur=TAPE.cur.trim()+SYM[k]+" (定数) "}
+      else if(!preF||!TAPE.cur)TAPE.cur+=fnum(preD)+" "+SYM[k]+" ";
+      else TAPE.cur=TAPE.cur.replace(/[+−×÷] $/,SYM[k]+" ");
+    }else if(k==="="){tapePush((TAPE.cur||"")+(preF&&!TAPE.cur?fnum(preD)+" ":TAPE.cur?fnum(preD)+" ":"")+"= "+fnum(cur()));TAPE.cur=""}
+    else if(k==="%"){if(TAPE.cur){tapePush(TAPE.cur+fnum(preD)+"% = "+fnum(cur()));TAPE.cur=""}}
+    else if(k==="SQ"){tapePush("√"+fnum(preD)+" = "+fnum(cur()))}
+    else if(k==="M+"||k==="M-"){tapePush((k==="M+"?"M+ ":"M− ")+fnum(cur())+"  (M="+fnum(C.mem)+")");TAPE.cur=""}
+    else if(k==="AC"){if(TAPE.cur){TAPE.cur=""}}
+    else if(k==="IN"&&P.vals[pa]!==preV){const ln=P.lines.find(l=>l[1]===pa);tapePush("→ "+(ln?ln[0]:"欄")+":"+fnum(evalExpr(P.vals[pa])))}
+  }catch(e){}
+  paintTape();
+}
+function paintTape(){
+  const b=$("#tbody");if(!b)return;
+  const ls=TAPE.lines.slice(-30);
+  b.innerHTML=ls.map(s=>`<div class="tl ${s.startsWith("→")?"in":s.startsWith("──")?"sep":""}">${esc(s)}</div>`).join("")+(TAPE.cur?`<div class="tl cur">${esc(TAPE.cur)}</div>`:"");
+  b.scrollTop=b.scrollHeight;
+}
+function calcKey0(k){
+  if(!P)return;
+  if(P.locked&&k==="IN")return;
+  guideTrack(k);
+  C.hist.push(k);if(C.hist.length>5)C.hist.shift();
+  if(C.egg){C.egg=0}
+  if(C.err&&k!=="AC"&&k!=="C"){paintGuide();return}
+  if(/^\d$/.test(k)||k==="00"){
+    if(C.fresh){C.disp=k==="00"?"0":k;C.fresh=false}
+    else{const digits=C.disp.replace(/[-.]/g,"").length;if(digits>=12)return;C.disp=C.disp==="0"?(k==="00"?"0":k):C.disp+k}
+  }else if(k==="."){if(C.fresh){C.disp="0.";C.fresh=false}else if(!C.disp.includes("."))C.disp+="."}
+  else if("+-*/".includes(k)){
+    if(C.lastKey===k&&C.op===k&&C.fresh){/* 同じ演算キー2回 → 定数計算(K) */C.k={op:k,a:C.acc};C.op=null;C.acc=null;C.fresh=true}
+    else{C.k=null;if(C.op&&!C.fresh)setNum(apply(C.acc,C.op,cur()));C.acc=cur();C.op=k;C.fresh=true}}
+  else if(k==="="){finish_eq()}
+  else if(k==="%"){if(C.op){const a=C.acc,b=cur();let r;
+      if(C.op==="*")r=a*b/100;else if(C.op==="/")r=a/b*100;else if(C.op==="+")r=a+a*b/100;else r=a-a*b/100;
+      setNum(r);C.acc=null;C.op=null;C.fresh=true}}
+  else if(k==="SQ"){setNum(Math.sqrt(Math.abs(cur())));C.fresh=true}
+  else if(k==="NEG"){if(C.disp!=="0")C.disp=C.disp.startsWith("-")?C.disp.slice(1):"-"+C.disp}
+  else if(k==="BS"){if(!C.fresh){C.disp=C.disp.slice(0,-1);if(C.disp===""||C.disp==="-")C.disp="0"}}
+  else if(k==="C"){C.disp="0";C.fresh=true;C.err=false}
+  else if(k==="AC"){C.disp="0";C.acc=null;C.op=null;C.fresh=true;C.lastOp=null;C.lastArg=null;C.err=false;C.k=null;
+    const seq=C.hist.join(",")==="1,3,7,9,AC",held=["1","3","7","9"].every(x=>HELD.has(x));
+    if(seq||held){C.egg=Date.now()+2500;setTimeout(()=>{if(C.egg&&Date.now()>=C.egg){C.egg=0;paintCalc()}},2600)}}
+  else if(k==="M+"||k==="M-"){if(C.op)finish_eq();C.mem+=(k==="M+"?1:-1)*cur();C.fresh=true}
+  else if(k==="MR"){setNum(C.mem);C.fresh=true}
+  else if(k==="MC"){C.mem=0}
+  else if(k==="IN"){
+    if(C.op&&!C.fresh)finish_eq();
+    const bl=P.blanks[P.active];
+    if(bl.t==="ch"){toast("この欄は選択肢から選んでね");return}
+    if(P.judged&&P.judged[P.active]!==undefined){advance();paintCalc();return}
+    P.vals[P.active]=String(cur());C.acc=null;C.op=null;C.fresh=true;progress();
+    if(isVS()&&G.fx.typoPending){G.fx.typoPending=false;P.vals[P.active]=typoOf(P.vals[P.active])}
+    const b=app.querySelector(`.blank[data-b="${P.active}"]`);if(b){b.classList.remove("flash");void b.offsetWidth;b.classList.add("flash")}
+    if(isVS())judgeBlank(P.active);
+    advance();
+  }
+  C.lastKey=k;
+  paintCalc();paintGuide();
+}
+function paintCalc(){
+  const n=$("#cnum"),ind=$("#cind");if(!n)return;
+  n.classList.toggle("egg",!!C.egg);
+  if(C.egg){n.textContent="CASIO";ind.innerHTML="";return}
+  let s=C.disp;const neg=s.startsWith("-");if(neg)s=s.slice(1);
+  let [ip,fp]=s.split(".");ip=Number(ip).toLocaleString("en-US");
+  n.textContent=(neg?"−":"")+ip+(fp!==undefined?"."+fp:"");
+  const tl=P&&!P.locked&&P.lines?(P.lines.find(l=>l[1]===P.active)||[""])[0]:"";
+  ind.innerHTML=`<span class="tgt">${tl?"→ "+esc(tl.replace(/\(.*?\)/g,"")):""}</span><span>${C.k?"K":""}</span><span>${C.mem!==0?"M":""}</span><span>${C.err?"E":""}</span><span>${C.op?{"+":"+","-":"−","*":"×","/":"÷"}[C.op]:""}</span>`;
+}
+
+/* ================= 検算ガイド ================= */
+const KLAB={"*":"×","/":"÷","-":"−","NEG":"+/−","IN":"入力","M-":"M−","BS":"▶"};
+function guideKeys(seq){const out=[];seq.concat(["IN"]).forEach((t,ti)=>{if(typeof t==="number"){String(t).split("").forEach(ch=>out.push({k:ch,t:ti}))}else out.push({k:t,t:ti})});return out}
+function guideOn(){return !!(G&&P&&!P.locked&&G.fx&&((G.fx.guideUntil&&now()<G.fx.guideUntil)||G.fx.auto===P.active))}
+function guideTimed(){return G.fx.guideUntil&&now()<G.fx.guideUntil}
+function guideTrack(k){
+  if(!guideOn())return;
+  const bl=P.blanks[P.active];if(bl.t!=="num"||!bl.g)return;
+  const gs=G.fx.gstep;if(gs.b!==P.active){gs.b=P.active;gs.s=0;gs.off=false}
+  const keys=guideKeys(bl.g),exp=keys[gs.s];
+  if(exp&&k===exp.k&&!gs.off){gs.s++;if(k==="IN"){gs.b=-1}}
+  else if(k==="AC"){const i=keys.findIndex(x=>x.k==="AC");gs.s=i+1;gs.off=false}
+  else if(k==="MC"&&keys[0].k==="MC"){gs.s=1;gs.off=false}
+  else gs.off=true;
+}
+function paintGuide(){
+  const box=$("#guide");if(!box)return;
+  app.querySelectorAll(".ck.hint").forEach(x=>x.classList.remove("hint"));
+  if(!guideOn()){box.style.display="none";return}
+  box.style.display="block";
+  const left=guideTimed()?Math.ceil((G.fx.guideUntil-now())/1000)+"s":"自動";
+  const bl=P.blanks[P.active];
+  if(bl.t!=="num"||!bl.g){box.innerHTML=`<div class="gh">🧮 検算ガイド <span>${left}</span></div><div class="gt">この欄は選択式(ガイドなし)</div>`;return}
+  const gs=G.fx.gstep;if(gs.b!==P.active){gs.b=P.active;gs.s=0;gs.off=false}
+  const keys=guideKeys(bl.g),seq=bl.g.concat(["IN"]);
+  const curT=gs.off?-1:(keys[gs.s]?keys[gs.s].t:seq.length);
+  box.innerHTML=`<div class="gh">🧮 ${guideTimed()?"検算ガイド":"お助けガイド"} <span>${left}</span></div><div class="gt">${seq.map((t,i)=>`<span class="${i<curT?"dn":i===curT?"cu":""}">${typeof t==="number"?yen(t):(KLAB[t]||t)}</span>`).join("")}</div>${gs.off?`<div class="goff">ずれたよ → AC から打ち直し</div>`:""}`;
+  if(!gs.off&&keys[gs.s]){const b=app.querySelector(`.ck[data-k="${CSS.escape(keys[gs.s].k)}"]`);if(b)b.classList.add("hint")}
+  else if(gs.off){const b=app.querySelector('.ck[data-k="AC"]');if(b)b.classList.add("hint")}
+}
+
+/* ================= メモ ================= */
+let cv,cx,drawing=false,last=null;
+function initMemo(){
+  cv=$("#cv");cx=cv.getContext("2d");const mt=$("#mt");
+  mt.value=MEMO.text;mt.oninput=()=>MEMO.text=mt.value;
+  const setTab=t=>{MEMO.tab=t;app.querySelectorAll(".mhead [data-t]").forEach(b=>b.classList.toggle("on",b.dataset.t===t));cv.style.display=t==="draw"?"block":"none";mt.style.display=t==="text"?"block":"none";if(t==="draw")fitCv()};
+  app.querySelectorAll(".mhead [data-t]").forEach(b=>b.onclick=()=>setTab(b.dataset.t));
+  $("#mclr").onclick=()=>{if(MEMO.tab==="draw"){cx.clearRect(0,0,cv.width,cv.height);MEMO.img=null}else{mt.value="";MEMO.text=""}};
+  const pos=e=>{const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+  cv.addEventListener("pointerdown",e=>{e.preventDefault();drawing=true;last=pos(e);try{cv.setPointerCapture(e.pointerId)}catch(_){}stroke(last,last)});
+  cv.addEventListener("pointermove",e=>{if(!drawing)return;e.preventDefault();
+    const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];(evs.length?evs:[e]).forEach(ev=>{const p=pos(ev);stroke(last,p);last=p})});
+  ["touchstart","touchmove","touchend"].forEach(t=>cv.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+  ["pointerup","pointercancel"].forEach(t=>cv.addEventListener(t,()=>{if(drawing){drawing=false;MEMO.img=cv.toDataURL()}}));
+  setTab(MEMO.tab);
+}
+function stroke(a,b){cx.strokeStyle="#1e2433";cx.lineWidth=2;cx.lineCap="round";cx.lineJoin="round";cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x+.01,b.y);cx.stroke()}
+function fitCv(){
+  if(!cv||!cv.isConnected)return;const r=cv.getBoundingClientRect();if(r.width<10)return;
+  const d=window.devicePixelRatio||1;cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);cx.setTransform(d,0,0,d,0,0);
+  if(MEMO.img){const im=new Image();im.onload=()=>{cx.drawImage(im,0,0,r.width,r.height)};im.src=MEMO.img}
+}
+window.addEventListener("resize",()=>setTimeout(fitCv,60));
+function inGame(t){const el=t&&t.nodeType===1?t:t&&t.parentElement;return el&&el.closest&&el.closest(".game")&&!el.closest("textarea,input")}
+document.addEventListener("selectstart",e=>{if(inGame(e.target))e.preventDefault()});
+document.addEventListener("contextmenu",e=>{if(inGame(e.target))e.preventDefault()});
+document.addEventListener("selectionchange",()=>{const s=document.getSelection();if(s&&s.rangeCount&&inGame(s.anchorNode))s.removeAllRanges()});
+
+document.addEventListener("keydown",e=>{
+  if(!G||!P||!$("#calc"))return;
+  const tg=document.activeElement&&document.activeElement.tagName;
+  if(tg==="INPUT"||tg==="TEXTAREA")return;
+  if(P.locked){if(e.key==="Enter"){e.preventDefault();const b=$("#fbn");b&&b.click()}return}
+  if(e.key==="Tab"){e.preventDefault();calcKey("IN");return}
+  if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();submit();return}
+  const bl=P.blanks[P.active];
+  if(bl.t==="ch"&&/^[1-9]$/.test(e.key)){const n=+e.key;if(n<=bl.opts.length){P.vals[P.active]=bl.opts[n-1];advance()}return}
+  if(/^[0-9]$/.test(e.key)){e.preventDefault();calcKey(shufActive()?String(G.fx.perm[+e.key]):e.key);return}
+  if(/^[.+\-*/]$/.test(e.key)){e.preventDefault();calcKey(e.key);return}
+  const map={"Enter":"=","=":"=","Backspace":"BS","Escape":"AC","Delete":"C","%":"%"};
+  if(map[e.key]){e.preventDefault();calcKey(map[e.key])}
+});
+
+/* ================= 採点 ================= */
+function submit(){
+  if(!P||P.locked)return;
+  if(isVS())return;
+  if(!P.vals.every(v=>v!=="")){const j=P.vals.findIndex(v=>v==="");P.active=j;paintBlanks();paintGuide();toast("空欄があるよ");return}
+  P.locked=true;
+  P.res=P.blanks.map((bl,i)=>bl.t==="ch"?P.vals[i]===bl.ans:Math.abs(evalExpr(P.vals[i])-bl.ans)<0.5);
+  const nOk=P.res.filter(Boolean).length,nNg=P.res.length-nOk,all=nNg===0;
+  G.okBlanks+=nOk;G.missBlanks+=nNg;
+  paintBlanks();paintGuide();
+  if(isVS())return submitVS(nOk,nNg,all);
+  pause();
+  let gain=0;
+  if(G.mode==="ta"){G.pen+=nNg*PEN_MS;if(all)G.perfect++}
+  else{if(all){G.combo++;G.perfect++;G.maxCombo=Math.max(G.maxCombo,G.combo)}else G.combo=0;
+    gain=nOk*100-nNg*30+(all?50*G.combo:0);G.pts=Math.max(0,G.pts+gain)}
+  drawHud();
+  pop(G.mode==="ta"?(all?"PERFECT!":`+${nNg*10}s`):(gain>=0?"+":"")+gain+"pt",all?"var(--neon)":"var(--red)");
+  const last=G.mode==="ta"&&G.qi>=TA_N;
+  sheet(all,`<div class="meta">${G.mode==="ta"?(nNg?`ペナルティ +${nNg*10}秒 ・ `:"")+"タイマー停止中":`${gain>=0?"+":""}${gain}pt${G.combo>1?` ・ 🔥${G.combo}コンボ`:""} ・ タイマー停止中`}</div>`,
+    last?"結果を見る":"次の問題 ▶",()=>{if(last){finishSolo();return}if(G.mode==="sa"&&SA_MS-now()<=0){G.ended=true;finishSolo();return}resume();nextProblem()});
+}
+function pop(text,color,anchor){
+  const el=document.createElement("div");el.className="pop";el.style.color=color;el.textContent=text;
+  if(anchor){const a=$(anchor);if(a){const r=a.getBoundingClientRect();el.style.top=(r.bottom+4)+"px";el.style.left=(r.left+r.width/2)+"px"}}
+  document.body.appendChild(el);setTimeout(()=>el.remove(),1100);
+}
+function sheet(good,meta,btn,cb){
+  const fb=document.createElement("div");fb.className="fb "+(good?"good":"bad");
+  const nNg=P.res.filter(x=>!x).length;
+  fb.innerHTML=`<h3>${good?"✓ 全欄正解":`✗ ${nNg}欄ミス`}</h3>${meta}<pre>${P.ex}</pre><button class="big" id="fbn">${btn}</button>`;
+  document.body.appendChild(fb);
+  $("#fbn").onclick=()=>{fb.remove();cb()};
+  const ab=$("#abar");if(ab)ab.style.visibility="hidden";
+}
+function finishSolo(){
+  stopTimer();pause();
+  document.querySelectorAll(".fb").forEach(x=>x.remove());
+  const ta=G.mode==="ta";
+  const total=G.okBlanks+G.missBlanks,acc=total?Math.round(G.okBlanks/total*100):0;
+  let rec,rank,isBest=false,main;
+  if(ta){const ms=Math.round(G.elapsed+G.pen);rank=rankTA(ms);rec={ms,rank,code:G.code,miss:G.missBlanks,d:Date.now()};
+    isBest=!REC.ta.length||ms<REC.ta[0].ms;REC.ta.push(rec);REC.ta.sort((a,b)=>a.ms-b.ms);REC.ta=REC.ta.slice(0,10);main=fmtT(ms)}
+  else{rank=rankSA(G.pts);rec={pts:G.pts,rank,code:G.code,solved:G.qi,d:Date.now()};
+    isBest=!REC.sa.length||G.pts>REC.sa[0].pts;REC.sa.push(rec);REC.sa.sort((a,b)=>b.pts-a.pts);REC.sa=REC.sa.slice(0,10);main=G.pts+"pt"}
+  saveRec();
+  const share=ta?`🧮ボキバトル 簿記1級\n⏱タイムアタック ${main}(ミス${G.missBlanks}欄・+${G.pen/1000}秒)\nランク${rank} / 正答率${acc}%\n対戦コード:${G.code}\nこのコードで勝負しよう!`
+   :`🧮ボキバトル 簿記1級\n⚡スコアアタック ${main}\nランク${rank} / ${G.qi}題・最大${G.maxCombo}コンボ\n対戦コード:${G.code}\nこのコードで勝負しよう!`;
+  app.innerHTML=`<div class="res">
+   ${isBest?`<div class="nb">🏆 自己ベスト更新!</div>`:""}
+   <div style="color:var(--mute);font-weight:800">${ta?"タイムアタック":"スコアアタック"} 結果</div>
+   <div class="rank ${rank}">${rank}</div><div class="final">${main}</div>
+   <div class="stats">
+    ${ta?`<div class="st"><span>解答タイム</span><b>${fmtT(G.elapsed)}</b></div><div class="st"><span>ペナルティ</span><b>+${G.pen/1000}s</b></div>`
+        :`<div class="st"><span>解いた問題</span><b>${G.qi}題</b></div><div class="st"><span>最大コンボ</span><b>${G.maxCombo}</b></div>`}
+    <div class="st"><span>正答率(欄)</span><b>${acc}%</b></div><div class="st"><span>全欄正解</span><b>${G.perfect}題</b></div>
+   </div>
+   <textarea class="share" id="sh" readonly>${share}</textarea>
+   <button class="big" id="cp" style="margin-bottom:10px">📋 結果をコピー</button>
+   <button class="big sec" id="again" style="margin-bottom:10px">🔁 同じコードで再挑戦</button>
+   <button class="big sec" id="home">ホームへ</button></div>`;
+  $("#cp").onclick=async()=>{const t=$("#sh");try{await navigator.clipboard.writeText(t.value);toast("コピーした!")}catch(e){t.select();toast("選択したのでコピーしてね")}};
+  $("#again").onclick=()=>{CODE=G.code;startSolo(G.mode)};
+  $("#home").onclick=()=>{CODE=newCode();title()};
+  window.scrollTo(0,0);
+}
+
+/* ================= HPバトル ================= */
+const CPU_LV=[{n:"見習い",read:14,spd:24,acc:.7,itm:.3},{n:"経理部員",read:10,spd:15,acc:.8,itm:.45},{n:"公認会計士",read:6,spd:9,acc:.9,itm:.6}];
+function startBattle(mode,opt){
+  resetDesk();
+  G={mode,base:"vs:"+opt.seed,qi:0,elapsed:0,running:false,t0:0,okBlanks:0,missBlanks:0,perfect:0,
+     hp:HP0,oppHp:HP0,oppPub:null,lastT:0,phase:0,lastPub:0,healed:0,oppHealed:0,streak:0,maxStreak:0,oppStreak:0,items:[],fx:{gstep:{b:-1,s:0}},
+     myName:opt.myName||"あなた",oppName:opt.oppName,lv:opt.lv,gid:opt.gid||0,
+     myAtks:[],blocked:[],seen:new Set(),seenBl:new Set(),ended:false};
+  countdown(()=>{if(!G)return;G.running=true;G.t0=performance.now();G.lastT=0;nextProblem();startTimer();if(mode==="cpu")startCpu();if(mode==="online")netPub()});
+}
+function myHP(){return Math.max(0,G.hp)}
+function oppDisp(){
+  if(G.mode==="online"){if(!G.oppPub)return HP0;return Math.max(0,G.oppPub.hp-rateAt(now())*(now()-G.oppPub.at)/1000)}
+  return Math.max(0,G.oppHp)}
+function oppHP(){return oppDisp()}
+function drainTick(){
+  if(!G||!isVS()||!G.running||G.ended)return;
+  if(G.mode==="online"&&G.oppPub&&oppDisp()<=0&&now()-G.oppPub.at>8000){endBattle(true,"相手の応答がなく体力が尽きた");return}
+  const t=now(),dt=(t-G.lastT)/1000;if(dt<=0)return;
+  const r=rateAt(t);G.hp-=r*dt*(boosted()?2:1);if(G.mode==="cpu")G.oppHp-=r*dt*(CPU.boostUntil&&t<CPU.boostUntil?2:1);G.lastT=t;
+  const ph=phaseAt(t);if(ph!==G.phase){G.phase=ph;banner(`⏰ ${PHASE[ph]}!体力の減りが速くなった`,"hit")}
+  if(G.mode==="online"&&t-G.lastPub>1000)netPub();
+  paintHP();
+}
+function paintHP(){
+  if(!G||!isVS())return;
+  const a=$("#hpme"),b=$("#hpop"),mh=myHP(),oh=oppDisp();
+  if(a){a.style.width=(mh/MAXHP*100)+"%";a.classList.toggle("low",mh<=8);$("#hpmev").textContent=Math.ceil(mh)}
+  if(b){b.style.width=(oh/MAXHP*100)+"%";b.classList.toggle("low",oh<=8);$("#hpopv").textContent=Math.ceil(oh)}
+  const g=$("#gb");if(g)g.classList.toggle("danger",mh<=8&&mh>0);
+  const bb=boosted();$("#hpme")&&$("#hpme").parentElement.classList.toggle("boost",bb);
+  const ob=G.mode==="cpu"&&CPU.boostUntil&&now()<CPU.boostUntil;$("#hpop")&&$("#hpop").parentElement.classList.toggle("boost",!!ob);
+  const s=$("#stk");if(s)s.innerHTML=`<span class="phs">${PHASE[G.phase]} ▼${(rateAt(now())*(bb?2:1)).toFixed(2)}/秒${bb?" 🔥×2":""}</span><br>${G.streak>0?`🔗${G.streak}連鎖 次<b>+${dmgFor(G.streak+1)}</b>`:`次 <b>+${dmgFor(1)}</b>`}`;
+  if(!G.ended){if(mh<=0){if(G.mode==="online")netPub();endBattle(false)}else if(G.mode==="cpu"&&oh<=0)endBattle(true)}
+}
+async function submitVS(nOk,nNg,all){
+  const ab=$("#abar");if(ab)ab.style.visibility="hidden";
+  const before=G.healed,chain0=G.streak;
+  await chainFx();
+  if(!G||G.ended)return;
+  const dmg=G.healed-before;
+  if(all)G.perfect++;
+  let got=null;
+  if(all&&G.items.length<MAX_ITEMS){got=ITEM_POOL[Math.floor(Math.random()*ITEM_POOL.length)];G.items.push(got)}
+  if(G.mode==="online")netPub();
+  paintHP();paintItems();
+  if(G.ended)return;
+  sheet(all,`<div class="meta">${dmg?`💚 <b style="color:var(--neon)">+${dmg}回復</b>!`:"回復なし"}${G.streak>1?` ・ 🔗${G.streak}連鎖中`:G.streak===0&&chain0>1?` ・ 連鎖ストップ`:""}${got?` ・ 🎁 ${ITEMS[got].i}${ITEMS[got].n} ゲット`:""}</div>`,
+    "次の問題 ▶",()=>{if(!G||G.ended)return;nextProblem()});
+}
+/* ===== 入力した瞬間に判定 ===== */
+const CHAIN_ATK=n=>n>=5&&(n-5)%3===0;   // 5,8,11…連鎖で連鎖アタック
+function judgeBlank(i){
+  if(!P||P.locked||(P.judged[i]!==undefined))return;
+  const bl=P.blanks[i],v=P.vals[i];
+  const ok=bl.t==="ch"?v===bl.ans:Math.abs(evalExpr(v)-bl.ans)<0.5;
+  P.judged[i]=ok;ok?G.okBlanks++:G.missBlanks++;
+  paintBlanks();
+  const el=app.querySelector(`.blank[data-b="${i}"]`);
+  if(ok){
+    G.streak++;G.maxStreak=Math.max(G.maxStreak,G.streak);
+    const n=G.streak,d=dmgFor(n),col=PCOL[(n-1)%PCOL.length];
+    if(el){burst(el,col,n);chainText(el,n,col)}
+    const tgt=$("#hpme");
+    const heal=()=>{if(!G||G.ended)return;G.hp=Math.min(MAXHP,G.hp+d);G.healed+=d;
+      const bar=$(".hpbar.me");if(bar){bar.classList.remove("heal");void bar.offsetWidth;bar.classList.add("heal")}
+      pop(`+${d}`,"var(--neon)","#hpme");paintHP();if(G.mode==="online")netPub()};
+    if(el&&tgt)shoot(el,tgt,col,n).then(heal);else heal();
+    if(CHAIN_ATK(n))setTimeout(()=>sendChainAttack(n),450);
+  }else{
+    if(el)fizz(el);
+    if(G.streak>1)chainBreak(el);
+    G.streak=0;
+  }
+  if(G.mode==="online")netPub();
+  paintHP();
+  if(P.blanks.every((_,k)=>P.judged[k]!==undefined))setTimeout(()=>finishProblemVS(),650);
+}
+function finishProblemVS(){
+  if(!G||G.ended||!P||P.locked)return;
+  P.locked=true;P.res=P.blanks.map((_,k)=>!!P.judged[k]);
+  const all=P.res.every(Boolean),heal=P.res.reduce((a,ok)=>a,0);
+  if(all)G.perfect++;
+  let got=null;
+  if(all&&G.items.length<MAX_ITEMS){got=ITEM_POOL[Math.floor(Math.random()*ITEM_POOL.length)];G.items.push(got)}
+  if(G.mode==="online")netPub();
+  paintBlanks();paintGuide();paintItems();
+  sheet(all,`<div class="meta">${all?"💚 全欄正解!":"まちがえた欄があったよ"}${G.streak>1?` ・ 🔗${G.streak}連鎖中`:""}${got?` ・ 🎁 ${ITEMS[got].i}${ITEMS[got].n} ゲット`:""}</div>`,
+    "次の問題 ▶",()=>{if(!G||G.ended)return;nextProblem()});
+}
+function sendChainAttack(n){
+  if(!G||G.ended)return;
+  banner(`🔥 ${n}連鎖アタック!相手の体力の減りが10秒間2倍`,"atk");
+  const fl=document.createElement("div");fl.className="atkfx";document.body.appendChild(fl);setTimeout(()=>fl.remove(),700);
+  if(G.mode==="cpu"){CPU.boostUntil=now()+10000}
+  else{const id=Math.random().toString(36).slice(2,10);G.myAtks.push({id,t:"chain",n});G.myAtks=G.myAtks.slice(-8);netPub()}
+}
+function boosted(){return G&&G.fx.boostUntil&&now()<G.fx.boostUntil}
+/* 相手の連鎖も見えるように */
+function oppChainFx(from,to){
+  const tgt=$("#hpop");if(!tgt)return;
+  for(let n=from;n<=to;n++){
+    setTimeout(()=>{if(!G||G.ended)return;const col=PCOL[(n-1)%PCOL.length];burst(tgt,col,Math.min(n,4));
+      const c=centerOf(tgt),t=document.createElement("div");t.className="chtxt opp";t.innerHTML=`相手 <b>${n}</b>れんさ`;t.style.left=c.x+"px";t.style.top=(c.y+14)+"px";t.style.color=col;t.style.fontSize=Math.min(14+n*2,28)+"px";
+      document.body.appendChild(t);t.animate([{transform:"translate(-50%,0) scale(.4)",opacity:0},{transform:"translate(-50%,4px) scale(1.1)",opacity:1,offset:.3},{transform:"translate(-50%,16px) scale(1)",opacity:0}],{duration:900}).onfinish=()=>t.remove();
+      const bar=$(".hpbar.op");if(bar){bar.classList.remove("heal");void bar.offsetWidth;bar.classList.add("heal")}
+    },(n-from)*280);
+  }
+}
+/* ===== ぷよ風・連鎖演出 ===== */
+const PCOL=["#ff4d6d","#3ddc84","#4da3ff","#ffd23f","#b06cff"];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function centerOf(el){const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}}
+async function chainFx(){
+  const order=P.lines.map(l=>l[1]);
+  for(const bi of order){
+    if(!G||G.ended)return;
+    const el=app.querySelector(`.blank[data-b="${bi}"]`);
+    if(P.res[bi]){
+      G.streak++;G.maxStreak=Math.max(G.maxStreak,G.streak);
+      const d=dmgFor(G.streak),col=PCOL[(G.streak-1)%PCOL.length];
+      if(el){burst(el,col,G.streak);chainText(el,G.streak,col)}
+      const tgt=$("#hpme");
+      if(el&&tgt)await shoot(el,tgt,col,G.streak);else await sleep(300);
+      if(!G||G.ended)return;
+      G.hp=Math.min(MAXHP,G.hp+d);G.healed+=d;
+      const bar=$(".hpbar.me");if(bar){bar.classList.remove("heal");void bar.offsetWidth;bar.classList.add("heal")}
+      pop(`+${d}`,"var(--neon)","#hpme");paintHP();if(G.mode==="online")netPub();
+      await sleep(G.streak>=3?220:160);
+    }else{
+      if(el)fizz(el);
+      if(G.streak>1)chainBreak(el);
+      G.streak=0;await sleep(260);
+    }
+  }
+}
+function burst(el,col,n){
+  const c=centerOf(el),k=Math.min(6+n*2,18);
+  for(let i=0;i<k;i++){
+    const b=document.createElement("div");b.className="pp";b.style.background=col;
+    const sz=8+Math.random()*10;b.style.width=b.style.height=sz+"px";b.style.left=(c.x-sz/2)+"px";b.style.top=(c.y-sz/2)+"px";
+    document.body.appendChild(b);
+    const a=Math.PI*2*i/k+Math.random()*.4,dist=30+Math.random()*40+n*6;
+    b.animate([{transform:"translate(0,0) scale(1)",opacity:1},{transform:`translate(${Math.cos(a)*dist}px,${Math.sin(a)*dist}px) scale(.2)`,opacity:0}],{duration:520+Math.random()*200,easing:"cubic-bezier(.2,.8,.3,1)"}).onfinish=()=>b.remove();
+  }
+}
+function chainText(el,n,col){
+  const c=centerOf(el),t=document.createElement("div");t.className="chtxt";
+  t.innerHTML=`<b>${n}</b>れんさ!`;t.style.left=c.x+"px";t.style.top=(c.y-34)+"px";t.style.color=col;
+  t.style.fontSize=Math.min(22+n*4,52)+"px";
+  document.body.appendChild(t);
+  t.animate([{transform:"translate(-50%,0) scale(.3) rotate(-12deg)",opacity:0},{transform:"translate(-50%,-14px) scale(1.25) rotate(4deg)",opacity:1,offset:.3},{transform:"translate(-50%,-20px) scale(1) rotate(0)",opacity:1,offset:.75},{transform:"translate(-50%,-40px) scale(.9)",opacity:0}],{duration:1000,easing:"ease-out"}).onfinish=()=>t.remove();
+  if(n>=4){const g=$("#gb");if(g){g.classList.remove("flash"+(n>=6?"2":""));void g.offsetWidth;g.classList.add("flash"+(n>=6?"2":""))}}
+}
+function shoot(el,tgt,col,n){
+  return new Promise(res=>{
+    const a=centerOf(el),b=centerOf(tgt),o=document.createElement("div");o.className="shot";o.style.background=col;
+    const sz=Math.min(16+n*3,34);o.style.width=o.style.height=sz+"px";o.style.left=(a.x-sz/2)+"px";o.style.top=(a.y-sz/2)+"px";
+    document.body.appendChild(o);
+    const dx=b.x-a.x,dy=b.y-a.y,mx=dx*.5+(dx>0?-60:60),my=dy*.5-80;
+    const an=o.animate([{transform:"translate(0,0) scale(1)"},{transform:`translate(${mx}px,${my}px) scale(1.3)`,offset:.5},{transform:`translate(${dx}px,${dy}px) scale(.7)`}],{duration:Math.max(260,420-n*15),easing:"cubic-bezier(.5,0,.6,1)"});
+    an.onfinish=()=>{o.remove();const c=centerOf(tgt);const r=document.createElement("div");r.className="ring";r.style.borderColor=col;r.style.left=c.x+"px";r.style.top=c.y+"px";document.body.appendChild(r);r.animate([{transform:"translate(-50%,-50%) scale(.2)",opacity:1},{transform:"translate(-50%,-50%) scale(2.2)",opacity:0}],{duration:420}).onfinish=()=>r.remove();res()};
+  });
+}
+function fizz(el){const c=centerOf(el),t=document.createElement("div");t.className="fz";t.textContent="✕";t.style.left=c.x+"px";t.style.top=c.y+"px";document.body.appendChild(t);
+  t.animate([{transform:"translate(-50%,-50%) scale(1.6)",opacity:1},{transform:"translate(-50%,-50%) scale(.6)",opacity:0}],{duration:500}).onfinish=()=>t.remove()}
+function chainBreak(el){if(!el)return;const c=centerOf(el),t=document.createElement("div");t.className="chtxt brk";t.textContent="連鎖ストップ";t.style.left=c.x+"px";t.style.top=(c.y+20)+"px";document.body.appendChild(t);
+  t.animate([{transform:"translate(-50%,0)",opacity:1},{transform:"translate(-50%,20px)",opacity:0}],{duration:900}).onfinish=()=>t.remove()}
+function hitFx(d){
+  const g=$("#gb");if(g){g.classList.remove("shake");void g.offsetWidth;g.classList.add("shake")}
+  const f=document.createElement("div");f.className="redflash";document.body.appendChild(f);setTimeout(()=>f.remove(),450);
+  pop(`-${d}`,"var(--red)","#hpme");
+  const bar=$(".hpbar.me");if(bar){bar.classList.remove("hit");void bar.offsetWidth;bar.classList.add("hit")}
+}
+/* --- アイテム --- */
+function paintItems(){
+  const bar=$("#itembar");if(!bar||!G)return;
+  let h="";
+  for(let i=0;i<MAX_ITEMS;i++){const it=G.items[i];
+    h+=it?`<button class="slot" data-i="${i}" title="${ITEMS[it].d}"><span>${ITEMS[it].i}</span><small>${ITEMS[it].n}</small></button>`:`<div class="slot empty"><small>空き</small></div>`}
+  const st=[];
+  if(G.fx.shield)st.push("🛡️内部統制");
+  if(guideOn())st.push("🧮ガイド中");
+  if(shufActive())st.push("🔀シャッフル中");
+  const html=h+`<div class="fxs">${st.join("<br>")}</div>`;
+  if(bar._h===html)return;bar._h=html;
+  const prev=bar._n||0;bar._n=G.items.length;
+  bar.innerHTML=html;
+  bar.querySelectorAll(".slot[data-i]").forEach((s,i)=>{if(i>=prev)s.classList.add("new")});
+  bar.querySelectorAll(".slot[data-i]").forEach(b=>b.onclick=()=>useItem(+b.dataset.i));
+}
+function useItem(i){
+  if(!G||G.ended)return;const t=G.items[i];if(!t)return;
+  if(t==="guide"&&P.locked){G.items.splice(i,1);G.fx.guideNext=true;toast("🧮 次の問題で検算ガイドが出るよ");paintItems();return}
+  G.items.splice(i,1);
+  if(t==="guide"){G.fx.guideUntil=now()+20000;G.fx.gstep={b:-1,s:0};banner("🧮 検算ガイド発動!(20秒)","self")}
+  else if(t==="shield"){G.fx.shield=true;banner("🛡️ 内部統制を整備した","self")}
+  else sendAttack(t);
+  paintItems();paintGuide();
+}
+function sendAttack(t){
+  const id=Math.random().toString(36).slice(2,10);
+  banner(`${ITEMS[t].i} ${ITEMS[t].n}を送った!`,"atk");
+  if(G.mode==="cpu")cpuReceive(t);
+  else{G.myAtks.push({id,t});G.myAtks=G.myAtks.slice(-8);netPub()}
+}
+function receiveAttack(t,id,n){
+  if(!G||G.ended)return false;
+  if(t==="chain"){G.fx.boostUntil=now()+10000;banner(`🔥 相手の${n?n+"連鎖":"連鎖"}アタック!10秒間 体力の減りが2倍`,"hit");
+    const g=$("#gb");if(g){g.classList.remove("shake");void g.offsetWidth;g.classList.add("shake")}const f=document.createElement("div");f.className="redflash";document.body.appendChild(f);setTimeout(()=>f.remove(),450);return true}
+  if(!ITEMS[t])return false;
+  if(G.fx.shield){G.fx.shield=false;banner(`🛡️ 内部統制が${ITEMS[t].n}をブロック!`,"self");if(id&&G.mode==="online"){G.blocked.push(id);netPub()}paintItems();return false}
+  if(t==="messy"){banner("🔢 端数地獄!問題の数字が細かくなった","hit");applyMessy()}
+  else if(t==="shuffle"){
+    let perm;do{perm=[0,1,2,3,4,5,6,7,8,9];for(let k=9;k>0;k--){const j=Math.floor(Math.random()*(k+1));[perm[k],perm[j]]=[perm[j],perm[k]]}}while(perm.some((v,k)=>v===k)&&Math.random()<.9);
+    G.fx.perm=perm;G.fx.shufUntil=now()+10000;banner("🔀 電卓シャッフル!数字キーがバラバラ(10秒)","hit");renderCalcKeys()}
+  else if(t==="typo"){banner("✏️ 転記ミスを仕込まれた!どこかの数字が…","hit");applyTypo()}
+  paintItems();
+  return true;
+}
+function applyMessy(){
+  if(!P||P.locked){G.fx.messyNext=true;return}
+  const np=makeProblem(P.base,P.idx,P.messyN+1);if(!np)return;
+  P.blanks.forEach((old,i)=>{const v=P.vals[i];if(v==="")return;
+    const right=old.t==="ch"?v===old.ans:Math.abs(evalExpr(v)-old.ans)<0.5;
+    np.vals[i]=right?(np.blanks[i].t==="ch"?np.blanks[i].ans:String(np.blanks[i].ans)):v});
+  np.judged=P.judged.slice();np.active=P.active;P=np;G.fx.gstep={b:-1,s:0};
+  renderGame();
+}
+function typoOf(v){
+  let neg=v.startsWith("-"),s=neg?v.slice(1):v;
+  const d=s.split("");const idx=[];for(let i=0;i<d.length-1;i++)if(/\d/.test(d[i])&&/\d/.test(d[i+1])&&d[i]!==d[i+1])idx.push(i);
+  if(idx.length){const i=idx[Math.floor(Math.random()*idx.length)];[d[i],d[i+1]]=[d[i+1],d[i]]}
+  else{const ds=[];d.forEach((c,i)=>{if(/\d/.test(c))ds.push(i)});const i=ds[ds.length-1];d[i]=String((+d[i]+3)%10)}
+  s=d.join("").replace(/^0+(?=\d)/,"");return(neg?"-":"")+s;
+}
+function applyTypo(){
+  if(C.disp.replace(/[-.]/g,"").length>=3&&!C.err){C.disp=typoOf(C.disp);paintCalc();const n=$("#cnum");if(n){n.classList.remove("tp");void n.offsetWidth;n.classList.add("tp")}return}
+  if(!P||P.locked){G.fx.typoPending=true;return}
+  const cand=P.blanks.map((b,i)=>b.t==="num"&&P.vals[i]!==""&&P.judged[i]===undefined&&!isNaN(evalExpr(P.vals[i]))?i:-1).filter(i=>i>=0);
+  if(!cand.length){G.fx.typoPending=true;return}
+  const i=cand[Math.floor(Math.random()*cand.length)];P.vals[i]=typoOf(String(evalExpr(P.vals[i])));paintBlanks();
+}
+function banner(html,cls){
+  const b=document.createElement("div");b.className="banner "+(cls||"");b.innerHTML=html;document.body.appendChild(b);
+  setTimeout(()=>b.classList.add("out"),1900);setTimeout(()=>b.remove(),2400);
+}
+let fxWasOn=false;
+function fxTick(){
+  if(!G||!isVS())return;
+  if(G.fx.shufUntil&&now()>=G.fx.shufUntil){G.fx.shufUntil=0;renderCalcKeys();paintItems();toast("電卓が元に戻った")}
+  const sb=$("#shufb");if(sb){if(shufActive()){sb.style.display="block";sb.textContent=`🔀 シャッフル中 ${Math.ceil((G.fx.shufUntil-now())/1000)}s`}else sb.style.display="none"}
+  const g=guideOn();if(g||fxWasOn){paintGuide();if(!g)paintItems()}fxWasOn=g;
+}
+
+/* --- CPU --- */
+const CPU={timer:null,qi:0,next:0,streak:0,shield:false,typo:false};
+function startCpu(){Object.assign(CPU,{qi:0,streak:0,shield:false,typo:false,boostUntil:0});cpuSchedule();stopCpu();CPU.timer=setInterval(cpuStep,200)}
+function stopCpu(){if(CPU.timer)clearInterval(CPU.timer);CPU.timer=null}
+function cpuSchedule(){const L=CPU_LV[G.lv],p=makeProblem(G.base,CPU.qi);CPU.n=p.blanks.length;CPU.next=now()+(L.read+CPU.n*L.spd)*(0.75+Math.random()*.5)*1000}
+function cpuStep(){
+  if(!G||G.mode!=="cpu"||G.ended||!G.running)return;
+  if(now()<CPU.next)return;
+  const L=CPU_LV[G.lv];let ok=0,dmg=0;
+  const res=[];for(let i=0;i<CPU.n;i++)res.push(Math.random()<L.acc);
+  if(CPU.typo){const k=res.indexOf(true);if(k>=0)res[k]=false;CPU.typo=false}
+  const s0=CPU.streak;let atk=0;
+  res.forEach(r=>{if(r){ok++;CPU.streak++;dmg+=dmgFor(CPU.streak);if(CHAIN_ATK(CPU.streak))atk=CPU.streak}else CPU.streak=0});
+  G.oppStreak=CPU.streak;
+  if(CPU.streak>s0)oppChainFx(Math.max(s0+1,CPU.streak-ok+1),CPU.streak);
+  if(dmg){G.oppHp=Math.min(MAXHP,G.oppHp+dmg);G.oppHealed+=dmg;setTimeout(()=>pop(`+${dmg}`,"var(--gold)","#hpop"),ok*280)}
+  if(atk)setTimeout(()=>receiveAttack("chain",null,atk),ok*280+200);
+  if(ok===CPU.n&&Math.random()<L.itm){
+    if(Math.random()<.18&&!CPU.shield){CPU.shield=true;banner(`相手が🛡️内部統制を整備した`,"info")}
+    else{const t=["messy","shuffle","typo"][Math.floor(Math.random()*3)];setTimeout(()=>receiveAttack(t),300)}
+  }
+  CPU.qi++;cpuSchedule();paintHP();
+}
+function cpuReceive(t){
+  if(CPU.shield){CPU.shield=false;setTimeout(()=>banner("相手の🛡️内部統制にブロックされた…","info"),700);return}
+  if(t==="messy")CPU.next+=8000;else if(t==="shuffle")CPU.next+=4000;else if(t==="typo")CPU.typo=true;
+}
+
+/* --- バトル終了 --- */
+function endBattle(win,why){
+  if(!G||G.ended)return;G.ended=true;stopCpu();pause();stopTimer();
+  document.querySelectorAll(".fb,.banner").forEach(x=>x.remove());
+  if(G.mode==="cpu"){win?REC.win.cpu++:REC.win.cpuL++}else{win?REC.win.on++:REC.win.onL++}
+  saveRec();
+  if(G.mode==="online"&&NET.nr){NET.pres.st="end";NET.nr.presence({st:"end",hp:Math.max(0,Math.round(G.hp*10)/10),dead:!win}).catch(()=>{})}
+  const total=G.okBlanks+G.missBlanks,acc=total?Math.round(G.okBlanks/total*100):0;
+  const g=G;
+  app.innerHTML=`<div class="res">
+   <div class="wl ${win?"w":"l"}">${win?"WIN":"LOSE"}</div>
+   <div style="color:var(--mute);font-weight:800;margin-bottom:6px">vs ${esc(g.oppName)}${why?` ・ ${why}`:""}</div>
+   <div class="stats">
+    <div class="st"><span>回復した量</span><b>${g.healed}</b></div><div class="st"><span>生き残った時間</span><b>${fmtT(g.elapsed)}</b></div>
+    <div class="st"><span>最大連鎖</span><b>${g.maxStreak}</b></div><div class="st"><span>正答率(欄)</span><b>${acc}%</b></div>
+    <div class="st"><span>解いた問題</span><b>${Math.max(0,g.qi-(P&&!P.locked?1:0))}題</b></div><div class="st"><span>到達</span><b style="font-size:15px">${PHASE[g.phase]}</b></div>
+   </div>
+   <button class="big" id="again" style="margin-bottom:10px">${g.mode==="cpu"?"🔁 もう一回":"🔁 ロビーに戻って再戦"}</button>
+   <button class="big sec" id="home">対戦メニューへ</button></div>`;
+  $("#again").onclick=()=>{if(g.mode==="cpu")startBattle("cpu",{lv:g.lv,seed:newCode()+":"+Date.now(),oppName:CPU_LV[g.lv].n});else backToLobby()};
+  $("#home").onclick=()=>{G=null;vsMenu()};
+  window.scrollTo(0,0);
+}
+
+/* ================= オンライン対戦 ================= */
+const NET={nr:null,code:"",name:"",opp:null,unsub:null,pres:{},goneAt:0,screen:""};
+function leaveNet(){
+  if(NET.nr){try{NET.unsub&&NET.unsub()}catch(e){}NET.nr.leave().catch(()=>{});}
+  NET.nr=null;NET.opp=null;NET.unsub=null;NET.screen="";
+}
+function setPres(patch){Object.assign(NET.pres,patch);if(NET.nr)NET.nr.presence(patch).catch(()=>{})}
+async function lobby(code,name){
+  stopCpu();leaveNet();
+  NET.code=code;NET.name=name;
+  app.innerHTML=`<div class="title"><button class="back" id="bk">← もどる</button><div class="lobby"><div class="lc">部屋 <b class="mono">${esc(code)}</b></div><div class="ls">接続中…</div></div></div>`;
+  $("#bk").onclick=()=>{leaveNet();vsMenu()};
+  if(!ROOM){await new Promise(r=>setTimeout(r,1500))}
+  if(!ROOM){
+    app.querySelector(".ls").innerHTML=`オンライン対戦につながらなかったよ。<br>(公開版:index.html の SB_URL / SB_KEY が未設定か、通信がブロックされています)<br>CPU対戦・タイムアタック・スコアアタックは遊べるよ。<br><br><button class="big sec" id="tocpu">CPU対戦で遊ぶ</button>`;
+    $("#tocpu").onclick=vsMenu;return;
+  }
+  try{NET.nr=await ROOM.join("bb-"+code)}catch(e){
+    app.querySelector(".ls").innerHTML=`部屋に入れなかった(${esc(e&&e.code||"error")})。少し待ってもう一度ためしてね。`;return}
+  NET.pres={nm:name,st:"lobby",rd:false,ra:0,gid:0,hp:HP0,dead:false,at:[],bl:[],sk:0,ff:0};
+  NET.nr.presence(NET.pres).catch(()=>{});
+  NET.unsub=NET.nr.onPeers(ch=>netPeers(ch.peers));
+  NET.screen="lobby";renderLobby();
+}
+function renderLobby(){
+  if(NET.screen!=="lobby")return;
+  const o=NET.opp,op=o&&o.presence||{};
+  const me=NET.pres;
+  app.innerHTML=`<div class="title"><button class="back" id="bk">← もどる</button>
+   <div class="lobby">
+    <div class="lc">部屋 <b class="mono">${esc(NET.code)}</b></div>
+    <div class="pl"><div class="pc ${me.rd?"rd":""}"><b>${esc(me.nm)}</b><small>あなた</small><span>${me.rd?"準備OK":"待機中"}</span></div>
+     <div class="vsx">VS</div>
+     <div class="pc ${op.rd?"rd":""}">${o?`<b>${esc(op.nm||"?")}</b><small>相手</small><span>${op.st==="play"?"対戦中…":op.rd?"準備OK":"待機中"}</span>`:`<b>…</b><small>相手を待っています</small><span>同じ部屋コードで入室してもらってね</span>`}</div></div>
+    <button class="big ${me.rd?"sec":""}" id="rdy" ${o?"":"disabled"}>${me.rd?"準備OKを取り消す":"準備OK!"}</button>
+    <div class="ls" style="margin-top:12px">2人とも「準備OK」で対戦スタート</div>
+   </div></div>`;
+  $("#bk").onclick=()=>{leaveNet();vsMenu()};
+  $("#rdy").onclick=()=>{setPres(me.rd?{rd:false}:{rd:true,ra:Date.now()});renderLobby();checkStart()};
+}
+function netPeers(peers){
+  if(!NET.nr)return;
+  const others=peers.filter(p=>!p.sameTab&&p.presence&&typeof p.presence.nm==="string").sort((a,b)=>a.peer<b.peer?-1:1);
+  const prev=NET.opp;
+  NET.opp=others.find(p=>prev&&p.peer===prev.peer)||others[0]||null;
+  if(NET.screen==="lobby"){renderLobby();checkStart();return}
+  if(G&&G.mode==="online"&&!G.ended){
+    const o=NET.opp;
+    if(!o){if(!NET.goneAt)NET.goneAt=Date.now();setTimeout(()=>{if(NET.goneAt&&Date.now()-NET.goneAt>=2900&&G&&!G.ended&&G.mode==="online"&&!NET.opp)endBattle(true,"相手が退出した")},3000);return}
+    NET.goneAt=0;
+    const op=o.presence;
+    if(op.ff&&op.ff===G.gid){endBattle(true,"相手が降参した");return}
+    if(op.gid!==G.gid)return;
+    if(typeof op.hp==="number")G.oppPub={hp:op.hp,at:now()};
+    if(op.dead){endBattle(true,"相手の体力が0になった");return}
+    const nsk=Number(op.sk)||0;if(nsk>(G.oppStreak||0))oppChainFx((G.oppStreak||0)+1,nsk);G.oppStreak=nsk;
+    (Array.isArray(op.at)?op.at:[]).forEach(a=>{if(a&&typeof a.id==="string"&&!G.seen.has(a.id)){G.seen.add(a.id);receiveAttack(a.t,a.id,a.n)}});
+    const mine=new Set(G.myAtks.map(a=>a.id));
+    (Array.isArray(op.bl)?op.bl:[]).forEach(id=>{if(mine.has(id)&&!G.seenBl.has(id)){G.seenBl.add(id);banner("相手の🛡️内部統制にブロックされた…","info")}});
+    paintHP();
+  }
+}
+function checkStart(){
+  const o=NET.opp;if(!o||NET.screen!=="lobby")return;
+  const op=o.presence,me=NET.pres;
+  const gid0=Math.max(Number(me.ra)||0,Number(op.ra)||0);
+  /* 相手が先に始めた(準備OK→対戦中が同時に届いた)場合も一緒に始める */
+  if(me.rd&&me.st==="lobby"&&((op.rd&&op.st==="lobby")||(op.st==="play"&&op.gid===gid0&&gid0>0))){
+    const gid=gid0;
+    NET.screen="play";
+    setPres({st:"play",rd:false,gid,hp:HP0,dead:false,at:[],bl:[],sk:0,ff:0});
+    startBattle("online",{seed:NET.code+":"+gid,gid,myName:me.nm,oppName:op.nm||"相手"});
+  }
+}
+function netPub(){
+  if(!G||G.mode!=="online")return;
+  G.lastPub=now();setPres({st:G.ended?"end":"play",gid:G.gid,hp:Math.max(0,Math.round(G.hp*10)/10),dead:G.hp<=0,at:G.myAtks.slice(-8),bl:G.blocked.slice(-8),sk:G.streak});
+}
+function netForfeit(){if(NET.nr&&G){setPres({st:"lobby",rd:false,ff:G.gid});NET.screen="";leaveNet()}}
+function backToLobby(){G=null;setPres({st:"lobby",rd:false,ff:0});NET.screen="lobby";renderLobby()}
+
+title();
+
+</script>
+</body>
+</html>
