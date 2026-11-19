@@ -623,8 +623,8 @@ function dmgFor(chain){return Math.min(8,chain)}
 let ROOM=null;
 /* ===== オンライン設定(GitHub Pages版)=====
    Supabase の Project URL と anon(public)キーを貼る。空ならオンライン対戦はオフ。 */
-const SB_URL="";
-const SB_KEY="";
+const SB_URL="https://nqgebtbmpxphwvxsokxj.supabase.co";
+const SB_KEY="sb_publishable_Vo26lf2r6SPQHSfCUOqR8A_c2byTvlm";
 function makeSbRoom(){
   const client=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{params:{eventsPerSecond:10}}});
   const myKey=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
