@@ -351,6 +351,16 @@ button{font-family:inherit;cursor:pointer}
   .abar .itembar.inbar .fxs{display:none}
   .abar .ab.nx{flex:1}
 }
+
+.hand.snd{flex-wrap:wrap;gap:8px}
+.hand.snd input[type=range]{flex-basis:100%;accent-color:var(--neon)}
+.sw.mute{font-size:13px;padding:3px 6px}
+@media (max-width:600px) and (orientation:portrait){.sw.mute{display:inline-block}}
+
+/* テープは電卓の一部(液晶の上) */
+.calc .tape{border-top:none;border-radius:8px;overflow:hidden;margin-bottom:6px}
+@media (min-width:601px),(orientation:landscape){.calc .tape .tbody{max-height:58px}}
+@media (max-width:600px) and (orientation:portrait){.calc .tape{margin:-5px -6px 5px;border-radius:0}}
 </style>
 </head>
 <body>
@@ -643,19 +653,102 @@ function makeSbRoom(){
   if(window.claude&&window.claude.use)ROOM=await window.claude.use("room");
 }catch(e){ROOM=null}})();
 
+
+/* ================= サウンド(Web Audioで合成。音声ファイルなし) ================= */
+const SND={ctx:null,master:null,se:null,bgm:null};
+function sndOn(k){return k==="se"?REC.se!==false:REC.bgm!==false}
+function sndVol(){return typeof REC.vol==="number"?REC.vol:0.7}
+function audioInit(){
+  try{
+    if(!SND.ctx){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+      SND.ctx=new AC();SND.master=SND.ctx.createGain();SND.master.gain.value=sndVol();SND.master.connect(SND.ctx.destination);
+      SND.se=SND.ctx.createGain();SND.se.gain.value=sndOn("se")?1:0;SND.se.connect(SND.master);
+      SND.bgm=SND.ctx.createGain();SND.bgm.gain.value=sndOn("bgm")?0.55:0;SND.bgm.connect(SND.master)}
+    if(SND.ctx.state==="suspended")SND.ctx.resume();
+  }catch(e){}
+}
+["pointerdown","keydown","touchstart"].forEach(t=>document.addEventListener(t,audioInit,{capture:true,passive:true}));
+function sndApply(){if(!SND.ctx)return;SND.master.gain.value=sndVol();SND.se.gain.value=sndOn("se")?1:0;SND.bgm.gain.value=sndOn("bgm")?0.55:0}
+function tone(f,d,type,v,at,slide,dest){
+  const c=SND.ctx;if(!c)return;const t=(at||c.currentTime);
+  const o=c.createOscillator(),g=c.createGain();o.type=type||"square";o.frequency.setValueAtTime(f,t);
+  if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+d);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(v||.15,t+.008);g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  o.connect(g);g.connect(dest||SND.se);o.start(t);o.stop(t+d+.02);
+}
+let NOISE=null;
+function noise(d,v,fq,at,dest,type){
+  const c=SND.ctx;if(!c)return;const t=at||c.currentTime;
+  if(!NOISE){NOISE=c.createBuffer(1,c.sampleRate,c.sampleRate);const a=NOISE.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1}
+  const s=c.createBufferSource();s.buffer=NOISE;const f=c.createBiquadFilter();f.type=type||"highpass";f.frequency.value=fq||3000;
+  const g=c.createGain();g.gain.setValueAtTime(v||.1,t);g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  s.connect(f);f.connect(g);g.connect(dest||SND.se);s.start(t);s.stop(t+d+.02);
+}
+const PENTA=[0,2,4,7,9,12,14,16,19,21,24,26,28,31,33,36];
+const SE={
+  key(k){if(!SND.ctx)return;if(k==="IN"){tone(880,.06,"square",.08);tone(1320,.08,"square",.07,SND.ctx.currentTime+.05)}
+    else if(k==="AC"||k==="C")tone(420,.05,"square",.06);else{tone(1900,.025,"square",.035);noise(.02,.03,6000)}},
+  ok(n){if(!SND.ctx)return;const t=SND.ctx.currentTime,b=523.25*Math.pow(2,PENTA[Math.min(n-1,15)]/12);
+    tone(b,.09,"square",.11,t);tone(b*1.5,.14,"square",.1,t+.07);if(n>=3)tone(b*2,.18,"triangle",.09,t+.14)},
+  ng(){if(!SND.ctx)return;tone(196,.22,"sawtooth",.12,0,110);tone(185,.22,"square",.05)},
+  heal(){if(!SND.ctx)return;const t=SND.ctx.currentTime;[1047,1319,1568].forEach((f,i)=>tone(f,.12,"triangle",.06,t+i*.04))},
+  atk(){if(!SND.ctx)return;noise(.45,.25,400,0,null,"bandpass");tone(110,.35,"sawtooth",.18,0,55);tone(880,.3,"square",.06,0,1760)},
+  hit(){if(!SND.ctx)return;tone(90,.3,"sine",.35,0,40);noise(.2,.22,1200,0,null,"lowpass")},
+  item(){if(!SND.ctx)return;const t=SND.ctx.currentTime;[1568,2093,2637].forEach((f,i)=>tone(f,.1,"square",.06,t+i*.06))},
+  use(){if(!SND.ctx)return;tone(440,.25,"square",.08,0,1760)},
+  block(){if(!SND.ctx)return;tone(2400,.08,"square",.06);tone(1200,.2,"triangle",.1,SND.ctx.currentTime+.05)},
+  phase(){if(!SND.ctx)return;const t=SND.ctx.currentTime;for(let i=0;i<4;i++)tone(i%2?740:988,.12,"square",.08,t+i*.14)},
+  count(n){if(!SND.ctx)return;n?tone(660,.12,"square",.1):tone(1320,.3,"square",.12)},
+  win(){if(!SND.ctx)return;const t=SND.ctx.currentTime;[523,659,784,1047,784,1047].forEach((f,i)=>tone(f,i===5?.5:.14,"square",.1,t+i*.12))},
+  lose(){if(!SND.ctx)return;const t=SND.ctx.currentTime;[392,370,349,262].forEach((f,i)=>tone(f,i===3?.6:.22,"triangle",.12,t+i*.22))},
+  clear(){if(!SND.ctx)return;const t=SND.ctx.currentTime;[784,988,1175,1568].forEach((f,i)=>tone(f,.16,"square",.09,t+i*.09))},
+  egg(){if(!SND.ctx)return;const t=SND.ctx.currentTime;[1047,1319,1568,2093,1568].forEach((f,i)=>tone(f,.09,"square",.07,t+i*.09))},
+  skip(){if(!SND.ctx)return;tone(660,.12,"square",.06,0,330)}
+};
+function se(name,arg){try{if(sndOn("se")&&SE[name])SE[name](arg)}catch(e){}}
+
+/* --- BGM:小さなステップシーケンサー(対戦は四半期ごとにテンポアップ) --- */
+const BGM={on:false,kind:"",step:0,next:0,timer:null,bpm:120,danger:false};
+const N=(s)=>440*Math.pow(2,(s-69)/12);
+const SONGS={
+  vs:{bpm:124,bass:[45,45,41,41,48,48,43,43],chords:[[57,60,64],[53,57,60],[48,52,55],[55,59,62]],lead:[76,0,74,72,0,69,72,0,74,0,72,69,67,0,69,0]},
+  solo:{bpm:108,bass:[48,48,45,45,41,41,43,43],chords:[[60,64,67],[57,60,64],[53,57,60],[55,59,62]],lead:[72,0,0,74,76,0,74,0,72,0,69,0,67,0,0,0]}
+};
+function bgmStart(kind){BGM.kind=kind;BGM.on=true;BGM.step=0;BGM.bpm=SONGS[kind].bpm;BGM.danger=false;if(!SND.ctx)return;BGM.next=SND.ctx.currentTime+.1;
+  if(BGM.timer)clearInterval(BGM.timer);BGM.timer=setInterval(bgmSched,25)}
+function bgmStop(){BGM.on=false;if(BGM.timer)clearInterval(BGM.timer);BGM.timer=null}
+function bgmTempo(phase){if(BGM.kind==="vs")BGM.bpm=SONGS.vs.bpm+phase*10}
+function bgmSched(){
+  if(!BGM.on||!SND.ctx){return}
+  const c=SND.ctx,S=SONGS[BGM.kind],d=SND.bgm,sp=60/BGM.bpm/4;
+  if(BGM.next<c.currentTime-.5)BGM.next=c.currentTime+.05;
+  while(BGM.next<c.currentTime+.12){
+    const st=BGM.step,t=BGM.next,bar=Math.floor(st/16)%4,s16=st%16;
+    if(s16%2===0)tone(N(S.bass[(bar*2+(s16>=8?1:0))%8]-12),sp*1.8,"triangle",.22,t,0,d);
+    if(s16%4===0){tone(150,.12,"sine",.35,t,45,d)}
+    if(s16%4===2||(BGM.danger&&s16%2===1))noise(.04,BGM.danger?.07:.05,7000,t,d);
+    const ch=S.chords[bar],ar=ch[[0,1,2,1][s16%4]]+(s16>=8?12:0);
+    if(BGM.kind==="vs"||s16%2===0)tone(N(ar),sp*.9,"square",.035,t,0,d);
+    const l=S.lead[s16];if(l&&(bar%2===1||BGM.danger))tone(N(l+(BGM.danger?12:0)),sp*1.6,"square",.045,t,0,d);
+    BGM.step++;BGM.next+=sp;
+  }
+}
+
 /* ================= タイトル ================= */
 function title(){
-  stopTimer();stopCpu();
+  stopTimer();stopCpu();bgmStop();
   const bt=REC.ta[0],bs=REC.sa[0];
   const list=(arr,f)=>arr.length?arr.slice(0,3).map((r,i)=>`<div class="rec"><span>${i+1}. ${f(r)}</span><span class="r">${r.rank} <small style="color:var(--mute);font-weight:500">#${r.code}</small></span></div>`).join(""):`<div class="empty">まだ記録なし</div>`;
   app.innerHTML=`<div class="title">
    <div class="logo"><h1>ボキバトル</h1><p>簿記1級 スピード競技</p></div>
-   <button class="mode vs" id="vs"><b>⚔️ 対戦(HPバトル)</b><span>正解した欄の数だけ相手にダメージ。連続正解でダメージアップ。おじゃまアイテムあり。</span><em class="best mono">${REC.win.cpu+REC.win.on}勝</em></button>
+   <button class="mode vs" id="vs"><b>⚔️ 対戦(サバイバル)</b><span>体力はじわじわ減っていく。正解で回復、連鎖で大回復&連鎖アタック。おじゃまアイテムで相手を追い込め。</span><em class="best mono">${REC.win.cpu+REC.win.on}勝</em></button>
    <button class="mode ta" id="ta"><b>⏱ タイムアタック</b><span>${TA_N}題を最速で解く。まちがえた欄は1つにつき+10秒。</span>${bt?`<em class="best mono">BEST ${fmtT(bt.ms)}</em>`:""}</button>
    <button class="mode sa" id="sa"><b>⚡ スコアアタック</b><span>3分間でできるだけ多く解く。全欄正解が続くとコンボボーナス。</span>${bs?`<em class="best mono">BEST ${bs.pts}pt</em>`:""}</button>
    <div class="hand"><span>電卓を打つ手</span><div class="seg"><button data-h="0" class="${REC.lefty?"":"on"}">右手</button><button data-h="1" class="${REC.lefty?"on":""}">左手</button></div></div>
    <div class="hand"><span>お助けガイド(${AUTO_MS/1000}秒止まると自動表示)</span><div class="seg" id="ag"><button data-a="1" class="${REC.noAuto?"":"on"}">ON</button><button data-a="0" class="${REC.noAuto?"on":""}">OFF</button></div></div>
    <div class="hand"><span>次の問題で電卓をリセット(AC・MC)</span><div class="seg"><button data-r="1" class="${REC.noReset?"":"on"}">ON</button><button data-r="0" class="${REC.noReset?"on":""}">OFF</button></div></div>
+   <div class="hand snd"><span>🔊 サウンド</span><div class="seg"><button data-s="se" class="${REC.se===false?"":"on"}">効果音</button><button data-s="bgm" class="${REC.bgm===false?"":"on"}">BGM</button></div>
+    <input type="range" id="vol" min="0" max="1" step="0.05" value="${typeof REC.vol==="number"?REC.vol:0.7}"></div>
    <div class="code"><label>対戦コード(ソロモード用)</label>
     <div class="row"><input id="code" class="mono" inputmode="numeric" maxlength="6" value="${CODE}"><button class="sbtn" id="nc">🎲 新しく</button></div>
     <small>同じコードなら全員まったく同じ問題が出るよ。タイムを送り合って勝負もできる。</small></div>
@@ -666,6 +759,8 @@ function title(){
   const ci=$("#code");ci.oninput=()=>{ci.value=ci.value.replace(/\D/g,"");CODE=ci.value};
   $("#nc").onclick=()=>{CODE=newCode();ci.value=CODE};
   app.querySelectorAll(".seg button[data-h]").forEach(b=>b.onclick=()=>{REC.lefty=b.dataset.h==="1";saveRec();app.querySelectorAll(".seg button[data-h]").forEach(x=>x.classList.toggle("on",x===b))});
+  app.querySelectorAll(".seg button[data-s]").forEach(b=>b.onclick=()=>{const k=b.dataset.s;REC[k]=REC[k]===false;saveRec();sndApply();b.classList.toggle("on",REC[k]!==false);if(k==="se"&&REC.se!==false){audioInit();se("ok",3)}});
+  const vol=$("#vol");if(vol){vol.oninput=()=>{REC.vol=+vol.value;saveRec();sndApply()};vol.onchange=()=>{audioInit();se("ok",1)}}
   app.querySelectorAll(".seg button[data-r]").forEach(b=>b.onclick=()=>{REC.noReset=b.dataset.r==="0";saveRec();app.querySelectorAll(".seg button[data-r]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelectorAll(".seg button[data-a]").forEach(b=>b.onclick=()=>{REC.noAuto=b.dataset.a==="0";saveRec();app.querySelectorAll(".seg button[data-a]").forEach(x=>x.classList.toggle("on",x===b))});
   $("#ta").onclick=()=>startSolo("ta");$("#sa").onclick=()=>startSolo("sa");$("#vs").onclick=vsMenu;
@@ -674,7 +769,7 @@ function title(){
 
 /* ================= 対戦メニュー ================= */
 function vsMenu(){
-  stopCpu();leaveNet();
+  stopCpu();leaveNet();bgmStop();
   app.innerHTML=`<div class="title">
    <button class="back" id="bk">← もどる</button>
    <div class="logo"><h1 style="font-size:32px">⚔️ HPバトル</h1><p>正解で攻撃・おじゃまで妨害</p></div>
@@ -714,10 +809,10 @@ function resetDesk(){MEMO.text="";MEMO.img=null;MEMO.drawMode=false;TAPE.lines=[
 function startSolo(mode){
   if(!CODE)CODE=newCode();resetDesk();
   G={mode,code:CODE,base:mode+":"+CODE,qi:0,elapsed:0,running:false,t0:0,pen:0,missBlanks:0,okBlanks:0,perfect:0,pts:0,combo:0,maxCombo:0,fx:{}};
-  countdown(()=>{G.running=true;G.t0=performance.now();nextProblem();startTimer()});
+  countdown(()=>{G.running=true;G.t0=performance.now();nextProblem();startTimer();bgmStart("solo")});
 }
 function countdown(cb){
-  let n=3;const tick=()=>{if(!G)return;if(n===0){cb();return}app.innerHTML=`<div class="cd"><span>${n}</span></div>`;n--;setTimeout(tick,800)};tick();
+  let n=3;const tick=()=>{if(!G)return;se("count",n);if(n===0){cb();return}app.innerHTML=`<div class="cd"><span>${n}</span></div>`;n--;setTimeout(tick,800)};tick();
 }
 function now(){return G.elapsed+(G.running?performance.now()-G.t0:0)}
 function pause(){if(G.running){G.elapsed+=performance.now()-G.t0;G.running=false}}
@@ -754,12 +849,13 @@ function skipProblem(){
   const lost=isVS()?G.streak:G.mode==="sa"?G.combo:0;
   if(isVS())G.streak=0;if(G.mode==="sa")G.combo=0;
   deskReset();P=np;G.fx.gstep={b:-1,s:0};progress();renderGame();
+  se("skip");
   toast(lost>0?`⏭ スキップ!${isVS()?"連鎖":"コンボ"}は0に`:"⏭ 問題を引き直した");
 }
 
 /* ================= 問題画面 ================= */
 function hudHTML(){
-  const sw=`<div style="display:flex;align-items:center;gap:4px"><button class="x" id="quit">✕</button><button class="sw" id="sw" title="電卓の左右を入れ替え">⇄</button></div>`;
+  const sw=`<div style="display:flex;align-items:center;gap:4px"><button class="x" id="quit">✕</button><button class="sw" id="sw" title="電卓の左右を入れ替え">⇄</button><button class="sw mute" id="mute">${REC.se===false&&REC.bgm===false?"🔇":"🔊"}</button></div>`;
   if(G.mode==="ta")return`<div class="hud">${sw}<div class="t mono" id="hudt">0:00.0</div><div class="p"><b>${G.qi}</b> / ${TA_N}<br>${G.pen?`<span class="pen">+${G.pen/1000}s</span>`:"&nbsp;"}</div></div>`;
   if(G.mode==="sa")return`<div class="hud">${sw}<div class="t mono" id="hudt">0:00.0</div><div class="p"><b class="mono">${G.pts}</b>pt<br>${G.combo>1?`<span style="color:var(--gold)">🔥${G.combo}コンボ</span>`:"&nbsp;"}</div></div>`;
   return`<div class="hud vsh">${sw}
@@ -786,12 +882,12 @@ function renderGame(){
      <div class="abar" id="abar"><button class="ab sk" id="bsk"><span style="font-size:16px">⏭</span><small>スキップ</small></button><button class="ab nx" id="bnx">次の欄 ▶</button><button class="ab go" id="bgo">解答する</button></div>
     </div>
     <div class="gright" id="gr">
-     <div class="tape" id="tape"><div class="thead"><span>🧾 計算テープ</span><button id="tclr">消す</button><button id="dtog" class="dtog">✍️ 手書き</button></div><div class="tbody" id="tbody"></div></div>
      <div class="memo2">
       <div class="mhead"><button data-t="draw" class="on">✍️</button><button data-t="text">📝</button><button id="mclr">全消し</button></div>
       <canvas id="cv"></canvas><textarea id="mt" placeholder="メモ"></textarea>
      </div>
      <div class="calc" id="calc">
+      <div class="tape" id="tape"><div class="thead"><span>🧾 計算テープ</span><button id="tclr">消す</button><button id="dtog" class="dtog">✍️ 手書き</button></div><div class="tbody" id="tbody"></div></div>
       <div class="guide" id="guide"></div>
       <div class="cdisp"><div class="cind" id="cind"></div><div class="cnum mono" id="cnum">0</div></div>
       <div class="ckeys2" id="ckeys"></div>
@@ -800,6 +896,7 @@ function renderGame(){
     </div>
    </div></div>`;
   $("#quit").onclick=()=>{if(confirmQuit()){if(G&&G.mode==="online"){netForfeit()}G=null;stopCpu();title()}};
+  $("#mute").onclick=()=>{const off=!(REC.se===false&&REC.bgm===false);REC.se=!off;REC.bgm=!off;saveRec();sndApply();$("#mute").textContent=off?"🔇":"🔊";toast(off?"サウンドOFF":"サウンドON")};
   $("#sw").onclick=()=>{REC.lefty=!REC.lefty;saveRec();$("#gb").classList.toggle("lefty",REC.lefty);setTimeout(fitCv,60);toast(REC.lefty?"左手モード:電卓を左に":"右手モード:電卓を右に")};
   app.querySelectorAll(".blank").forEach(b=>b.onclick=()=>{if(P.locked)return;const i=+b.dataset.b;if(P.judged&&P.judged[i]!==undefined)return;P.active=i;paintBlanks();paintGuide()});
   app.querySelectorAll(".cho").forEach(b=>b.onclick=()=>{if(P.locked)return;const i=+b.dataset.b;if(P.judged&&P.judged[i]!==undefined)return;P.active=i;P.vals[i]=b.dataset.c;progress();if(isVS())judgeBlank(i);advance()});
@@ -886,6 +983,7 @@ function fnum(v){if(!isFinite(v))return"E";const neg=v<0;let s=String(Math.abs(M
 function tapePush(s){TAPE.lines.push(s);if(TAPE.lines.length>60)TAPE.lines.shift()}
 function calcKey(k){
   if(!P)return;
+  se("key",k);
   const preD=cur(),preF=C.fresh,preK=!!C.k,preV=P.vals[P.active],pa=P.active,preM=C.mem;
   calcKey0(k);
   try{
@@ -932,7 +1030,7 @@ function calcKey0(k){
   else if(k==="C"){C.disp="0";C.fresh=true;C.err=false}
   else if(k==="AC"){C.disp="0";C.acc=null;C.op=null;C.fresh=true;C.lastOp=null;C.lastArg=null;C.err=false;C.k=null;
     const seq=C.hist.join(",")==="1,3,7,9,AC",held=["1","3","7","9"].every(x=>HELD.has(x));
-    if(seq||held){C.egg=Date.now()+2500;setTimeout(()=>{if(C.egg&&Date.now()>=C.egg){C.egg=0;paintCalc()}},2600)}}
+    if(seq||held){se("egg");C.egg=Date.now()+2500;setTimeout(()=>{if(C.egg&&Date.now()>=C.egg){C.egg=0;paintCalc()}},2600)}}
   else if(k==="M+"||k==="M-"){if(C.op)finish_eq();C.mem+=(k==="M+"?1:-1)*cur();C.fresh=true}
   else if(k==="MR"){setNum(C.mem);C.fresh=true}
   else if(k==="MC"){C.mem=0}
@@ -972,6 +1070,7 @@ function guideTrack(k){
   const gs=G.fx.gstep;if(gs.b!==P.active){gs.b=P.active;gs.s=0;gs.off=false}
   const keys=guideKeys(bl.g),exp=keys[gs.s];
   if(exp&&k===exp.k&&!gs.off){gs.s++;if(k==="IN"){gs.b=-1}}
+  else if(k==="00"&&exp&&exp.k==="0"&&keys[gs.s+1]&&keys[gs.s+1].k==="0"&&keys[gs.s+1].t===exp.t&&!gs.off){gs.s+=2}
   else if(k==="AC"){const i=keys.findIndex(x=>x.k==="AC");gs.s=i+1;gs.off=false}
   else if(k==="MC"&&keys[0].k==="MC"){gs.s=1;gs.off=false}
   else gs.off=true;
@@ -988,7 +1087,8 @@ function paintGuide(){
   const keys=guideKeys(bl.g),seq=bl.g.concat(["IN"]);
   const curT=gs.off?-1:(keys[gs.s]?keys[gs.s].t:seq.length);
   box.innerHTML=`<div class="gh">🧮 ${guideTimed()?"検算ガイド":"お助けガイド"} <span>${left}</span></div><div class="gt">${seq.map((t,i)=>`<span class="${i<curT?"dn":i===curT?"cu":""}">${typeof t==="number"?yen(t):(KLAB[t]||t)}</span>`).join("")}</div>${gs.off?`<div class="goff">ずれたよ → AC から打ち直し</div>`:""}`;
-  if(!gs.off&&keys[gs.s]){const b=app.querySelector(`.ck[data-k="${CSS.escape(keys[gs.s].k)}"]`);if(b)b.classList.add("hint")}
+  if(!gs.off&&keys[gs.s]){const b=app.querySelector(`.ck[data-k="${CSS.escape(keys[gs.s].k)}"]`);if(b)b.classList.add("hint");
+    if(keys[gs.s].k==="0"&&keys[gs.s+1]&&keys[gs.s+1].k==="0"&&keys[gs.s+1].t===keys[gs.s].t){const b2=app.querySelector('.ck[data-k="00"]');if(b2)b2.classList.add("hint")}}
   else if(gs.off){const b=app.querySelector('.ck[data-k="AC"]');if(b)b.classList.add("hint")}
 }
 
@@ -1052,6 +1152,7 @@ function submit(){
   else{if(all){G.combo++;G.perfect++;G.maxCombo=Math.max(G.maxCombo,G.combo)}else G.combo=0;
     gain=nOk*100-nNg*30+(all?50*G.combo:0);G.pts=Math.max(0,G.pts+gain)}
   drawHud();
+  se(all?"ok":"ng",all?3:0);
   pop(G.mode==="ta"?(all?"PERFECT!":`+${nNg*10}s`):(gain>=0?"+":"")+gain+"pt",all?"var(--neon)":"var(--red)");
   const last=G.mode==="ta"&&G.qi>=TA_N;
   sheet(all,`<div class="meta">${G.mode==="ta"?(nNg?`ペナルティ +${nNg*10}秒 ・ `:"")+"タイマー停止中":`${gain>=0?"+":""}${gain}pt${G.combo>1?` ・ 🔥${G.combo}コンボ`:""} ・ タイマー停止中`}</div>`,
@@ -1071,7 +1172,7 @@ function sheet(good,meta,btn,cb){
   const ab=$("#abar");if(ab)ab.style.visibility="hidden";
 }
 function finishSolo(){
-  stopTimer();pause();
+  stopTimer();pause();bgmStop();se("clear");
   document.querySelectorAll(".fb").forEach(x=>x.remove());
   const ta=G.mode==="ta";
   const total=G.okBlanks+G.missBlanks,acc=total?Math.round(G.okBlanks/total*100):0;
@@ -1110,7 +1211,7 @@ function startBattle(mode,opt){
      hp:HP0,oppHp:HP0,oppPub:null,lastT:0,phase:0,lastPub:0,healed:0,oppHealed:0,streak:0,maxStreak:0,oppStreak:0,items:[],fx:{gstep:{b:-1,s:0}},
      myName:opt.myName||"あなた",oppName:opt.oppName,lv:opt.lv,gid:opt.gid||0,
      myAtks:[],blocked:[],seen:new Set(),seenBl:new Set(),ended:false};
-  countdown(()=>{if(!G)return;G.running=true;G.t0=performance.now();G.lastT=0;nextProblem();startTimer();if(mode==="cpu")startCpu();if(mode==="online")netPub()});
+  countdown(()=>{if(!G)return;G.running=true;G.t0=performance.now();G.lastT=0;nextProblem();startTimer();bgmStart("vs");if(mode==="cpu")startCpu();if(mode==="online")netPub()});
 }
 function myHP(){return Math.max(0,G.hp)}
 function oppDisp(){
@@ -1122,7 +1223,7 @@ function drainTick(){
   if(G.mode==="online"&&G.oppPub&&oppDisp()<=0&&now()-G.oppPub.at>8000){endBattle(true,"相手の応答がなく体力が尽きた");return}
   const t=now(),dt=(t-G.lastT)/1000;if(dt<=0)return;
   const r=rateAt(t);G.hp-=r*dt*(boosted()?2:1);if(G.mode==="cpu")G.oppHp-=r*dt*(CPU.boostUntil&&t<CPU.boostUntil?2:1);G.lastT=t;
-  const ph=phaseAt(t);if(ph!==G.phase){G.phase=ph;banner(`⏰ ${PHASE[ph]}!体力の減りが速くなった`,"hit")}
+  const ph=phaseAt(t);if(ph!==G.phase){G.phase=ph;se("phase");bgmTempo(ph);banner(`⏰ ${PHASE[ph]}!体力の減りが速くなった`,"hit")}
   if(G.mode==="online"&&t-G.lastPub>1000)netPub();
   paintHP();
 }
@@ -1131,7 +1232,7 @@ function paintHP(){
   const a=$("#hpme"),b=$("#hpop"),mh=myHP(),oh=oppDisp();
   if(a){a.style.width=(mh/MAXHP*100)+"%";a.classList.toggle("low",mh<=8);$("#hpmev").textContent=Math.ceil(mh)}
   if(b){b.style.width=(oh/MAXHP*100)+"%";b.classList.toggle("low",oh<=8);$("#hpopv").textContent=Math.ceil(oh)}
-  const g=$("#gb");if(g)g.classList.toggle("danger",mh<=8&&mh>0);
+  const g=$("#gb");if(g)g.classList.toggle("danger",mh<=8&&mh>0);BGM.danger=mh<=8&&mh>0;
   const bb=boosted();$("#hpme")&&$("#hpme").parentElement.classList.toggle("boost",bb);
   const ob=G.mode==="cpu"&&CPU.boostUntil&&now()<CPU.boostUntil;$("#hpop")&&$("#hpop").parentElement.classList.toggle("boost",!!ob);
   const s=$("#stk");if(s)s.innerHTML=`<span class="phs">${PHASE[G.phase]} ▼${(rateAt(now())*(bb?2:1)).toFixed(2)}/秒${bb?" 🔥×2":""}</span><br>${G.streak>0?`🔗${G.streak}連鎖 次<b>+${dmgFor(G.streak+1)}</b>`:`次 <b>+${dmgFor(1)}</b>`}`;
@@ -1145,7 +1246,7 @@ async function submitVS(nOk,nNg,all){
   const dmg=G.healed-before;
   if(all)G.perfect++;
   let got=null;
-  if(all&&G.items.length<MAX_ITEMS){got=ITEM_POOL[Math.floor(Math.random()*ITEM_POOL.length)];G.items.push(got)}
+  if(all&&G.items.length<MAX_ITEMS){got=ITEM_POOL[Math.floor(Math.random()*ITEM_POOL.length)];G.items.push(got);setTimeout(()=>se("item"),250)}
   if(G.mode==="online")netPub();
   paintHP();paintItems();
   if(G.ended)return;
@@ -1163,16 +1264,16 @@ function judgeBlank(i){
   const el=app.querySelector(`.blank[data-b="${i}"]`);
   if(ok){
     G.streak++;G.maxStreak=Math.max(G.maxStreak,G.streak);
-    const n=G.streak,d=dmgFor(n),col=PCOL[(n-1)%PCOL.length];
+    const n=G.streak,d=dmgFor(n),col=PCOL[(n-1)%PCOL.length];se("ok",n);
     if(el){burst(el,col,n);chainText(el,n,col)}
     const tgt=$("#hpme");
     const heal=()=>{if(!G||G.ended)return;G.hp=Math.min(MAXHP,G.hp+d);G.healed+=d;
       const bar=$(".hpbar.me");if(bar){bar.classList.remove("heal");void bar.offsetWidth;bar.classList.add("heal")}
-      pop(`+${d}`,"var(--neon)","#hpme");paintHP();if(G.mode==="online")netPub()};
+      pop(`+${d}`,"var(--neon)","#hpme");se("heal");paintHP();if(G.mode==="online")netPub()};
     if(el&&tgt)shoot(el,tgt,col,n).then(heal);else heal();
     if(CHAIN_ATK(n))setTimeout(()=>sendChainAttack(n),450);
   }else{
-    if(el)fizz(el);
+    if(el)fizz(el);se("ng");
     if(G.streak>1)chainBreak(el);
     G.streak=0;
   }
@@ -1186,7 +1287,7 @@ function finishProblemVS(){
   const all=P.res.every(Boolean),heal=P.res.reduce((a,ok)=>a,0);
   if(all)G.perfect++;
   let got=null;
-  if(all&&G.items.length<MAX_ITEMS){got=ITEM_POOL[Math.floor(Math.random()*ITEM_POOL.length)];G.items.push(got)}
+  if(all&&G.items.length<MAX_ITEMS){got=ITEM_POOL[Math.floor(Math.random()*ITEM_POOL.length)];G.items.push(got);setTimeout(()=>se("item"),250)}
   if(G.mode==="online")netPub();
   paintBlanks();paintGuide();paintItems();
   sheet(all,`<div class="meta">${all?"💚 全欄正解!":"まちがえた欄があったよ"}${G.streak>1?` ・ 🔗${G.streak}連鎖中`:""}${got?` ・ 🎁 ${ITEMS[got].i}${ITEMS[got].n} ゲット`:""}</div>`,
@@ -1194,7 +1295,7 @@ function finishProblemVS(){
 }
 function sendChainAttack(n){
   if(!G||G.ended)return;
-  banner(`🔥 ${n}連鎖アタック!相手の体力の減りが10秒間2倍`,"atk");
+  banner(`🔥 ${n}連鎖アタック!相手の体力の減りが10秒間2倍`,"atk");se("atk");
   const fl=document.createElement("div");fl.className="atkfx";document.body.appendChild(fl);setTimeout(()=>fl.remove(),700);
   if(G.mode==="cpu"){CPU.boostUntil=now()+10000}
   else{const id=Math.random().toString(36).slice(2,10);G.myAtks.push({id,t:"chain",n});G.myAtks=G.myAtks.slice(-8);netPub()}
@@ -1296,7 +1397,7 @@ function paintItems(){
 function useItem(i){
   if(!G||G.ended)return;const t=G.items[i];if(!t)return;
   if(t==="guide"&&P.locked){G.items.splice(i,1);G.fx.guideNext=true;toast("🧮 次の問題で検算ガイドが出るよ");paintItems();return}
-  G.items.splice(i,1);
+  G.items.splice(i,1);se("use");
   if(t==="guide"){G.fx.guideUntil=now()+20000;G.fx.gstep={b:-1,s:0};banner("🧮 検算ガイド発動!(20秒)","self")}
   else if(t==="shield"){G.fx.shield=true;banner("🛡️ 内部統制を整備した","self")}
   else sendAttack(t);
@@ -1310,10 +1411,11 @@ function sendAttack(t){
 }
 function receiveAttack(t,id,n){
   if(!G||G.ended)return false;
-  if(t==="chain"){G.fx.boostUntil=now()+10000;banner(`🔥 相手の${n?n+"連鎖":"連鎖"}アタック!10秒間 体力の減りが2倍`,"hit");
+  if(t==="chain"){G.fx.boostUntil=now()+10000;se("hit");banner(`🔥 相手の${n?n+"連鎖":"連鎖"}アタック!10秒間 体力の減りが2倍`,"hit");
     const g=$("#gb");if(g){g.classList.remove("shake");void g.offsetWidth;g.classList.add("shake")}const f=document.createElement("div");f.className="redflash";document.body.appendChild(f);setTimeout(()=>f.remove(),450);return true}
   if(!ITEMS[t])return false;
-  if(G.fx.shield){G.fx.shield=false;banner(`🛡️ 内部統制が${ITEMS[t].n}をブロック!`,"self");if(id&&G.mode==="online"){G.blocked.push(id);netPub()}paintItems();return false}
+  if(G.fx.shield){G.fx.shield=false;se("block");banner(`🛡️ 内部統制が${ITEMS[t].n}をブロック!`,"self");if(id&&G.mode==="online"){G.blocked.push(id);netPub()}paintItems();return false}
+  se("hit");
   if(t==="messy"){banner("🔢 端数地獄!問題の数字が細かくなった","hit");applyMessy()}
   else if(t==="shuffle"){
     let perm;do{perm=[0,1,2,3,4,5,6,7,8,9];for(let k=9;k>0;k--){const j=Math.floor(Math.random()*(k+1));[perm[k],perm[j]]=[perm[j],perm[k]]}}while(perm.some((v,k)=>v===k)&&Math.random()<.9);
@@ -1387,7 +1489,7 @@ function cpuReceive(t){
 
 /* --- バトル終了 --- */
 function endBattle(win,why){
-  if(!G||G.ended)return;G.ended=true;stopCpu();pause();stopTimer();
+  if(!G||G.ended)return;G.ended=true;stopCpu();pause();stopTimer();bgmStop();se(win?"win":"lose");
   document.querySelectorAll(".fb,.banner").forEach(x=>x.remove());
   if(G.mode==="cpu"){win?REC.win.cpu++:REC.win.cpuL++}else{win?REC.win.on++:REC.win.onL++}
   saveRec();
