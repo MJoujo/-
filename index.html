@@ -997,6 +997,17 @@ button{font-family:inherit;cursor:pointer}
 .cnudge{width:100%;margin-top:12px;border:1.5px dashed #4da3ff;background:#10223d;color:#bcd7ff;border-radius:12px;padding:9px;font-weight:800;font-size:13px;display:flex;justify-content:space-between}
 .cchoice{background:var(--bg);border:2px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:4px}
 .cchoice small{color:var(--mute);font-size:12px;line-height:1.6}.cchoice .big{margin-top:6px;font-size:14px;padding:11px}
+.rdbc{border-radius:14px;border-top:none;padding:8px;max-width:440px;margin:8px auto 0;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.rdbc .cnum{font-size:26px}.rdbc .ckeys2{grid-auto-rows:minmax(40px,1fr)}
+.rdbc .ck{font-size:18px}.rdbc .ck.mem,.rdbc .ck.fn,.rdbc .ck.clr{font-size:13px}
+.rdtpad .rdbc{margin-top:2px;padding:5px;max-width:none}.rdtpad .rdbc .cnum{font-size:20px}.rdtpad .rdbc .cdisp{margin-bottom:4px}.rdtpad .rdbc .ck{font-size:15px}
+.rdtcur{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.rdtcur .rdk.nx{flex:none;padding:6px 12px;font-size:13px}
+.rdtc.flash{animation:rdfl .5s}
+@keyframes rdfl{0%{background:#ffe27a}100%{}}
+.nerr{margin-top:10px;background:rgba(255,94,94,.10);border:2px solid #ff6b6b;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.55;text-align:left;color:#ffd2d2}
+.nerr .net{font-weight:900;font-size:14px;color:#fff;margin-bottom:2px}.nerr .net small{opacity:.6;font-size:11px;margin-left:4px}
+.nerr .nfix{color:#ffe7a8;font-weight:800;margin-top:4px}.nerr .ndet{opacity:.55;font-size:11px;margin-top:4px;word-break:break-all}
 </style>
 </head>
 <body>
@@ -1434,12 +1445,12 @@ function makeSbRoom(){
       const c=client.channel(name,{config:{presence:{key:myKey},broadcast:{self:false}}});ch=c;
       c.on("presence",{event:"sync"},()=>{if(ch===c)emit()});
       c.on("broadcast",{event:"g"},m=>{if(ch!==c)return;const p=m&&m.payload;if(!p||p.k===myKey)return;mfns.forEach(f=>{try{f(p)}catch(e){}})});
-      c.subscribe(st=>{
+      c.subscribe((st,err)=>{
         if(ch!==c)return;
         if(st==="SUBSCRIBED"){api.ok=true;api.downAt=0;flush();if(!done){done=true;res(api)}}
         else if(st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"){
           api.ok=false;if(!api.downAt)api.downAt=Date.now();
-          if(!done){done=true;rej({code:st});return}
+          if(!done){done=true;rej({code:st,msg:err&&(err.message||String(err))||""});return}
           if(left)return;
           setTimeout(()=>{if(left||ch!==c)return;try{client.removeChannel(c)}catch(e){}connect()},1500);
         }});
@@ -2005,8 +2016,8 @@ let ROAD=[
      TALK([["きみ","店長、金庫の現金が帳簿より少ないです…"],["店長","原因がわかるまでは「現金過不足」で調整して、帳簿の現金を実際に合わせよう。"]],{n:"現金過不足",g:"",d:"帳簿と実際の現金のズレを一時的に入れておく科目。<br>原因がわかったら正しい科目へ。"}),
      CALC(`帳簿の現金は ${yn(book)}円、金庫の現金は ${yn(real)}円。いくら足りない?`,"不足額",diff,`${yn(book)} − ${yn(real)} = ${yn(diff)}`),
      JR(`帳簿 ${yn(book)}円に対し、実際の現金は ${yn(real)}円だった。`,[["現金過不足",diff]],[["現金",diff]],["雑損","雑益"]),
-     JR(`現金不足 ${yn(diff)}円のうち ${yn(tel)}円は、通信費の記入もれとわかった。`,[["通信費",tel]],[["現金過不足",tel]],["現金","雑損"]),
-     ...(diff-tel>0?[JR(`決算日になっても、残りの不足 ${yn(diff-tel)}円の原因はわからなかった。`,[["雑損",diff-tel]],[["現金過不足",diff-tel]],["雑益","現金"])]:[]),
+     JR(`現金の不足額 ${yn(diff)}円を現金過不足勘定で処理していた。このうち ${yn(tel)}円は、通信費の記入もれとわかった。`,[["通信費",tel]],[["現金過不足",tel]],["現金","雑損"]),
+     ...(diff-tel>0?[JR(`決算日。現金過不足勘定に借方残高 ${yn(diff-tel)}円(現金の不足分)が残っているが、原因はわからなかった。`,[["雑損",diff-tel]],[["現金過不足",diff-tel]],["雑益","現金"])]:[]),
      MC("現金が帳簿より「多かった」ときの、決算での科目は?",["雑益","雑損","受取利息"],"雑益","原因不明の多い分は雑益(収益)。少ない分は雑損(費用)。")]}}
   ]},
  {id:"c3",no:3,month:"4月",title:"商品の売り買い",story:"いよいよ開店!商品を仕入れて、お客さんに売っていこう。",color:"#8a5a14",
@@ -2069,7 +2080,7 @@ ROAD.push(
      JR(`従業員の出張にあたり、旅費の概算額 ${yn(a)}円を現金で渡した。`,[["仮払金",a]],[["現金",a]],["仮受金","旅費交通費"]),
      JR(`従業員が帰ってきて、旅費 ${yn(used)}円を精算し、残りの現金を受け取った。(概算払いは ${yn(a)}円)`,[["旅費交通費",used],["現金",a-used]],[["仮払金",a]],["仮受金","給料"]),
      JR(`普通預金口座に ${yn(u)}円の入金があったが、内容はわからない。`,[["普通預金",u]],[["仮受金",u]],["仮払金","売上"]),
-     JR(`さきほどの入金 ${yn(u)}円は、売掛金の回収だとわかった。`,[["仮受金",u]],[["売掛金",u]],["売上","普通預金"]),
+     JR(`内容不明のため仮受金で処理していた普通預金への入金 ${yn(u)}円は、売掛金の回収だとわかった。`,[["仮受金",u]],[["売掛金",u]],["売上","普通預金"]),
      TALK([["gou","給料から天引きされてる「所得税」って、お店がもらっちゃうんスか!?"],["luna","…ちがう。預かってるだけ。あとで税務署に払う。"]],{n:"所得税預り金",g:"負債",d:"給料から天引きして、あとで国に納める所得税。預かっているだけなので負債。"}),
      JR(`給料 ${yn(g)}円のうち、所得税 ${yn(tx)}円を差し引いた残りを現金で支払った。`,[["給料",g]],[["所得税預り金",tx],["現金",g-tx]],["立替金","預り金"]),
      JR(`商品 ${yn(sv)}円を売り上げ、代金は自治体発行の商品券で受け取った。`,[["受取商品券",sv]],[["売上",sv]],["現金","売掛金"])]}}
@@ -2106,7 +2117,7 @@ ROAD.push(
      JR(`倉庫用の建物 ${yn(c)}円を購入し、代金は月末払いとした。`,[["建物",c]],[["未払金",c]],["買掛金","土地"]),
      JR(`倉庫を借りるにあたり、敷金 ${yn(d)}円を普通預金から支払った。`,[["差入保証金",d]],[["普通預金",d]],["支払家賃","前払金"]),
      S("車両運搬具")]}},
-   {id:"c6l2",name:"減価償却",make:lv=>{const c=A(lv,300000,1200000),n=rpick([4,5,6,8,10]),y=Math.round(c/n),m=rpick([3,4,6,8,9]),ym=Math.round(c/n*m/12);return[
+   {id:"c6l2",name:"減価償却",make:lv=>{const n=rpick([4,5,6,8,10]),c=n*12*(lv>=2?rnd(500,2000)*10:rnd(5,20)*1000),y=c/n,m=rpick([3,4,6,8,9]),ym=c/n*m/12;return[
      TALK([["luna","…ものは使うと価値が減る。その分を毎年、費用にする。それが減価償却。"],["niya","人間も年々減価償却されてて草"]],{n:"減価償却(定額法)",g:"",d:"1年分の減価償却費 = 取得原価 ÷ 耐用年数<br>(残存価額ゼロのとき)"}),
      CALC(`備品 ${yn(c)}円、耐用年数 ${n}年、残存価額ゼロ。1年分の減価償却費は?`,"減価償却費",y,`${yn(c)} ÷ ${n} = ${yn(y)}`),
      TALK([["tencho","減った分は、備品から直接引かずに「減価償却累計額」に積み上げていくんだよ。これを間接法っていうの。"]],null),
@@ -2360,7 +2371,7 @@ ROAD.push(
    {id:"c13l1",name:"先入先出法",make:lv=>{const q0=rnd(2,5)*10,p0=rnd(8,20)*(lv>=2?10:100),q1=rnd(3,8)*10,p1=p0+rnd(1,5)*(lv>=2?10:100),q2=q0+rnd(1,Math.floor(q1/10)-1)*10,out=q0*p0+(q2-q0)*p1,rest=(q0+q1-q2)*p1;return[
      TALK([["luna","…先入先出法。先に仕入れたものから先に出ていく。古い単価から使う。"]],{n:"先入先出法",g:"",d:"払い出すとき、<b>古いほうの単価</b>から順に使う。<br>足りなくなったら次の単価へ。"}),
      CALC(`前月繰越 ${q0}個 @${yn(p0)}円、仕入 ${q1}個 @${yn(p1)}円。${q2}個を売った。払出金額(売上原価)は?`,"払出金額",out,`${q0}×${yn(p0)} + ${q2-q0}×${yn(p1)} = ${yn(out)}`),
-     CALC(`さっきの続き。売ったあとの残高金額は?(${q0+q1-q2}個残っている)`,"残高金額",rest,`残りはすべて新しい単価:${q0+q1-q2}×${yn(p1)} = ${yn(rest)}`),
+     CALC(`前月繰越 ${q0}個 @${yn(p0)}円、仕入 ${q1}個 @${yn(p1)}円。${q2}個を売った(先入先出法)。売ったあとの残高金額は?`,"残高金額",rest,`残りはすべて新しい単価:${q0+q1-q2}×${yn(p1)} = ${yn(rest)}`),
      MC("先入先出法で払い出すとき、最初に使う単価は?",["いちばん古い単価","いちばん新しい単価","平均の単価"],"いちばん古い単価","先に入ったものから先に出る。")]}},
    {id:"c13l2",name:"移動平均法",make:lv=>{const m=mvScenario(lv),t=mvTable(m,false);return[
      TALK([["robo","ピピッ。移動平均法。仕入レルタビニ平均単価ヲ計算シ直シマス"]],{n:"移動平均法",g:"",d:"仕入れるたびに<br>平均単価 = 残高金額の合計 ÷ 残高数量<br>払い出しはその平均単価で計算する。"}),
@@ -2368,7 +2379,7 @@ ROAD.push(
      TBL("商品有高帳(移動平均法)の空欄をうめよう。",t.cols,t.rows,"平均単価は仕入のたびに計算し直す。売上(払出)はその時点の平均単価。","商品有高帳")]}},
    {id:"c13l3",name:"売上原価と売上総利益",make:lv=>{const m=mvScenario(lv),sp=Math.round(Math.max(m.u1,m.u2)*1.5/100)*100+100,sales=(m.q2+m.q4)*sp,t=mvTable(m,true);return[
      TBL("商品有高帳(移動平均法)を完成させよう。",t.cols,t.rows,"数量 → 単価 → 金額の順に埋めると楽。","商品有高帳"),
-     CALC(`この商品の当月の売上原価は?(払出金額の合計)`,"売上原価",m.cogs,`${yn(m.q2*m.u1)} + ${yn(m.q4*m.u2)} = ${yn(m.cogs)}`),
+     CALC(`移動平均法。前月繰越 ${m.q0}個 @${yn(m.p0)}円、5日 仕入 ${m.q1}個 @${yn(m.p1)}円、12日 売上 ${m.q2}個、20日 仕入 ${m.q3}個 @${yn(m.p3)}円、25日 売上 ${m.q4}個。当月の売上原価(払出金額の合計)は?`,"売上原価",m.cogs,`${yn(m.q2*m.u1)} + ${yn(m.q4*m.u2)} = ${yn(m.cogs)}`),
      CALC(`当月は合計 ${m.q2+m.q4}個を @${yn(sp)}円で売った。売上総利益は?(売上原価は ${yn(m.cogs)}円)`,"売上総利益",sales-m.cogs,`売上高 ${yn(sales)} − 売上原価 ${yn(m.cogs)} = ${yn(sales-m.cogs)}`)]}}
   ]},
  {id:"c14",no:14,month:"3月・2年目決算",title:"精算表と財務諸表",story:"2年目の決算。試算表から、損益計算書と貸借対照表を作りあげよう。3級の総まとめ!",color:"#9a2a2a",
@@ -2432,7 +2443,7 @@ K2({id:"k1",no:1,month:"株式会社 1年目",title:"商品売買の応用",stor
  {id:"k1l3",name:"決算整理のまとめ",make:lv=>{const b=A(lv,80000,200000),p=r100(10,30),Q=rnd(60,150),q=Q-rnd(2,8),n=p-r10(5,30),E=Q*p,gen=(Q-q)*p,hyo=q*(p-n);return[
    JR(`期首商品棚卸高 ${yn(b)}円を仕入勘定に振り替えた。`,[["仕入",b]],[["繰越商品",b]],["売上原価","商品"]),
    JR(`期末商品の帳簿棚卸高(${Q}個 @${yn(p)}円)を繰越商品に振り替えた。`,[["繰越商品",E]],[["仕入",E]],["商品","売上原価"]),
-   JR(`実地数量は ${q}個、正味売却価額は @${yn(n)}円だった。減耗損と評価損を計上する。`,[["棚卸減耗損",gen],["商品評価損",hyo]],[["繰越商品",gen+hyo]],["仕入","売上原価"]),
+   JR(`期末商品:帳簿数量 ${Q}個、実地数量 ${q}個、原価 @${yn(p)}円、正味売却価額 @${yn(n)}円。棚卸減耗損と商品評価損を計上する(三分法)。`,[["棚卸減耗損",gen],["商品評価損",hyo]],[["繰越商品",gen+hyo]],["仕入","売上原価"]),
    MC("商品評価損は、損益計算書ではふつうどこに含める?",["売上原価","営業外費用","特別損失"],"売上原価","評価損は売上原価の内訳として表示する。")]}}
 ]});
 K2({id:"k2",no:2,month:"株式会社 1年目",title:"預金と手形の応用",story:"銀行の残高と帳簿が合わない!?手形の裏書や割引にも挑戦。",color:"#146b8f",lessons:[
@@ -2476,7 +2487,7 @@ K2({id:"k4",no:4,month:"株式会社 1年目",title:"固定資産の応用",stor
    TALK([["robo","ピピッ。200%定率法。償却率 = 1 ÷ 耐用年数 × 2"]],{n:"200%定率法",g:"",d:"減価償却費 = (取得原価 − 減価償却累計額) × 償却率<br>償却率 = 1/耐用年数 × 2"}),
    CALC(`耐用年数 ${n}年の200%定率法の償却率は?(%で答える)`,"償却率(%)",Math.round(rate*100),`1÷${n}×2=${rate}(${Math.round(rate*100)}%)`),
    CALC(`備品 ${yn(C)}円、償却率 ${Math.round(rate*100)}%。1年目の減価償却費は?`,"減価償却費",d1,`${yn(C)}×${Math.round(rate*100)}%=${yn(d1)}`),
-   CALC(`2年目の減価償却費は?(1年目の償却額 ${yn(d1)}円)`,"減価償却費",d2,`(${yn(C)}−${yn(d1)})×${Math.round(rate*100)}%=${yn(d2)}`),
+   CALC(`備品 ${yn(C)}円、200%定率法の償却率 ${Math.round(rate*100)}%。1年目の償却額は ${yn(d1)}円だった。2年目の減価償却費は?`,"減価償却費",d2,`(${yn(C)}−${yn(d1)})×${Math.round(rate*100)}%=${yn(d2)}`),
    JR(`決算。2年目の減価償却費 ${yn(d2)}円を計上する(間接法)。`,[["減価償却費",d2]],[["減価償却累計額",d2]],["備品","未払金"])]}},
  {id:"k4l2",name:"建設仮勘定と除却",make:lv=>{const tot=A(lv,3000000,8000000),pre=Math.round(tot*.3/1000)*1000,C=A(lv,300000,800000),acc=Math.round(C*rpick([.6,.7,.8])/1000)*1000,ev=r1k(5,30),loss=C-acc-ev;return[
    TALK([["gou","倉庫の工事、半分払ったけどまだ完成してないッス!"],["luna","…完成前に払ったお金は「建設仮勘定」。"]],{n:"建設仮勘定",g:"資産",d:"建設中の固定資産への支払い。完成したら建物などに振り替える。"}),
@@ -2540,7 +2551,7 @@ K2({id:"k8",no:8,month:"株式会社 1年目",title:"税効果会計",story:"会
  {id:"k8l1",name:"貸倒引当金の損金不算入",make:lv=>{const a=r1k(10,90),t=a*30/100;return[
    TALK([["robo","ピピッ。会計デハ費用、税金ノ計算デハ費用ニナラナイ…ズレ発生"],["luna","…そのズレ×税率を「繰延税金資産」にする。税金の前払いみたいなもの。"]],{n:"税効果会計",g:"",d:"将来の税金が減る差異 × 税率 → 繰延税金資産 / 法人税等調整額<br>(この章では税率30%)"}),
    CALC(`貸倒引当金繰入 ${yn(a)}円が税法上は費用にならなかった。税率30%。繰延税金資産は?`,"繰延税金資産",t,`${yn(a)}×30%=${yn(t)}`),
-   JR(`決算。上の差異について税効果会計を適用する(税率30%)。`,[["繰延税金資産",t]],[["法人税等調整額",t]],["繰延税金負債","法人税等"]),
+   JR(`決算。税法上は費用にならなかった貸倒引当金繰入 ${yn(a)}円(将来減算一時差異)について税効果会計を適用する(税率30%)。`,[["繰延税金資産",t]],[["法人税等調整額",t]],["繰延税金負債","法人税等"]),
    MC("法人税等調整額が貸方に出ると、損益計算書の税金は?",["減る","増える","変わらない"],"減る","法人税等から差し引かれる。")]}},
  {id:"k8l2",name:"減価償却の超過",make:lv=>{const book=r1k(100,300),tax=book-r1k(10,60),ex=book-tax,t=ex*30/100;return[
    CALC(`会計上の減価償却費 ${yn(book)}円、税法上の限度額 ${yn(tax)}円。償却超過額は?`,"償却超過額",ex,`${yn(book)}−${yn(tax)}=${yn(ex)}`),
@@ -2603,7 +2614,7 @@ K2({id:"k12",no:12,month:"株式会社 2年目",title:"連結会計",story:"つ�
  {id:"k12l1",name:"資本連結",make:lv=>{const c=r1k(10,30)*100,re=r1k(2,10)*100,pct=rpick([60,70,80]),eq=c+re,par=eq*pct/100,gw=r1k(2,8)*100,cost=par+gw,nci=eq-par;return[
    TALK([["pon","まさか、ぼくの店が子会社になるとは…ポン"],["tencho","親会社の投資(子会社株式)と、子会社の資本を消し合うのが連結の第一歩だよ。"]],{n:"資本連結",g:"",d:"子会社の資本 × 親の持分 と 子会社株式 の差 → のれん<br>子会社の資本 × 他の株主の持分 → 非支配株主持分"}),
    CALC(`子会社の資本金 ${yn(c)}円・利益剰余金 ${yn(re)}円。親会社が${pct}%を ${yn(cost)}円で取得。のれんは?`,"のれん",gw,`(${yn(c)}+${yn(re)})×${pct}%=${yn(par)}、${yn(cost)}−${yn(par)}=${yn(gw)}`),
-   CALC(`同じ条件で、非支配株主持分は?`,"非支配株主持分",nci,`${yn(eq)}×${100-pct}%=${yn(nci)}`),
+   CALC(`子会社の資本金 ${yn(c)}円・利益剰余金 ${yn(re)}円。親会社が${pct}%を取得した。非支配株主持分は?`,"非支配株主持分",nci,`${yn(eq)}×${100-pct}%=${yn(nci)}`),
    JR(`支配獲得日の資本連結の仕訳。子会社の資本金 ${yn(c)}円、利益剰余金 ${yn(re)}円、子会社株式 ${yn(cost)}円(持分${pct}%)。`,[["資本金",c],["利益剰余金",re],["のれん",gw]],[["子会社株式",cost],["非支配株主持分",nci]],["資本準備金","繰越利益剰余金"])]}},
  {id:"k12l2",name:"のれん償却と利益の按分",make:lv=>{const gw=r1k(1,9)*1000,am=gw/10,ni=r1k(100,500),pct=rpick([60,70,80]),nci=ni*(100-pct)/100,dv=r1k(50,200),dp=dv*pct/100,dn=dv-dp;return[
    JR(`連結。のれん ${yn(gw)}円を10年で定額法により償却する。`,[["のれん償却",am]],[["のれん",am]],["減価償却費","利益剰余金"]),
@@ -2614,7 +2625,7 @@ K2({id:"k12",no:12,month:"株式会社 2年目",title:"連結会計",story:"つ�
    JR(`連結。親会社から子会社への売上高 ${yn(s)}円を相殺消去する。`,[["売上高",s]],[["売上原価",s]],["売掛金","仕入"]),
    JR(`連結。親会社の子会社に対する売掛金 ${yn(ar)}円を相殺消去する。`,[["買掛金",ar]],[["売掛金",ar]],["売上高","未払金"]),
    CALC(`子会社の期末在庫のうち ${yn(inv)}円は親会社から仕入れたもの。親会社の利益率は${rate}%。未実現利益は?`,"未実現利益",un,`${yn(inv)}×${rate}%=${yn(un)}`),
-   JR(`連結。上の未実現利益 ${yn(un)}円を消去する(ダウンストリーム)。`,[["売上原価",un]],[["商品",un]],["売上高","繰越商品"])]}}
+   JR(`連結。子会社の期末商品に含まれる、親会社が付けた利益(未実現利益)${yn(un)}円を消去する(ダウンストリーム)。`,[["売上原価",un]],[["商品",un]],["売上高","繰越商品"])]}}
 ]});
 /* ---------- 工業簿記 ---------- */
 K2({id:"k13",no:13,month:"工場編",title:"工業簿記のしくみ",story:"よね屋がオリジナル商品の工場を作った!材料・労務・経費で製品の原価を計算しよう。",color:"#8a5a14",lessons:[
@@ -2640,7 +2651,7 @@ K2({id:"k14",no:14,month:"工場編",title:"個別原価計算と部門別",stor
  {id:"k14l1",name:"予定配賦",make:lv=>{const base=rpick([1000,1200,1500,2000]),rate=r100(5,15),bud=base*rate,act=Math.round(base*rpick([.85,.9,.95])),app=act*rate;return[
    TALK([["robo","ピピッ。製造間接費ハ、予定ノ配賦率デ先ニ配リマス"]],{n:"予定配賦",g:"",d:"予定配賦率 = 年間予算 ÷ 基準操業度<br>予定配賦額 = 予定配賦率 × 実際操業度"}),
    CALC(`製造間接費の予算 ${yn(bud)}円、基準操業度 ${yn(base)}時間。予定配賦率は?`,"予定配賦率",rate,`${yn(bud)}÷${yn(base)}=${yn(rate)}`),
-   CALC(`実際の直接作業時間 ${yn(act)}時間。予定配賦額は?`,"予定配賦額",app,`${yn(rate)}×${yn(act)}=${yn(app)}`),
+   CALC(`予定配賦率 @${yn(rate)}円/時間、実際の直接作業時間 ${yn(act)}時間。予定配賦額は?`,"予定配賦額",app,`${yn(rate)}×${yn(act)}=${yn(app)}`),
    JR(`製造間接費 ${yn(app)}円を予定配賦した。`,[["仕掛品",app]],[["製造間接費",app]],["製品","製造間接費配賦差異"])]}},
  {id:"k14l2",name:"配賦差異の分析",make:lv=>{const base=rpick([1000,2000]),vr=r100(2,6),fix=r1k(250,750)*2,fr=fix/base,act=Math.round(base*rpick([.8,.9])),real=vr*act+fix+(r1k(-30,50)||12000),app=(vr+fr)*act,diff=app-real,allow=vr*act+fix,bud=allow-real,op=fr*(act-base);return[
    TALK([["luna","…予定と実際の差が配賦差異。予算差異と操業度差異に分ける。公式法。"]],{n:"差異分析(公式法)",g:"",d:"予算差異 = 予算許容額 − 実際発生額<br>操業度差異 = 固定費率 × (実際操業度 − 基準操業度)<br>マイナスは不利差異"}),
@@ -2669,7 +2680,7 @@ K2({id:"k15",no:15,month:"工場編",title:"総合原価計算",story:"人気商
  {id:"k15l3",name:"正常仕損",make:lv=>{const in_=rnd(10,20)*100,sp=rnd(1,5)*10,eq=rnd(1,4)*100,fq=in_-sp-eq,cost=in_*r10(20,50),u=cost/in_,emv=u*eq,fin=cost-emv;return[
    TALK([["robo","ピピッ。ERROR…製品ガ一部、不良品ニ"],["tencho","工程の終わりで出る正常な仕損は、完成品だけに負担させるんだよ。"]],{n:"正常仕損(終点発生)",g:"",d:"終点で発生 → 仕損品の原価は<b>完成品だけ</b>が負担<br>月末仕掛品は仕損の原価を負担しない"}),
    CALC(`当月投入 ${in_}個(材料費 ${yn(cost)}円・始点投入)。完成品 ${fq}個、正常仕損 ${sp}個(終点)、月末仕掛品 ${eq}個。月末仕掛品の材料費は?`,"月末仕掛品",emv,`${yn(cost)}÷${in_}個×${eq}=${yn(emv)}`),
-   CALC(`同じ条件で、完成品の材料費は?(仕損分は完成品が負担)`,"完成品",fin,`${yn(cost)}−${yn(emv)}=${yn(fin)}`),
+   CALC(`当月投入 ${in_}個(材料費 ${yn(cost)}円・始点投入)。完成品 ${fq}個、正常仕損 ${sp}個(終点発生)、月末仕掛品 ${eq}個。完成品の材料費は?(仕損分は完成品が負担)`,"完成品",fin,`${yn(cost)}−${yn(emv)}=${yn(fin)}`),
    MC("仕損が工程の途中(月末仕掛品の進捗より前)で発生したら?",["完成品と月末仕掛品の両方で負担","完成品だけで負担","仕損品は費用にしない"],"完成品と月末仕掛品の両方で負担","月末仕掛品もその地点を通過しているので両者負担。")]}}
 ]});
 K2({id:"k16",no:16,month:"工場編",title:"標準原価計算とCVP",story:"目標の原価と実際をくらべて、どこで損したか分析。損益分岐点も計算しよう。",color:"#7a1f4a",lessons:[
@@ -2678,14 +2689,14 @@ K2({id:"k16",no:16,month:"工場編",title:"標準原価計算とCVP",story:"目
    CALC(`標準価格 @${yn(sp)}円、実際価格 @${yn(ap)}円、実際消費量 ${yn(aq)}kg。価格差異は?(不利ならマイナス)`,"価格差異",pv,`(${sp}−${ap})×${aq}=${yn(pv)}`),
    CALC(`標準価格 @${yn(sp)}円、標準消費量 ${yn(sq)}kg、実際消費量 ${yn(aq)}kg。数量差異は?(不利ならマイナス)`,"数量差異",qv,`${sp}×(${sq}−${aq})=${yn(qv)}`),
    MC(`数量差異が ${yn(qv)}円。これは?`,["有利差異","不利差異"],qv>=0?"有利差異":"不利差異",qv>=0?"標準より少ない材料で作れた=有利。":"標準より材料を多く使った=不利。")]}},
- {id:"k16l2",name:"直接原価計算",make:lv=>{const q=rnd(5,20)*100,p=r100(10,30),v=Math.round(p*rpick([.4,.5,.6])/10)*10,F=r1k(100,400),S=p*q,V=v*q,CM=S-V;return[
+ {id:"k16l2",name:"直接原価計算",make:lv=>{const q=rnd(5,20)*100,p=r100(10,30),v=Math.round(p*rpick([.4,.5,.6])/10)*10,S=p*q,V=v*q,CM=S-V,F=Math.round(CM*rpick([.3,.4,.5,.6])/1000)*1000;return[
    TALK([["tencho","費用を「売れた数で増える変動費」と「いつも同じ固定費」に分けると、もうけの見通しが立てやすいんだよ。"]],{n:"直接原価計算",g:"",d:"売上高 − 変動費 = 貢献利益<br>貢献利益 − 固定費 = 営業利益"}),
    CALC(`販売価格 @${yn(p)}円、変動費 @${yn(v)}円、販売数量 ${q}個。貢献利益は?`,"貢献利益",CM,`(${yn(p)}−${yn(v)})×${q}=${yn(CM)}`),
    CALC(`貢献利益 ${yn(CM)}円、固定費 ${yn(F)}円。営業利益は?`,"営業利益",CM-F,`${yn(CM)}−${yn(F)}=${yn(CM-F)}`)]}},
  {id:"k16l3",name:"損益分岐点",make:lv=>{const p=r100(10,30),rate=rpick([20,25,40,50]),v=p*(100-rate)/100,F=r1k(100,500),be=F*100/rate,tp=r1k(50,200),tg=(F+tp)*100/rate,S=Math.ceil(be*1.25/10000)*10000,ms=Math.round((S-be)/S*1000)/10;return[
    TALK([["niya","もうけゼロの売上とか計算する意味ある?草"],["luna","…ある。いくら売れば赤字じゃないか。経営の基本。"]],{n:"損益分岐点",g:"",d:"損益分岐点売上高 = 固定費 ÷ 貢献利益率<br>目標利益の売上高 = (固定費+目標利益) ÷ 貢献利益率"}),
    CALC(`貢献利益率 ${rate}%、固定費 ${yn(F)}円。損益分岐点売上高は?`,"損益分岐点売上高",be,`${yn(F)}÷${rate}%=${yn(be)}`),
-   CALC(`同じ条件で、営業利益 ${yn(tp)}円を出すための売上高は?`,"売上高",tg,`(${yn(F)}+${yn(tp)})÷${rate}%=${yn(tg)}`),
+   CALC(`貢献利益率 ${rate}%、固定費 ${yn(F)}円。営業利益 ${yn(tp)}円を出すための売上高は?`,"売上高",tg,`(${yn(F)}+${yn(tp)})÷${rate}%=${yn(tg)}`),
    MC("貢献利益率が上がると、損益分岐点売上高は?",["下がる","上がる","変わらない"],"下がる","1円の売上で回収できる固定費が増えるので、少ない売上で黒字になる。")]}}
 ]});
 Object.assign(BOSSN,{k1:"在庫の亡霊",k2:"銀行の窓口番",k3:"相場の妖怪",k4:"焼け跡の主",k5:"リース屋の影",k6:"引当金の門番",k7:"為替の魔術師",k8:"税効果の番人",k9:"株主総会の議長",k10:"契約の守護者",k11:"支店長",k12:"ポン吉商店(真の姿)",k13:"工場長",k14:"配賦の迷い子",k15:"ラインの番人",k16:"原価の大魔王"});
@@ -2699,7 +2710,7 @@ K1({id:"j1",no:1,month:"上場準備編",title:"収益認識の応用",story:"�
  {id:"j1l1",name:"変動対価",make:lv=>{const q=rnd(5,20)*100,p=r100(10,50),tot=q*p,r=rpick([2,4,5,10]),rb=tot*r/100;return[
    TALK([["luna","…リベートや返品が見込まれるなら、その分は売上にしない。変動対価。"]],{n:"変動対価",g:"",d:"受け取る対価が変わりうる部分(リベート・返品など)は、<br>見込額を<b>返金負債</b>にして売上から除く。"}),
    CALC(`商品 ${q}個を @${yn(p)}円で掛け販売。売上の ${r}%はリベートとして返金が見込まれる。計上する売上高は?`,"売上高",tot-rb,`${yn(tot)}×(100−${r})%=${yn(tot-rb)}`),
-   JR(`上の販売の仕訳(リベート見込 ${yn(rb)}円)。`,[["売掛金",tot]],[["売上",tot-rb],["返金負債",rb]],["契約負債","売上割戻引当金"]),
+   JR(`商品 ${q}個を @${yn(p)}円で掛け販売した。売上の${r}%(${yn(rb)}円)はリベートとして返金が見込まれる。`,[["売掛金",tot]],[["売上",tot-rb],["返金負債",rb]],["契約負債","売上割戻引当金"]),
    MC("百貨店が仕入先の商品を預かって売る「消化仕入」。百貨店が代理人なら売上は?",["手数料だけ(純額)","販売額の総額","売上は計上しない"],"手数料だけ(純額)","代理人は手数料部分を純額で収益にする。")]}},
  {id:"j1l2",name:"重要な金融要素",make:lv=>{const Y=r1k(5,20)*100,i=rpick([2,4,5]),X=Math.round(Y*(1+i/100)*(1+i/100)),y1=Y*i/100;return[
    TALK([["tencho","2年後にお金をもらう約束で売ったら、その中には利息が含まれているんだよ。"]],{n:"重要な金融要素",g:"",d:"売上は<b>現金販売価格</b>で計上。<br>差額は時の経過に応じて受取利息に配分する。"}),
@@ -2716,7 +2727,7 @@ K1({id:"j2",no:2,month:"上場準備編",title:"金融商品",story:"貸した�
  {id:"j2l1",name:"貸倒見積(CF見積法)",make:lv=>{const B=r1k(50,200)*100,cf=B,f=rpick([0.9070,0.8900,0.9246]),pv=Math.round(cf*f),al=B-pv;return[
    TALK([["luna","…貸倒懸念債権。将来もらえるお金を、最初の利子率で割り引いた現在価値と、帳簿価額の差が貸倒見積高。"]],{n:"キャッシュ・フロー見積法",g:"",d:"貸倒見積高 = 債権の帳簿価額 − 将来CFの現在価値<br>(当初の約定利子率で割り引く)"}),
    CALC(`貸付金 ${yn(B)}円。条件緩和後、2年後に元本 ${yn(cf)}円だけ回収できる見込み(利息免除)。現価係数 ${f}。将来CFの現在価値は?(円未満四捨五入)`,"現在価値",pv,`${yn(cf)}×${f}=${yn(pv)}`),
-   CALC(`同じ条件で、貸倒見積高は?`,"貸倒見積高",al,`${yn(B)}−${yn(pv)}=${yn(al)}`),
+   CALC(`貸付金 ${yn(B)}円。将来CFの現在価値は ${yn(pv)}円と計算された(キャッシュ・フロー見積法)。貸倒見積高は?`,"貸倒見積高",al,`${yn(B)}−${yn(pv)}=${yn(al)}`),
    JR(`決算。貸倒引当金 ${yn(al)}円を設定する(残高なし)。`,[["貸倒引当金繰入",al]],[["貸倒引当金",al]],["貸付金","貸倒損失"])]}},
  {id:"j2l2",name:"償却原価法(利息法)",make:lv=>{const F=rpick([1000000,2000000]),c=rpick([1,2]),e=c+rpick([1,2]),P=F-r1k(2,9)*10,int=P*e/100,cp=F*c/100,am=int-cp;return[
    TALK([["robo","ピピッ。利息法。帳簿価額 × 実効利子率 ガ 利息配分額デス"]],{n:"利息法",g:"",d:"利息配分額 = 帳簿価額 × 実効利子率<br>償却額 = 利息配分額 − クーポン受取額"}),
@@ -2751,7 +2762,7 @@ K1({id:"j4",no:4,month:"上場準備編",title:"固定資産と減損",story:"�
    CALC(`除去費用の見積額 ${yn(E)}円、${n}年後に除去、割引率3%の現価係数 ${f}。資産除去債務は?(円未満四捨五入)`,"資産除去債務",pv,`${yn(E)}×${f}=${yn(pv)}`),
    JR(`機械 ${yn(C)}円を当座預金で購入した。資産除去債務 ${yn(pv)}円を計上する。`,[["機械装置",C+pv]],[["当座預金",C],["資産除去債務",pv]],["減価償却累計額","未払金"]),
    CALC(`1年後、資産除去債務 ${yn(pv)}円の時の経過による増加(利息費用、3%)は?(円未満四捨五入)`,"利息費用",it,`${yn(pv)}×3%=${yn(it)}`)]}},
- {id:"j4l2",name:"減損損失",make:lv=>{const BV=r1k(300,900)*1000,U=Math.round(BV*rpick([.6,.7,.8])/1000)*1000,net=Math.round(BV*rpick([.4,.45,.5])/1000)*1000,use=Math.round(BV*rpick([.5,.55,.6])/1000)*1000,rec=Math.max(net,use),loss=BV-rec;return[
+ {id:"j4l2",name:"減損損失",make:lv=>{const BV=r1k(300,900)*10,U=Math.round(BV*rpick([.6,.7,.8])/1000)*1000,net=Math.round(BV*rpick([.4,.45,.5])/1000)*1000,use=Math.round(BV*rpick([.5,.55,.6])/1000)*1000,rec=Math.max(net,use),loss=BV-rec;return[
    TALK([["luna","…減損は3ステップ。兆候 → 認識(割引前CF < 帳簿価額?) → 測定(回収可能価額まで下げる)。"]],{n:"減損会計",g:"",d:"割引前将来CF < 帳簿価額 なら減損を認識<br>回収可能価額 = 正味売却価額 と 使用価値 の<b>高いほう</b><br>減損損失 = 帳簿価額 − 回収可能価額"}),
    MC(`帳簿価額 ${yn(BV)}円、割引前将来CF ${yn(U)}円。減損損失を認識する?`,["認識する","認識しない"],U<BV?"認識する":"認識しない","割引前将来CFが帳簿価額より小さいので認識する。"),
    CALC(`正味売却価額 ${yn(net)}円、使用価値 ${yn(use)}円。回収可能価額は?`,"回収可能価額",rec,`高いほう → ${yn(rec)}`),
@@ -2759,7 +2770,7 @@ K1({id:"j4",no:4,month:"上場準備編",title:"固定資産と減損",story:"�
  {id:"j4l3",name:"級数法と見積りの変更",make:lv=>{const n=rpick([4,5]),S=n*(n+1)/2,C=S*r1k(20,80)*100,d1=C*n/S,d2=C*(n-1)/S,BV=r1k(300,900)*100,rem=rpick([3,4,5]);return[
    TALK([["robo","ピピッ。級数法。耐用年数ノ数字ヲ足シタ合計デ割リマス"]],{n:"級数法",g:"",d:"減価償却費 = 要償却額 × (残り年数) ÷ (1+2+…+耐用年数)"}),
    CALC(`機械 ${yn(C)}円、耐用年数 ${n}年、残存ゼロ、級数法。1年目の減価償却費は?`,"1年目",d1,`${yn(C)}×${n}/${S}=${yn(d1)}`),
-   CALC(`同じ機械の2年目の減価償却費は?`,"2年目",d2,`${yn(C)}×${n-1}/${S}=${yn(d2)}`),
+   CALC(`機械 ${yn(C)}円、耐用年数 ${n}年、残存ゼロ、級数法。2年目の減価償却費は?`,"2年目",d2,`${yn(C)}×${n-1}/${S}=${yn(d2)}`),
    CALC(`期首の帳簿価額 ${yn(BV)}円。当期から残りの耐用年数を ${rem}年に見直した(定額法・残存ゼロ)。当期の減価償却費は?(円未満四捨五入)`,"減価償却費",Math.round(BV/rem),`${yn(BV)}÷${rem}(見積りの変更は将来に向かって)`)]}}
 ]});
 K1({id:"j5",no:5,month:"上場準備編",title:"リース会計",story:"大型の機械をリースで調達。利息法で計算しよう。",color:"#1f6f8a",lessons:[
@@ -2767,7 +2778,7 @@ K1({id:"j5",no:5,month:"上場準備編",title:"リース会計",story:"大型�
    TALK([["luna","…1級は利息法。リース債務の残高 × 利子率 がその年の利息。"]],{n:"リース(利息法)",g:"",d:"支払利息 = 期首リース債務 × 利子率<br>元本返済 = リース料 − 支払利息"}),
    CALC(`期首のリース債務 ${yn(pv)}円、利子率 ${r}%。当期の支払利息は?`,"支払利息",it,`${yn(pv)}×${r}%=${yn(it)}`),
    JR(`リース料 ${yn(pay)}円を普通預金から支払った(支払利息 ${yn(it)}円)。`,[["リース債務",prin],["支払利息",it]],[["普通預金",pay]],["リース資産","前払費用"]),
-   CALC(`支払後のリース債務残高は?`,"リース債務",pv-prin,`${yn(pv)}−${yn(prin)}=${yn(pv-prin)}`)]}},
+   CALC(`期首のリース債務 ${yn(pv)}円。リース料 ${yn(pay)}円(うち支払利息 ${yn(it)}円)を支払った。支払後のリース債務残高は?`,"リース債務",pv-prin,`${yn(pv)}−${yn(prin)}=${yn(pv-prin)}`)]}},
  {id:"j5l2",name:"リースの判定",make:lv=>{const fair=r1k(100,300)*100,pvL=Math.round(fair*rpick([.85,.92,.95])/10000)*10000,ratio=Math.round(pvL/fair*100),life=rpick([6,8,10]),term=rpick([4,5,6,8]);const fin=ratio>=90||term/life>=.75;return[
    TALK([["tencho","リースが「ファイナンス」か「オペレーティング」かは、数字の基準で判定するよ。"]],{n:"ファイナンス・リースの判定",g:"",d:"現在価値基準:リース料総額の現在価値 ≧ 見積現金購入価額の<b>90%</b><br>経済的耐用年数基準:リース期間 ≧ 経済的耐用年数の<b>75%</b><br>どちらかを満たせばファイナンス・リース"}),
    CALC(`リース料総額の現在価値 ${yn(pvL)}円、見積現金購入価額 ${yn(fair)}円。現在価値は購入価額の何%?`,"割合(%)",ratio,`${yn(pvL)}÷${yn(fair)}=${ratio}%`),
@@ -2797,7 +2808,7 @@ K1({id:"j7",no:7,month:"海外展開編",title:"外貨換算の応用",story:"�
  {id:"j7l1",name:"為替予約(取引前)",make:lv=>{const d=r100(10,90),fr=rnd(105,150),y=d*fr;return[
    TALK([["tencho","取引の前に為替予約をしていたら、予約したレートで換算してしまえばいいんだよ(振当処理)。"]],{n:"為替予約(振当処理)",g:"",d:"取引発生時までに予約 → 予約レート(先物レート)で換算。<br>決済時に差損益は出ない。"}),
    CALC(`商品 ${yn(d)}ドルを掛けで輸入。取引前に1ドル=${fr}円で為替予約済み。仕入の金額は?`,"仕入",y,`${yn(d)}×${fr}=${yn(y)}`),
-   JR(`上の輸入取引の仕訳。`,[["仕入",y]],[["買掛金",y]],["為替差損益","前払費用"])]}},
+   JR(`商品 ${yn(d)}ドルを掛けで輸入した。取引前に1ドル=${fr}円で為替予約をしている(振当処理)。`,[["仕入",y]],[["買掛金",y]],["為替差損益","前払費用"])]}},
  {id:"j7l2",name:"為替予約(取引後)",make:lv=>{const d=r100(10,50),s0=rnd(110,140),s1=s0+rpick([-3,-2,2,3]),f1=s1+rpick([-2,-1,1,2]),dd=(s1-s0)*d,df=(f1-s1)*d;return[
    TALK([["luna","…取引のあとで予約したら、ズレを2つに分ける。直直差額(取引日→予約日の直物)は当期の損益、直先差額(予約日の直物→先物)は期間配分。"]],null),
    CALC(`買掛金 ${yn(d)}ドル。取引日の直物 ${s0}円、予約日の直物 ${s1}円。直直差額は?(買掛金が増える向きを+)`,"直直差額",dd,`(${s1}−${s0})×${yn(d)}=${yn(dd)}`),
@@ -2806,7 +2817,7 @@ K1({id:"j7",no:7,month:"海外展開編",title:"外貨換算の応用",story:"�
  {id:"j7l3",name:"外貨建有価証券",make:lv=>{const d=r100(50,200),fd=d+r100(1,20),cr=rnd(110,150),hr=cr-rpick([3,5,8]);return[
    TALK([["robo","ピピッ。外貨建ノ その他有価証券ハ、外貨ノ時価 × 決算日レート"]],null),
    CALC(`その他有価証券(取得 ${yn(d)}ドル、取得時 1ドル=${hr}円)。決算日の時価 ${yn(fd)}ドル、決算日レート ${cr}円。貸借対照表価額は?`,"貸借対照表価額",fd*cr,`${yn(fd)}×${cr}=${yn(fd*cr)}`),
-   CALC(`同じく、評価差額(時価 − 取得原価の円額)は?`,"評価差額",fd*cr-d*hr,`${yn(fd*cr)}−${yn(d)}×${hr}=${yn(fd*cr-d*hr)}`),
+   CALC(`その他有価証券(取得 ${yn(d)}ドル、取得時 1ドル=${hr}円)。決算日の時価 ${yn(fd)}ドル、決算日レート ${cr}円。評価差額(時価の円額 − 取得原価の円額)は?`,"評価差額",fd*cr-d*hr,`${yn(fd*cr)}−${yn(d)}×${hr}=${yn(fd*cr-d*hr)}`),
    MC("外貨建の子会社株式の決算時の換算レートは?",["取得時の為替相場","決算日の為替相場","期中平均相場"],"取得時の為替相場","子会社株式・関連会社株式は取得時レートのまま。")]}}
 ]});
 K1({id:"j8",no:8,month:"海外展開編",title:"税効果会計の応用",story:"税率の変更、回収できるかどうかの判断…税効果の上級テク。",color:"#4a4a6a",lessons:[
@@ -2818,20 +2829,20 @@ K1({id:"j8",no:8,month:"海外展開編",title:"税効果会計の応用",story:
  {id:"j8l2",name:"回収可能性",make:lv=>{const t=r1k(200,800)*10,ok=Math.round(t*rpick([.5,.6,.7])/1000)*1000,dta=ok*30/100;return[
    TALK([["tencho","将来もうからない見込みなら、税金が減るはずの分も回収できないよね。だから繰延税金資産を減らすの。"]],{n:"回収可能性",g:"",d:"将来の課税所得の見込みなどから、<br>回収できる分だけ繰延税金資産を計上する(評価性引当額)。"}),
    CALC(`将来減算一時差異 ${yn(t)}円のうち、回収可能と判断されたのは ${yn(ok)}円。繰延税金資産は?(税率30%)`,"繰延税金資産",dta,`${yn(ok)}×30%=${yn(dta)}`),
-   CALC(`評価性引当額(回収できない差異×30%)は?`,"評価性引当額",(t-ok)*30/100,`${yn(t-ok)}×30%`)]}},
+   CALC(`将来減算一時差異 ${yn(t)}円のうち、回収可能と判断されたのは ${yn(ok)}円。評価性引当額(回収できない差異×税率30%)は?`,"評価性引当額",(t-ok)*30/100,`${yn(t-ok)}×30%`)]}},
  {id:"j8l3",name:"連結の税効果",make:lv=>{const u=r1k(10,90)*10,t=u*30/100;return[
    TALK([["robo","ピピッ。連結デ消シタ未実現利益ニモ、税効果ヲカケマス"]],null),
    JR(`連結。棚卸資産に含まれる未実現利益 ${yn(u)}円を消去する(ダウンストリーム)。`,[["売上原価",u]],[["商品",u]],["売上高","繰延税金資産"]),
-   JR(`上の未実現利益 ${yn(u)}円について税効果会計を適用する(税率30%)。`,[["繰延税金資産",t]],[["法人税等調整額",t]],["繰延税金負債","法人税等"])]}}
+   JR(`連結。消去した棚卸資産の未実現利益 ${yn(u)}円について税効果会計を適用する(税率30%)。`,[["繰延税金資産",t]],[["法人税等調整額",t]],["繰延税金負債","法人税等"])]}}
 ]});
 K1({id:"j9",no:9,month:"上場編",title:"純資産の応用",story:"ついに上場!自己株式、新株予約権、ストック・オプション…株主との関係が複雑に。",color:"#6a3a7a",lessons:[
  {id:"j9l1",name:"自己株式",make:lv=>{const n=rpick([100,200,500]),p=r100(5,20),fee=r1k(1,9),cost=n*p,sp=p+r100(1,5),sn=n/2;return[
    TALK([["luna","…自社の株を買い戻したら「自己株式」。純資産のマイナス。手数料は取得原価に入れない。"]],{n:"自己株式",g:"",d:"取得:自己株式 / 当座預金(手数料は支払手数料)<br>処分差益 → その他資本剰余金"}),
    JR(`自己株式 ${n}株を @${yn(p)}円で取得し、手数料 ${yn(fee)}円とともに当座預金から支払った。`,[["自己株式",cost],["支払手数料",fee]],[["当座預金",cost+fee]],["資本金","その他資本剰余金"]),
    JR(`自己株式 ${sn}株(帳簿価額 @${yn(p)}円)を @${yn(sp)}円で処分し、当座預金に入金された。`,[["当座預金",sp*sn]],[["自己株式",p*sn],["その他資本剰余金",(sp-p)*sn]],["資本金","自己株式処分益"].slice(0,1).concat(["利益剰余金"]))]}},
- {id:"j9l2",name:"新株予約権",make:lv=>{const n=rpick([10,20,50]),w=r1k(1,5)*10,ex=r1k(10,50)*10,tw=n*w*10,tx=n*ex*10,tot=tw+tx;return[
+ {id:"j9l2",name:"新株予約権",make:lv=>{const n=rpick([10,20,50]),w=r1k(1,5)*10,ex=r1k(10,50)*10,tw=n*w,tx=n*ex,tot=tw+tx;return[
    TALK([["tencho","「決まった値段で株を買える権利」を売ったら「新株予約権」。権利が使われたら資本金に振り替えるよ。"]],{n:"新株予約権",g:"純資産",d:"発行:当座預金 / 新株予約権<br>権利行使:新株予約権+払込金 → 資本金(・資本準備金)"}),
-   JR(`新株予約権 ${n}個を1個 ${yn(w*10)}円で発行し、払込金は当座預金とした。`,[["当座預金",tw]],[["新株予約権",tw]],["資本金","前受金"]),
+   JR(`新株予約権 ${n}個を1個 ${yn(w)}円で発行し、払込金は当座預金とした。`,[["当座預金",tw]],[["新株予約権",tw]],["資本金","前受金"]),
    JR(`新株予約権 ${n}個すべてが行使され、払込金 ${yn(tx)}円が当座預金に入金された。全額を資本金とする。`,[["当座預金",tx],["新株予約権",tw]],[["資本金",tot]],["資本準備金","自己株式"])]}},
  {id:"j9l3",name:"ストック・オプション",make:lv=>{const n=rpick([50,100,200]),pr=r100(5,20)*3,per=rpick([24,36]),m=12,cost=n*pr*m/per;return[
    TALK([["gou","社員にストック・オプションが配られたッス!"],["luna","…会社側は、権利が確定するまでの勤務期間にわたって費用にする。株式報酬費用。"]],{n:"ストック・オプション",g:"",d:"各期の費用 = 公正な評価単価 × 付与数 × 経過月数 ÷ 対象勤務期間"}),
@@ -2880,15 +2891,15 @@ K1({id:"j12",no:12,month:"M&A編",title:"連結会計の応用",story:"子会社
  {id:"j12l3",name:"段階取得",make:lv=>{const bv=r1k(100,400)*10,fv=bv+r1k(10,80)*10;return[
    TALK([["robo","ピピッ。前カラ持ッテイタ株ニ買イ増シテ子会社ニ。前ノ株ハ時価ニ評価シ直シマス"]],{n:"段階取得",g:"",d:"支配獲得日の時価で、以前から持っていた株式を評価し直す。<br>差額 → 段階取得に係る差益(差損)"}),
    CALC(`以前から持っていたS社株式(帳簿価額 ${yn(bv)}円)の支配獲得日の時価は ${yn(fv)}円。段階取得に係る差益は?`,"段階取得に係る差益",fv-bv,`${yn(fv)}−${yn(bv)}=${yn(fv-bv)}`),
-   JR(`連結。上の株式を時価に評価替えする。`,[["子会社株式",fv-bv]],[["段階取得に係る差益",fv-bv]],["のれん","その他有価証券評価差額金"])]}}
+   JR(`連結。段階取得により、以前から持っていたS社株式(帳簿価額 ${yn(bv)}円)を支配獲得日の時価 ${yn(fv)}円に評価替えする。`,[["子会社株式",fv-bv]],[["段階取得に係る差益",fv-bv]],["のれん","その他有価証券評価差額金"])]}}
 ]});
 /* ---------- 工業簿記・原価計算 ---------- */
 K1({id:"j13",no:13,month:"工場拡大編",title:"費目別計算の応用",story:"工場が3つに増えた!材料副費、予定賃率、相互配賦…細かい計算に強くなろう。",color:"#8a5a14",lessons:[
  {id:"j13l1",name:"材料副費",make:lv=>{const pr=r1k(500,2000),r=rpick([3,4,5]),app=pr*r/100,act=app+(r100(-50,80)||300);return[
    TALK([["robo","ピピッ。材料副費(引取運賃・検収費ナド)ヲ予定配賦シマス"]],null),
    CALC(`材料の購入代価 ${yn(pr)}円、材料副費の予定配賦率 ${r}%。予定配賦額は?`,"予定配賦額",app,`${yn(pr)}×${r}%=${yn(app)}`),
-   CALC(`材料副費の実際発生額 ${yn(act)}円。材料副費差異は?(有利+・不利−)`,"材料副費差異",app-act,`${yn(app)}−${yn(act)}=${yn(app-act)}`)]}},
- {id:"j13l2",name:"予定賃率と賃率差異",make:lv=>{const r=r100(12,20),h=rnd(400,900),paid=r1k(500,1500)*10,pre=r1k(50,150)*10,cur=r1k(50,150)*10,act=paid-pre+cur,app=r*h,diff=app-act;return[
+   CALC(`材料の購入代価 ${yn(pr)}円、材料副費の予定配賦率 ${r}%。材料副費の実際発生額は ${yn(act)}円。材料副費差異は?(有利+・不利−)`,"材料副費差異",app-act,`${yn(app)}−${yn(act)}=${yn(app-act)}`)]}},
+ {id:"j13l2",name:"予定賃率と賃率差異",make:lv=>{const r=r100(12,20),h=rnd(400,900),app=r*h,act=app+(r100(-60,60)||2000),pre=r1k(50,150),cur=r1k(50,150),paid=act+pre-cur,diff=app-act;return[
    TALK([["luna","…実際の賃金 = 当月支払 − 前月未払 + 当月未払。予定賃率で消費した額との差が賃率差異。"]],null),
    CALC(`当月支払高 ${yn(paid)}円、前月未払 ${yn(pre)}円、当月未払 ${yn(cur)}円。当月の実際消費賃金は?`,"実際消費額",act,`${yn(paid)}−${yn(pre)}+${yn(cur)}=${yn(act)}`),
    CALC(`予定賃率 @${yn(r)}円、実際作業時間 ${h}時間。賃率差異は?(有利+・不利−、実際消費額 ${yn(act)}円)`,"賃率差異",diff,`${yn(r)}×${h}=${yn(app)}、${yn(app)}−${yn(act)}=${yn(diff)}`)]}},
@@ -2901,7 +2912,7 @@ K1({id:"j14",no:14,month:"工場拡大編",title:"総合原価計算の応用",s
  {id:"j14l1",name:"工程別(累加法)",make:lv=>{const q=rnd(5,10)*100,u1=r10(20,60),u2=r10(10,40),f1=q*u1,f2=q*(u1+u2);return[
    TALK([["robo","ピピッ。第1工程ノ完成品ハ、第2工程デ「前工程費」ニナリマス"]],{n:"累加法",g:"",d:"第1工程の完成品原価 → 第2工程の前工程費として加算<br>(始点投入の材料と同じ扱い)"}),
    CALC(`第1工程の完成品 ${q}個、単位原価 @${yn(u1)}円。第2工程に振り替える前工程費は?`,"前工程費",f1,`${q}×${yn(u1)}=${yn(f1)}`),
-   CALC(`第2工程で1個あたり ${yn(u2)}円の加工費がかかり、${q}個すべて完成(仕掛品なし)。完成品原価は?`,"完成品原価",f2,`${yn(f1)}+${q}×${yn(u2)}=${yn(f2)}`)]}},
+   CALC(`第1工程から前工程費 ${yn(f1)}円(${q}個分)を受け入れた。第2工程で1個あたり ${yn(u2)}円の加工費がかかり、${q}個すべて完成(仕掛品なし)。完成品原価は?`,"完成品原価",f2,`${yn(f1)}+${q}×${yn(u2)}=${yn(f2)}`)]}},
  {id:"j14l2",name:"等級別計算",make:lv=>{const qa=rnd(2,6)*100,qb=rnd(2,6)*100,ka=1,kb=rpick([0.5,0.8]),pa=qa*ka,pb=qb*kb,unit=r10(10,50),tot=(pa+pb)*unit;return[
    TALK([["luna","…大きさ違いの製品は等価係数で重みをつけて、積数の比で原価を分ける。"]],{n:"等級別総合原価計算",g:"",d:"積数 = 完成品数量 × 等価係数<br>各等級の原価 = 完成品原価 × 積数の比"}),
    CALC(`1級品 ${qa}個(等価係数 ${ka})、2級品 ${qb}個(等価係数 ${kb})。2級品の積数は?`,"積数",pb,`${qb}×${kb}=${pb}`),
@@ -2929,7 +2940,7 @@ K1({id:"j15",no:15,month:"工場拡大編",title:"標準原価計算の応用",s
    MC("材料受入価格差異の処理は?",["払出分と期末在庫分に配分する","全額を売上原価にする","特別損失にする"],"払出分と期末在庫分に配分する","受入時に把握した差異は、まだ使っていない材料にも関係するため。")]}
 ]});
 K1({id:"j16",no:16,month:"経営編",title:"直接原価計算と意思決定",story:"上場企業の経営者として最後の試練。どの製品を作る?設備投資はする?",color:"#7a1f4a",lessons:[
- {id:"j16l1",name:"固定費調整",make:lv=>{const dc=r1k(100,500)*1000,fu=r10(10,50),be=rnd(1,5)*100,en=rnd(1,5)*100,fe=en*fu,fb=be*fu,ab=dc+fe-fb;return[
+ {id:"j16l1",name:"固定費調整",make:lv=>{const dc=r1k(100,500)*10,fu=r10(10,50),be=rnd(1,5)*100,en=rnd(1,5)*100,fe=en*fu,fb=be*fu,ab=dc+fe-fb;return[
    TALK([["luna","…全部原価計算と直接原価計算の利益の差は、在庫に入っている固定製造原価の差だけ。"]],{n:"固定費調整",g:"",d:"全部原価計算の営業利益<br>= 直接原価計算の営業利益 + 期末在庫の固定製造原価 − 期首在庫の固定製造原価"}),
    CALC(`直接原価計算の営業利益 ${yn(dc)}円。製品1個あたりの固定製造原価 @${yn(fu)}円、期首在庫 ${be}個、期末在庫 ${en}個。全部原価計算の営業利益は?`,"営業利益",ab,`${yn(dc)}+${en}×${fu}−${be}×${fu}=${yn(ab)}`)]}},
  {id:"j16l2",name:"最適セールスミックス",make:lv=>{const ca=r100(3,8),cb=r100(3,8),ha=rnd(1,3),hb=rnd(1,3),ua=ca/ha,ub=cb/hb,first=ua>=ub?"製品A":"製品B";return[
@@ -2939,7 +2950,7 @@ K1({id:"j16",no:16,month:"経営編",title:"直接原価計算と意思決定",s
  {id:"j16l3",name:"設備投資の意思決定",make:lv=>{const inv=r1k(200,600)*100,cf=r1k(60,200)*100,n=rpick([3,4,5]),f={3:2.4869,4:3.1699,5:3.7908}[n],pv=Math.round(cf*f),npv=pv-inv;return[
    TALK([["gou","新しい機械、買うべきッスか!?"],["luna","…将来のキャッシュ・フローを現在価値に直して、投資額と比べる。正味現在価値法。"]],{n:"正味現在価値法(NPV)",g:"",d:"正味現在価値 = 将来CFの現在価値合計 − 投資額<br>プラスなら投資する価値がある"}),
    CALC(`毎年のキャッシュ・フロー ${yn(cf)}円が ${n}年続く。年金現価係数(10%)は ${f}。現在価値の合計は?(円未満四捨五入)`,"現在価値",pv,`${yn(cf)}×${f}=${yn(pv)}`),
-   CALC(`投資額 ${yn(inv)}円。正味現在価値は?(マイナスならマイナスで)`,"正味現在価値",npv,`${yn(pv)}−${yn(inv)}=${yn(npv)}`),
+   CALC(`投資額 ${yn(inv)}円、将来CFの現在価値の合計 ${yn(pv)}円。正味現在価値は?(マイナスならマイナスで)`,"正味現在価値",npv,`${yn(pv)}−${yn(inv)}=${yn(npv)}`),
    MC(`正味現在価値が ${yn(npv)}円。この投資は?`,["行うべき","行うべきでない"],npv>0?"行うべき":"行うべきでない","プラスなら投資案は有利。")]}}
 ]});
 Object.assign(BOSSN,{j1:"収益認識の番人",j2:"金融の魔女",j3:"百貨店の女王",j4:"減損の亡霊",j5:"リースの錬金術師",j6:"年金の長老",j7:"為替の大魔術師",j8:"税率の支配者",j9:"上場審査官",j10:"社債の守り手",j11:"合併の黒幕",j12:"グループの覇王",j13:"工場の三賢者",j14:"工程の迷宮主",j15:"差異の探偵",j16:"最後の経営判断"});
@@ -3043,6 +3054,7 @@ function fmtMS(t){t=Math.max(0,t);return Math.floor(t/60)+":"+String(t%60).padSt
 function rdClose(){if(RD&&RD.tick)clearInterval(RD.tick);const ov=$("#rdov");if(ov)ov.remove();RD=null;roadScreen()}
 function rdRender(){
   const ov=$("#rdov");if(!ov||!RD)return;
+  RDCALC=null;
   const s=RD.steps[RD.i];
   const done=RD.steps.slice(0,RD.i).filter(x=>x.t!=="talk").length;
   const prog=Math.min(100,done/Math.max(1,RD.steps.filter(x=>x.t!=="talk").length)*100);
@@ -3109,19 +3121,10 @@ function rdRender(){
     };draw();
   }
   if(s.t==="calc"){
-    const c={d:"0",acc:null,op:null,fresh:true};
-    const cal=k=>{
-      if(/^\d+$/.test(k)){c.d=c.fresh||c.d==="0"?(k==="00"?"0":k):(c.d+k).slice(0,12);c.fresh=false}
-      else if(k==="C"){c.d="0";c.acc=null;c.op=null;c.fresh=true}
-      else if(k==="⌫"){c.d=c.d.length>1?c.d.slice(0,-1):"0"}
-      else{const v=parseFloat(c.d);if(c.op&&!c.fresh){c.acc=c.op==="+"?c.acc+v:c.op==="−"?c.acc-v:c.op==="×"?c.acc*v:c.acc/v}else if(c.acc==null||!c.op)c.acc=v;
-        if(k==="="){c.d=String(Math.round(c.acc*100)/100);c.op=null;c.acc=null}else{c.op=k;c.d=String(Math.round(c.acc*100)/100)}c.fresh=true}
-      se("key",k);upd()};
-    const upd=()=>{body.querySelector(".rdcd2").textContent=yn(parseFloat(c.d)||0);RD.cur.val=parseFloat(c.d)||0;setReady(true)};
     body.innerHTML=`${tag("電卓で計算")}<h2 class="rdp">${s.label}の金額は?</h2>${qcard(s.q)}
-      <div class="rdcalc"><div class="rdcd2">0</div><div class="rdkeys">${["7","8","9","÷","4","5","6","×","1","2","3","−","0","00","C","+","⌫","="].map(k=>`<button class="rdk ${"÷×−+=".includes(k)?"op":k==="C"||k==="⌫"?"cl":""} ${k==="="?"eq":""}" data-k="${k}">${k}</button>`).join("")}</div></div>
-      <div class="rdhint">計算して、表示された数字で「チェック」</div>`;
-    body.querySelectorAll(".rdk").forEach(b=>b.onclick=()=>cal(b.dataset.k));
+      <div class="rdcwrap">${rdCalcHTML()}</div>
+      <div class="rdhint">装備中の電卓で計算 →「入力」か「チェック」で答える</div>`;
+    rdCalcMount({tgt:()=>s.label,onDisp:v=>{if(RD&&RD.cur){RD.cur.val=v;setReady(true)}},onIn:v=>{RD.cur.val=v;setReady(true);rdCheck()}});
   }
   if(s.t==="spot"){
     body.innerHTML=`${tag("間違い探し")}<div class="rdl">${castFace(rdSpotWho(s),"miss")}<div class="rdbb">${castOf(rdSpotWho(s))===CAST.robo?"ピピッ。仕訳シマシタ。…タブン、カンペキ":"この仕訳、1か所まちがえたかも…どこ?"}</div></div>${qcard(s.q)}
@@ -3138,23 +3141,16 @@ function rdRender(){
       return`<td class="${typeof v==="number"?"n":ci===0?"h":""}">${typeof v==="number"?yn(v):v}</td>`};
     body.innerHTML=`${tag(RD.o.kind==="exam"?"第"+s.sec+"問":(s.title||"表をうめる"))}${qcard(s.q)}
       <div class="rdtw"><table class="rdtb"><thead><tr>${s.cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${s.rows.map((row,ri)=>`<tr>${row.map((v,ci)=>cell(v,ri,ci)).join("")}</tr>`).join("")}</tbody></table></div>
-      <div class="rdtpad"><div class="rdtcur"><span id="rdtlab"></span><b class="rdcd2" id="rdtd">0</b></div>
-      <div class="rdkeys">${["7","8","9","÷","4","5","6","×","1","2","3","−","0","00","C","+","⌫","=","次の空欄 ›"].map(k=>`<button class="rdk ${"÷×−+=".includes(k)?"op":k==="C"||k==="⌫"?"cl":""} ${k==="="?"eq1":""} ${k.startsWith("次")?"nx":""}" data-k="${k}">${k}</button>`).join("")}</div></div>
-      <div class="rdhint">空欄をタップして電卓で入力(計算もできるよ)・${blanks.length}か所</div>`;
+      <div class="rdtpad"><div class="rdtcur"><span id="rdtlab"></span><button class="rdk nx" data-k="次">次の空欄 ›</button></div>${rdCalcHTML()}</div>
+      <div class="rdhint">空欄をタップ → 電卓で計算して「入力」・${blanks.length}か所</div>`;
     const lab=k=>{const [r,cc]=k.split("-").map(Number);return`${rdRowName(s,r)} / ${s.cols[cc]}`};
     const sync=()=>{body.querySelectorAll(".rdtc").forEach(b=>{const k=b.dataset.k;b.classList.toggle("act",k===act);b.classList.toggle("f",vals[k]!=null);b.textContent=vals[k]!=null?yn(vals[k]):""});
-      $("#rdtlab").textContent=act?lab(act):"";$("#rdtd").textContent=yn(parseFloat(c.d)||0);RD.cur.val=vals;setReady(blanks.every(k=>vals[k]!=null))};
-    const sel=k=>{act=k;c.d=vals[k]!=null?String(vals[k]):"0";c.acc=null;c.op=null;c.fresh=true;sync();const b=body.querySelector(`.rdtc[data-k="${k}"]`);if(b)b.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"})};
-    const key=k=>{
-      if(k.startsWith("次")){const i=blanks.indexOf(act);const nx=blanks.slice(i+1).concat(blanks.slice(0,i)).find(x=>vals[x]==null)||blanks[(i+1)%blanks.length];sel(nx);se("key","IN");return}
-      if(/^\d+$/.test(k)){c.d=c.fresh||c.d==="0"?(k==="00"?"0":k):(c.d+k).slice(0,12);c.fresh=false}
-      else if(k==="C"){c.d="0";c.acc=null;c.op=null;c.fresh=true;delete vals[act];se("key","C");sync();return}
-      else if(k==="⌫"){c.d=c.d.length>1?c.d.slice(0,-1):"0"}
-      else{const v=parseFloat(c.d);if(c.op&&!c.fresh){c.acc=c.op==="+"?c.acc+v:c.op==="−"?c.acc-v:c.op==="×"?c.acc*v:c.acc/v}else if(c.acc==null||!c.op)c.acc=v;
-        if(k==="="){c.d=String(Math.round(c.acc*100)/100);c.op=null;c.acc=null}else{c.op=k;c.d=String(Math.round(c.acc*100)/100)}c.fresh=true}
-      if(act){vals[act]=parseFloat(c.d)||0}se("key",k);sync()};
+      $("#rdtlab").textContent=act?"→ "+lab(act):"";if($("#cnum"))paintCalc();RD.cur.val=vals;setReady(blanks.every(k=>vals[k]!=null))};
+    const sel=k=>{act=k;sync();const b=body.querySelector(`.rdtc[data-k="${k}"]`);if(b)b.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"})};
+    const nxt=()=>{const i=blanks.indexOf(act);return blanks.slice(i+1).concat(blanks.slice(0,i)).find(x=>vals[x]==null)||blanks[(i+1)%blanks.length]};
+    rdCalcMount({compact:1,tgt:()=>act?lab(act):"",onIn:v=>{if(!act)return;vals[act]=v;const was=act;sync();if(blanks.some(x=>vals[x]==null))sel(nxt());else sync();const b=body.querySelector(`.rdtc[data-k="${was}"]`);if(b){b.classList.remove("flash");void b.offsetWidth;b.classList.add("flash")}}});
     body.querySelectorAll(".rdtc").forEach(b=>b.onclick=()=>{sel(b.dataset.k);se("key","IN")});
-    body.querySelectorAll(".rdtpad .rdk").forEach(b=>b.onclick=()=>key(b.dataset.k));
+    body.querySelector(".rdtpad .nx").onclick=()=>{sel(nxt());se("key","IN")};
     sync();setTimeout(()=>{const b=body.querySelector(".rdtc.act"),w=body.querySelector(".rdtw");if(b&&w)w.scrollLeft+=b.getBoundingClientRect().left-w.getBoundingClientRect().left-w.clientWidth/2+b.offsetWidth/2},50);
   }
   if(RD.exam)chk.textContent="解答して次へ";
@@ -3675,7 +3671,7 @@ function calcRows(L){return Math.max(...L.keys.map(k=>k[4]+(k[6]||1)-1))}
 
 const C={disp:"0",acc:null,op:null,fresh:true,mem:0,lastOp:null,lastArg:null,err:false,k:null,lastKey:"",hist:[],egg:0};
 const HELD=new Set();
-function shufActive(){return G&&G.fx&&G.fx.shufUntil&&now()<G.fx.shufUntil}
+function shufActive(){return P&&G&&G.fx&&G.fx.shufUntil&&now()<G.fx.shufUntil}
 function renderCalcKeys(){
   const box=$("#ckeys");if(!box)return;
   const L=curCalc(),id=REC.calc&&CALCS[REC.calc]?REC.calc:"std",rows=calcRows(L);
@@ -3708,8 +3704,11 @@ const TAPE={lines:[],cur:""};
 const SYM={"+":"+","-":"−","*":"×","/":"÷"};
 function fnum(v){if(!isFinite(v))return"E";const neg=v<0;let s=String(Math.abs(Math.round(v*1e8)/1e8));let[ip,fp]=s.split(".");ip=Number(ip).toLocaleString("en-US");return(neg?"−":"")+ip+(fp?"."+fp:"")}
 function tapePush(s){TAPE.lines.push(s);if(TAPE.lines.length>60)TAPE.lines.shift()}
+let RDCALC=null;
+function rdCalcHTML(){return`<div class="calc rdbc" id="calc"><div class="cdisp"><div class="cind" id="cind"></div><div class="cnum mono" id="cnum">0</div></div><div class="ckeys2" id="ckeys"></div></div>`}
+function rdCalcMount(o){RDCALC=o;Object.assign(C,{disp:"0",acc:null,op:null,fresh:true,lastOp:null,lastArg:null,err:false,k:null,lastKey:"",hist:[],egg:0,gt:0});renderCalcKeys();if(o.compact){const bx=$("#ckeys");if(bx)bx.style.gridTemplateRows=`repeat(${calcRows(curCalc())},${isPhone()?31:36}px)`}paintCalc()}
 function calcKey(k){
-  if(!P)return;
+  if(!P){if(RDCALC&&$("#calc")){se("key",k);calcKey0(k)}return}
   se("key",k);
   const preD=cur(),preF=C.fresh,preK=!!C.k,preV=P.vals[P.active],pa=P.active,preM=C.mem;
   calcKey0(k);
@@ -3736,8 +3735,8 @@ function paintTape(){
   b.scrollTop=b.scrollHeight;
 }
 function calcKey0(k){
-  if(!P)return;
-  if(P.locked&&k==="IN")return;
+  if(!P&&!RDCALC)return;
+  if(P&&P.locked&&k==="IN")return;
   guideTrack(k);
   C.hist.push(k);if(C.hist.length>5)C.hist.shift();
   if(C.egg){C.egg=0}
@@ -3768,6 +3767,7 @@ function calcKey0(k){
   else if(k==="M+"||k==="M-"){if(C.op)finish_eq();C.mem+=(k==="M+"?1:-1)*cur();C.fresh=true}
   else if(k==="MR"){setNum(C.mem);C.fresh=true}
   else if(k==="MC"){C.mem=0}
+  else if(k==="IN"&&!P){if(C.op&&!C.fresh)finish_eq();const v=cur();C.acc=null;C.op=null;C.fresh=true;C.lastKey=k;paintCalc();RDCALC.onIn(v);return}
   else if(k==="IN"){
     if(C.op&&!C.fresh)finish_eq();
     const bl=P.blanks[P.active];
@@ -3789,7 +3789,8 @@ function paintCalc(){
   let s=C.disp;const neg=s.startsWith("-");if(neg)s=s.slice(1);
   let [ip,fp]=s.split(".");ip=Number(ip).toLocaleString("en-US");
   n.textContent=(neg?"−":"")+ip+(fp!==undefined?"."+fp:"");
-  const tl=P&&!P.locked&&P.lines?(P.lines.find(l=>l[1]===P.active)||[""])[0]:"";
+  const tl=P&&!P.locked&&P.lines?(P.lines.find(l=>l[1]===P.active)||[""])[0]:(!P&&RDCALC&&RDCALC.tgt?RDCALC.tgt():"");
+  if(!P&&RDCALC&&RDCALC.onDisp)RDCALC.onDisp(cur());
   ind.innerHTML=`<span class="tgt">${tl?"→ "+esc(tl.replace(/\(.*?\)/g,"")):""}</span><span>${C.gt?"GT":""}</span><span>${C.k?"K":""}</span><span>${C.mem!==0?"M":""}</span><span>${C.err?"E":""}</span><span>${C.op?{"+":"+","-":"−","*":"×","/":"÷"}[C.op]:""}</span>`;
 }
 
@@ -3856,6 +3857,9 @@ document.addEventListener("contextmenu",e=>{if(inGame(e.target))e.preventDefault
 document.addEventListener("selectionchange",()=>{const s=document.getSelection();if(s&&s.rangeCount&&inGame(s.anchorNode))s.removeAllRanges()});
 
 document.addEventListener("keydown",e=>{
+  if(!P&&RDCALC&&$("#calc")&&$("#rdov")){const tg=document.activeElement&&document.activeElement.tagName;if(tg==="INPUT"||tg==="TEXTAREA")return;
+    if(/^[0-9.+\-*/%]$/.test(e.key)){e.preventDefault();calcKey(e.key);return}
+    const m={"Enter":"=","=":"=","Backspace":"BS","Escape":"AC","Delete":"C","Tab":"IN"};if(m[e.key]){e.preventDefault();calcKey(m[e.key])}return}
   if(!G||!P||!$("#calc"))return;
   const tg=document.activeElement&&document.activeElement.tagName;
   if(tg==="INPUT"||tg==="TEXTAREA")return;
@@ -4256,12 +4260,48 @@ function endBattle(win,why){
 const NET={nr:null,code:"",name:"",opp:null,unsub:null,munsub:null,pres:{},screen:"",bc:false,gs:{},msgAt:0,missAt:0};
 function leaveNet(){
   if(NET.nr){try{NET.unsub&&NET.unsub()}catch(e){}try{NET.munsub&&NET.munsub()}catch(e){}NET.nr.leave().catch(()=>{});}
-  NET.nr=null;NET.opp=null;NET.unsub=null;NET.munsub=null;NET.screen="";NET.missAt=0;
+  NET.nr=null;NET.opp=null;NET.unsub=null;NET.munsub=null;NET.screen="";NET.missAt=0;if(NET.tk){clearInterval(NET.tk);NET.tk=null}
 }
 function setPres(patch){Object.assign(NET.pres,patch);if(NET.nr)NET.nr.presence(patch).catch(()=>{})}
 function netGame(patch){
   if(!NET.nr)return;
   if(NET.bc){NET.gs=Object.assign({},NET.gs,patch);NET.nr.send(NET.gs)}else setPres(patch);
+}
+/* ===== オンラインのエラー表示 ===== */
+const NERR={
+  E01:["インターネットにつながっていません","Wi-Fiやモバイル通信がオフ、または電波が弱いみたい。","通信をオンにしてから入り直してね。"],
+  E02:["オンライン対戦が設定されていません","このindex.htmlにサーバー(Supabase)のURLやキーが入っていません。","公開版のindex.htmlを使っているか確認してね。"],
+  E03:["通信用のプログラムが読み込めませんでした","広告ブロッカー・学校/会社のネットワーク・通信制限で、supabase-jsの読み込みが止められているかも。","ページを再読み込みするか、別の回線(モバイル通信など)でためしてね。"],
+  E04:["サーバーに入室を断られました","サーバー側の設定(Realtime)やキーが正しくない、または接続数が上限に達しています。","少し待ってもう一度。何度も出るなら管理者に連絡してね。"],
+  E05:["サーバーの応答がありません","通信が遅いか、途中でブロックされています。","電波のよい場所で入り直してね。"],
+  E06:["接続が切れました","サーバーとの接続が閉じられました。","もう一度入り直してね。"],
+  E10:["相手が見つかりません","この部屋にはまだあなたしかいません。","相手と部屋コードが同じか確認してね(大文字・小文字も)。"],
+  E11:["部屋が満員です","この部屋にはすでに2人以上います。いちばん早く入った人と対戦します。","別の部屋コードにするとスムーズだよ。"],
+  E12:["相手のアプリが古いバージョンです","バージョンがちがうと対戦の通信ができません。","2人ともページを再読み込み(スマホならタブを閉じて開き直す)してから入り直してね。"],
+  E13:["開始の合図が届きません","2人とも準備OKなのに、合図が相手に届いていないみたい。","一度「準備OKを取り消す」→もう一度押してね。直らなければ入り直してね。"],
+  E20:["通信が不安定です(再接続中…)","サーバーとの接続が切れたので、自動で入り直しています。","そのまま少し待ってね。"],
+  E21:["通信が切れたため対戦を中断しました","20秒以上サーバーにつながりませんでした。この対戦は勝敗に数えません。","電波のよい場所で、もう一度入り直してね。"],
+  E22:["相手からの通信が止まっています","相手の電波が悪いか、アプリを閉じたかも。","10秒たっても戻らなければ、相手の退出として扱います。"],
+};
+function netErrHTML(code,extra){const e=NERR[code]||["エラーが発生しました","",""];
+  return`<div class="nerr"><div class="net">⚠️ ${e[0]} <small class="mono">${code}</small></div>${e[1]?`<div>${e[1]}</div>`:""}${e[2]?`<div class="nfix">→ ${e[2]}</div>`:""}${extra?`<div class="ndet mono">${esc(String(extra)).slice(0,160)}</div>`:""}</div>`}
+function joinErrCode(e){const c=e&&e.code||"";if(!navigator.onLine)return"E01";if(c==="CHANNEL_ERROR")return"E04";if(c==="TIMED_OUT"||c==="timeout")return"E05";if(c==="CLOSED")return"E06";return"E05"}
+function lobbyFail(code,extra){const ls=app.querySelector(".lobby .ls");if(!ls)return;
+  ls.innerHTML=netErrHTML(code,extra)+`<button class="big" id="retry" style="margin-top:12px">もう一度つなぐ</button><button class="big sec" id="tocpu" style="margin-top:8px">CPU対戦で遊ぶ</button>`;
+  $("#retry").onclick=()=>lobby(NET.code,NET.name);$("#tocpu").onclick=()=>{leaveNet();vsMenu()}}
+function netTick(){
+  if(!NET.nr){return}
+  const t=Date.now(),nr=NET.nr;
+  if(NET.screen==="lobby"){
+    let w="";
+    if(nr.ok===false&&nr.downAt){w=t-nr.downAt>15000?netErrHTML("E21").replace("対戦を中断しました","部屋から切断されました").replace("この対戦は勝敗に数えません。",""):netErrHTML("E20")}
+    else if(!navigator.onLine)w=netErrHTML("E01");
+    else if(!NET.opp&&t-NET.joinAt>30000)w=netErrHTML("E10");
+    else if(NET.nOthers>1)w=netErrHTML("E11");
+    else if(NET.pres.rd&&NET.opp&&NET.opp.presence.rd&&NET.bothRdAt&&t-NET.bothRdAt>6000)w=netErrHTML("E13");
+    if(NET.opp&&NET.pres.rd&&NET.opp.presence.rd){if(!NET.bothRdAt)NET.bothRdAt=t}else NET.bothRdAt=0;
+    const box=app.querySelector("#netw");if(box&&box.dataset.h!==w){box.dataset.h=w;box.innerHTML=w}
+  }
 }
 async function lobby(code,name){
   stopCpu();leaveNet();
@@ -4269,15 +4309,15 @@ async function lobby(code,name){
   app.innerHTML=`<div class="title"><button class="back" id="bk">← もどる</button><div class="lobby"><div class="lc">部屋 <b class="mono">${esc(code)}</b></div><div class="ls">接続中…</div></div></div>`;
   $("#bk").onclick=()=>{leaveNet();vsMenu()};
   if(!ROOM){await new Promise(r=>setTimeout(r,1500))}
-  if(!ROOM){
-    app.querySelector(".ls").innerHTML=`オンライン対戦につながらなかったよ。<br>(公開版:index.html の SB_URL / SB_KEY が未設定か、通信がブロックされています)<br>CPU対戦・タイムアタック・スコアアタックは遊べるよ。<br><br><button class="big sec" id="tocpu">CPU対戦で遊ぶ</button>`;
-    $("#tocpu").onclick=vsMenu;return;
-  }
+  if(!navigator.onLine){lobbyFail("E01");return}
+  if(!ROOM){lobbyFail(!SB_URL||!SB_KEY?"E02":!window.supabase?"E03":"E05");return}
   try{NET.nr=await ROOM.join("bb-"+code)}catch(e){
-    app.querySelector(".ls").innerHTML=`部屋に入れなかった(${esc(e&&e.code||"error")})。少し待ってもう一度ためしてね。`;return}
+    if(NET.code!==code)return;lobbyFail(joinErrCode(e),[e&&e.code,e&&e.msg].filter(Boolean).join(" / "));return}
+  NET.joinAt=Date.now();NET.bothRdAt=0;NET.nOthers=0;
+  if(NET.tk)clearInterval(NET.tk);NET.tk=setInterval(netTick,1000);
   NET.bc=typeof NET.nr.send==="function"&&typeof NET.nr.onMsg==="function";
-  NET.pres=NET.bc?{nm:name,st:"lobby",rd:false,ra:0,gid:0,ff:0,av:REC.av||"",bs:bsetKey(bset())}
-                 :{nm:name,st:"lobby",rd:false,ra:0,gid:0,hp:HP0,dead:false,at:[],bl:[],sk:0,ff:0,av:REC.av||"",bs:bsetKey(bset())};
+  NET.pres=NET.bc?{v:NETV,nm:name,st:"lobby",rd:false,ra:0,gid:0,ff:0,av:REC.av||"",bs:bsetKey(bset())}
+                 :{v:NETV,nm:name,st:"lobby",rd:false,ra:0,gid:0,hp:HP0,dead:false,at:[],bl:[],sk:0,ff:0,av:REC.av||"",bs:bsetKey(bset())};
   NET.nr.presence(NET.pres).catch(()=>{});
   NET.unsub=NET.nr.onPeers(ch=>netPeers(ch.peers));
   if(NET.bc)NET.munsub=NET.nr.onMsg(netMsg);
@@ -4294,15 +4334,16 @@ function renderLobby(){
      <div class="vsx">VS</div>
      <div class="pc ${op.rd?"rd":""}">${o?`<img class="pav" src="${avSrc(op.av)}" alt=""><b>${esc(op.nm||"?")}</b><small>相手</small><span>${op.st==="play"?"対戦中…":op.rd?"準備OK":"待機中"}</span>`:`<b>…</b><small>相手を待っています</small><span>同じ部屋コードで入室してもらってね</span>`}</div></div>
     <button class="big ${me.rd?"sec":""}" id="rdy" ${o?"":"disabled"}>${me.rd?"準備OKを取り消す":"準備OK!"}</button>
-    <div class="ls" style="margin-top:12px">2人とも「準備OK」で対戦スタート ・ <b>${bsLabel(me.bs)}</b></div>
-    ${o&&op.bs&&op.bs!==me.bs?`<div class="bswarn">⚠️ 相手は「${bsLabel(op.bs)}」になっているよ。バトル画面で級・範囲をそろえてから入り直してね</div>`:""}
+    <div class="ls" style="margin-top:12px">2人とも「準備OK」で対戦スタート ・ <b>${bsLabel(o?roomBs():me.bs)}</b></div>
+    ${o&&(op.v||0)!==NETV?netErrHTML("E12"):o&&(op.bs||"1.all")!==(me.bs||"1.all")?`<div class="ls">設定がちがうので、先に準備OKした人の「${bsLabel(roomBs())}」で対戦するよ</div>`:""}
+    <div id="netw" data-h=""></div>
    </div></div>`;
   $("#bk").onclick=()=>{leaveNet();vsMenu()};
   $("#rdy").onclick=()=>{setPres(me.rd?{rd:false}:{rd:true,ra:Date.now()});renderLobby();checkStart()};
 }
 function netPeers(peers){
   if(!NET.nr)return;
-  const others=peers.filter(p=>!p.sameTab&&p.presence&&typeof p.presence.nm==="string").sort((a,b)=>a.peer<b.peer?-1:1);
+  const others=peers.filter(p=>!p.sameTab&&p.presence&&typeof p.presence.nm==="string").sort((a,b)=>a.peer<b.peer?-1:1);NET.nOthers=others.length;
   const prev=NET.opp;
   NET.opp=others.find(p=>prev&&p.peer===prev.peer)||others[0]||null;
   if(NET.screen==="lobby"){renderLobby();checkStart();return}
@@ -4336,23 +4377,41 @@ function netApply(op){
 function netWatch(){
   if(!G||G.mode!=="online"||G.ended||!NET.nr)return;
   const t=Date.now();
-  if(NET.nr.ok===false){NET.missAt=0;return}
+  if(NET.nr.ok===false){NET.missAt=0;const d=NET.nr.downAt?t-NET.nr.downAt:0;
+    if(d>20000){netFatal("E21");return}
+    if(d>2000&&!G.nwarn){G.nwarn=1;banner("📡 通信が切れた…再接続中(E20)","info")}return}
+  if(G.nwarn){G.nwarn=0;banner("📡 再接続できた!","info")}
+  if(!navigator.onLine&&!G.offw){G.offw=1;banner("📡 インターネットにつながっていません(E01)","info")}else if(navigator.onLine)G.offw=0;
+  const quiet=t-(NET.msgAt||t);
+  if(NET.opp&&G.running&&quiet>6000&&!G.qwarn){G.qwarn=1;banner("⏳ 相手からの通信が止まっています(E22)","info")}
+  if(quiet<3000)G.qwarn=0;
   if(NET.opp||!NET.missAt)return;
   if(t-NET.missAt>=10000&&t-(NET.msgAt||0)>=10000)endBattle(true,"相手が退出した");
 }
+function netFatal(code){
+  if(!G||G.ended)return;G.ended=true;stopTimer();bgmStop();try{pause()}catch(e){}
+  document.querySelectorAll(".fb,.banner").forEach(x=>x.remove());
+  app.innerHTML=`<div class="title"><div class="lobby">${netErrHTML(code)}<button class="big" id="retry" style="margin-top:14px">部屋に入り直す</button><button class="big sec" id="home2" style="margin-top:8px">もどる</button></div></div>`;
+  $("#retry").onclick=()=>{G=null;lobby(NET.code,NET.name)};$("#home2").onclick=()=>{G=null;leaveNet();vsMenu()};
+}
 function bsLabel(k){if(!k)return"1級・全部";const [g,s]=k.split(".");return`${g}級・${{all:"全部",com:"商業",ind:"工業"}[s]||"全部"}`}
+const NETV=4;
+/* 級・範囲がちがうときは、先に「準備OK」した人の設定に合わせる(同時なら文字順) */
+function roomBs(){const o=NET.opp,op=o&&o.presence||{},me=NET.pres;const a=me.bs||"1.all",b=op.bs||"1.all";if(a===b)return a;
+  const ra=me.rd?Number(me.ra)||0:Infinity,rb=op.rd?Number(op.ra)||0:Infinity;if(ra!==rb)return ra<rb?a:b;return a<b?a:b}
 function checkStart(){
   const o=NET.opp;if(!o||NET.screen!=="lobby")return;
   const op=o.presence,me=NET.pres;
-  if((op.bs||"1.all")!==(me.bs||"1.all"))return;
+  if((op.v||0)!==NETV)return;
+  const bs=roomBs();
   const gid0=Math.max(Number(me.ra)||0,Number(op.ra)||0);
   /* 相手が先に始めた(準備OK→対戦中が同時に届いた)場合も一緒に始める */
   if(me.rd&&me.st==="lobby"&&((op.rd&&op.st==="lobby")||(op.st==="play"&&op.gid===gid0&&gid0>0))){
     const gid=gid0;
-    NET.screen="play";NET.missAt=0;NET.msgAt=0;
+    NET.screen="play";NET.missAt=0;NET.msgAt=Date.now()+4000;
     if(NET.bc){setPres({st:"play",rd:false,gid,ff:0});NET.gs={gid,hp:HP0,dead:false,at:[],bl:[],sk:0}}
     else setPres({st:"play",rd:false,gid,hp:HP0,dead:false,at:[],bl:[],sk:0,ff:0});
-    startBattle("online",{seed:NET.code+":"+gid+"#"+(me.bs||"1.all"),gid,myName:me.nm,oppName:op.nm||"相手"});
+    startBattle("online",{seed:NET.code+":"+gid+"#"+bs,gid,myName:me.nm,oppName:op.nm||"相手"});
   }
 }
 function netPub(){
