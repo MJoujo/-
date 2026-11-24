@@ -3641,11 +3641,11 @@ function rankResHTML(x){return`<div class="rkres"><div class="rkt">🏆 ラン�
   ${x.bonus?`<div class="rkmsg">🔥 連勝ボーナス +${x.bonus}</div>`:""}${x.msg?`<div class="rkmsg">${x.msg}</div>`:""}</div>`}
 function rkCpuL(r){const t=Math.max(-.3,Math.min(1.3,(r-800)/1200));return{n:"ゴースト",read:Math.max(4,16-10*t),spd:Math.max(6,28-17*t),acc:Math.min(.96,.65+.25*t),itm:Math.min(.7,.25+.35*t)}}
 /* ---- マッチング(待合室 bb-q-<級> の presence を全員が同じ規則でペアにする) ---- */
-const RQ={nr:null,gr:"",t0:0,id:"",tk:null,cand:null,candN:0,peers:[],off:false,unsub:null};
-function rkLeave(){if(RQ.tk)clearInterval(RQ.tk);RQ.tk=null;if(RQ.nr){try{RQ.unsub&&RQ.unsub()}catch(e){}RQ.nr.leave().catch(()=>{})}RQ.nr=null;RQ.unsub=null;RQ.peers=[]}
+const RQ={nr:null,gr:"",t0:0,id:"",tk:null,cand:null,candN:0,peers:[],off:false,unsub:null,munsub:null,inv:null,done:false};
+function rkLeave(){if(RQ.tk)clearInterval(RQ.tk);RQ.tk=null;if(RQ.nr){try{RQ.unsub&&RQ.unsub();RQ.munsub&&RQ.munsub()}catch(e){}RQ.nr.leave().catch(()=>{})}RQ.nr=null;RQ.unsub=null;RQ.munsub=null;RQ.peers=[];RQ.inv=null}
 async function rankQueue(gr,keep){
   stopCpu();leaveNet();rkLeave();NET.ranked=null;G=null;
-  const R=rankOf(gr);Object.assign(RQ,{gr,t0:keep&&keep.t0||Date.now(),bad:keep&&keep.bad||[],id:Math.random().toString(36).slice(2,10),cand:null,candN:0,peers:[],off:false});
+  const R=rankOf(gr);Object.assign(RQ,{gr,t0:keep&&keep.t0?Math.max(keep.t0,Date.now()-(RK_WAIT-10)*1000):Date.now(),inv:null,done:false,id:Math.random().toString(36).slice(2,10),cand:null,candN:0,peers:[],off:false});
   app.innerHTML=`<div class="title"><div class="lobby rkq"><div class="lc">🏆 ランクマッチ ${gr}級</div>${rkBadge(R.pt,"lg")}
     <div class="rkspin"></div><div class="ls" id="rqs">対戦相手をさがしています…</div><div class="rqt mono" id="rqt">0:00</div><small id="rqn"></small>
     <small class="rqh">${RK_WAIT}秒たっても見つからなければ、近い強さのCPU(ゴースト)と対戦します</small>
@@ -3655,11 +3655,14 @@ async function rankQueue(gr,keep){
   if(!ROOM||!navigator.onLine){RQ.off=true;return}
   try{const nr=await ROOM.join("bb-q-"+gr);if(RQ.gr!==gr||!RQ.tk){nr.leave().catch(()=>{});return}
     RQ.nr=nr;nr.presence({v:NETV,q:1,id:RQ.id,r:R.r,pt:R.pt,t:RQ.t0,nm:REC.name||"プレイヤー"}).catch(()=>{});
-    RQ.unsub=nr.onPeers(ch=>{RQ.peers=ch.peers||[]})}catch(e){RQ.off=true}
+    RQ.unsub=nr.onPeers(ch=>{RQ.peers=ch.peers||[]});
+    RQ.munsub=nr.onMsg(m=>{if(!m||RQ.done||RQ.gr!==gr)return;
+      if(m.t==="inv"&&m.to===RQ.id){nr.send({t:"acc",to:m.from,from:RQ.id,code:m.code});rkCommit(m.code,m.from)}
+      else if(m.t==="acc"&&m.to===RQ.id&&RQ.inv&&m.code===RQ.inv.code)rkCommit(m.code,m.from)})}catch(e){RQ.off=true}
 }
 function rkPair(){
   const t=Date.now(),seen=new Set();
-  const list=RQ.peers.map(p=>p.presence).filter(p=>p&&p.q&&p.v===NETV&&p.id&&!(RQ.bad||[]).includes(p.id)&&!seen.has(p.id)&&seen.add(p.id)).sort((a,b)=>(a.t-b.t)||(a.id<b.id?-1:1));
+  const list=RQ.peers.map(p=>p.presence).filter(p=>p&&p.q&&p.v===NETV&&p.id&&!seen.has(p.id)&&seen.add(p.id)).sort((a,b)=>(a.t-b.t)||(a.id<b.id?-1:1));
   const used=new Set();
   for(const a of list){if(used.has(a.id))continue;
     for(const b of list){if(b===a||used.has(b.id))continue;
@@ -3671,14 +3674,21 @@ function rkTick(){
   const tt=$("#rqt");if(!tt){rkLeave();return}tt.textContent=fmtMS(Math.floor(el));
   const n=new Set(RQ.peers.map(p=>p.presence&&p.presence.q&&p.presence.id).filter(Boolean)).size;
   const rn=$("#rqn");if(rn)rn.textContent=RQ.off?"オンラインにつながらないので、CPUと対戦します":`いま${RQ.gr}級で待っている人:${Math.max(1,n)}人`;
+  if(RQ.done)return;
   const o=RQ.off?null:rkPair();
-  if(o){if(RQ.cand===o.id)RQ.candN++;else{RQ.cand=o.id;RQ.candN=1}
-    if(RQ.candN>=1){const code="rk"+[RQ.id,o.id].sort().join("");const gr=RQ.gr;rkLeave();se("ok",4);
-      lobby(code,REC.name||"プレイヤー",{gr,t0:RQ.t0,oid:o.id,bad:RQ.bad});return}
-    const s=$("#rqs");if(s)s.textContent=`相手が見つかった!(${o.nm||"?"})`}
-  else{RQ.cand=null;RQ.candN=0}
+  if(RQ.inv&&Date.now()-RQ.inv.at>3500)RQ.inv=null;   /* 返事がなければ出し直す */
+  if(o){const s1=$("#rqs");if(s1)s1.textContent=`相手が見つかった!(${o.nm||"?"})つないでいます…`;
+    /* 先に待っていた方が招待を送り、相手の「OK」が返ってきてから2人とも部屋へ移る */
+    const meP=(RQ.peers.map(p=>p.presence).find(p=>p&&p.id===RQ.id))||{t:RQ.t0,id:RQ.id};
+    const iProp=(meP.t-o.t)<0||(meP.t===o.t&&RQ.id<o.id);
+    if(iProp&&(!RQ.inv||RQ.inv.to!==o.id)){const code="rk"+[RQ.id,o.id].sort().join("");RQ.inv={to:o.id,code,at:Date.now()};RQ.nr&&RQ.nr.send({t:"inv",to:o.id,from:RQ.id,code})}
+    else if(iProp&&RQ.inv&&Date.now()-RQ.inv.at>1200&&!RQ.inv.re){RQ.inv.re=1;RQ.nr&&RQ.nr.send({t:"inv",to:o.id,from:RQ.id,code:RQ.inv.code})}}
+  else{const s1=$("#rqs");if(s1)s1.textContent="対戦相手をさがしています…"}
   if(el>=(RQ.off?4:RK_WAIT)){const gr=RQ.gr;rkLeave();rkCpuStart(gr)}
 }
+function rkCommit(code,oid){if(RQ.done)return;RQ.done=true;const gr=RQ.gr,t0=RQ.t0;se("ok",4);
+  const s1=$("#rqs");if(s1)s1.textContent="マッチング成立!";
+  setTimeout(()=>{rkLeave();lobby(code,REC.name||"プレイヤー",{gr,t0,oid})},400)}
 function rkCpuStart(gr){
   const R=rankOf(gr),cr=Math.round(R.r+(Math.random()*120-60));NET.ranked=null;
   startBattle("cpu",{lv:1,seed:`${newCode()}:${Date.now()}#${gr}.all`,oppName:GHOSTS[Math.floor(Math.random()*GHOSTS.length)]+"(CPU)"});
@@ -3705,7 +3715,7 @@ async function rkBoard(gr){
   let rows=[];
   try{const{data,error}=await sb.from("rank_board").select("user_id,name,av,pt,rating,w,l").eq("season",sk).eq("grade",gr).order("pt",{ascending:false}).order("rating",{ascending:false}).limit(100);
     if(error)throw error;rows=data||[]}
-  catch(e){box.innerHTML=`<div class="ls">順位表を読み込めませんでした${e&&e.code==="42P01"?"(サーバーに順位表の表がまだありません)":""}<br><small class="mono">${esc(String(e&&(e.code||e.message)||e))}</small></div>`;return}
+  catch(e){box.innerHTML=`<div class="ls">順位表を読み込めませんでした${e&&e.code==="42P01"?"(サーバーに順位表の表がまだありません)":e&&e.code==="42501"?"(順位表を読む権限がサーバーで許可されていません。管理者:grant文を実行してね)":""}<br><small class="mono">${esc(String(e&&(e.code||e.message)||e))}</small></div>`;return}
   if(!$("#rklist"))return;
   const me=CLOUD.user&&CLOUD.user.id;
   box.innerHTML=(CLOUD.user?"":`<button class="cnudge" id="rklog">☁️ Googleでログインすると順位表にのるよ <b>›</b></button>`)+
@@ -4565,7 +4575,11 @@ function lobbyFail(code,extra){const ls=app.querySelector(".lobby .ls");if(!ls)r
 function netTick(){
   if(!NET.nr){return}
   const t=Date.now(),nr=NET.nr;
-  if(NET.screen==="lobby"&&NET.ranked&&(t-NET.joinAt>12000&&!NET.opp||NET.opp&&(NET.opp.presence.v||0)!==NETV&&t-NET.joinAt>5000)){const k=NET.ranked;leaveNet();rankQueue(k.gr,{t0:k.t0,bad:(k.bad||[]).concat(k.oid||[])});return}
+  if(NET.screen==="lobby"&&NET.ranked&&NET.opp&&(NET.opp.presence.v||0)===NETV){
+    if(!NET.pres.rd)setPres({rd:true,ra:Date.now()});
+    else if(NET.opp.presence.rd&&NET.bothRdAt&&t-NET.bothRdAt>3000&&!NET.rsent){NET.rsent=1;setPres({rd:true,ra:NET.pres.ra})}  /* 合図が届かないときは送り直す */
+    checkStart();if(NET.screen!=="lobby")return}
+  if(NET.screen==="lobby"&&NET.ranked&&(t-NET.joinAt>12000&&!NET.opp||NET.opp&&(NET.opp.presence.v||0)!==NETV&&t-NET.joinAt>5000)){const k=NET.ranked;leaveNet();rankQueue(k.gr,{t0:k.t0});return}
   if(NET.screen==="lobby"){
     let w="";
     if(nr.ok===false&&nr.downAt){w=t-nr.downAt>15000?netErrHTML("E21").replace("対戦を中断しました","部屋から切断されました").replace("この対戦は勝敗に数えません。",""):netErrHTML("E20")}
@@ -4586,8 +4600,8 @@ async function lobby(code,name,rk){
   if(!navigator.onLine){lobbyFail("E01");return}
   if(!ROOM){lobbyFail(!SB_URL||!SB_KEY?"E02":!window.supabase?"E03":"E05");return}
   try{NET.nr=await ROOM.join("bb-"+code)}catch(e){
-    if(NET.code!==code)return;if(rk){rankQueue(rk.gr,{t0:rk.t0,bad:(rk.bad||[]).concat(rk.oid||[])});return}lobbyFail(joinErrCode(e),[e&&e.code,e&&e.msg].filter(Boolean).join(" / "));return}
-  NET.joinAt=Date.now();NET.bothRdAt=0;NET.nOthers=0;
+    if(NET.code!==code)return;if(rk){rankQueue(rk.gr,{t0:rk.t0});return}lobbyFail(joinErrCode(e),[e&&e.code,e&&e.msg].filter(Boolean).join(" / "));return}
+  NET.joinAt=Date.now();NET.bothRdAt=0;NET.nOthers=0;NET.rsent=0;
   if(NET.tk)clearInterval(NET.tk);NET.tk=setInterval(netTick,1000);
   NET.bc=typeof NET.nr.send==="function"&&typeof NET.nr.onMsg==="function";
   NET.pres=NET.bc?{v:NETV,nm:name,st:"lobby",rd:false,ra:0,gid:0,ff:0,av:REC.av||"",bs:rk?rk.gr+".all":bsetKey(bset()),...(rk?{rk:{r:rankOf(rk.gr).r,pt:rankOf(rk.gr).pt}}:{})}
