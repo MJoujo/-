@@ -2062,18 +2062,53 @@ function cloudRefreshUI(){
 /* ================= サウンド(Web Audioで合成。音声ファイルなし) ================= */
 const SND={ctx:null,master:null,se:null,bgm:null};
 function sndOn(k){return k==="se"?REC.se!==false:k==="voice"?REC.voice!==false:REC.bgm!==false}
-/* ---- キャラボイス(端末の読み上げ音声を使う) ---- */
+/* ---- キャラボイス ---- */
 const VX={luna:{p:.85,r:.92},gou:{p:.6,r:1.2},robo:{p:.2,r:.85},niya:{p:1.7,r:1.3},yone:{p:1.25,r:.78},pon:{p:.75,r:1.05}};
 let _vjp=null,_vok=false;
 function vSyn(){return window.speechSynthesis&&window.SpeechSynthesisUtterance?window.speechSynthesis:null}
 function vPick(){const S=vSyn();if(!S)return null;const vs=S.getVoices()||[];_vjp=vs.find(v=>/^ja/i.test(v.lang)&&/Kyoko|O-ren|Google|Nanami|Haruka/i.test(v.name))||vs.find(v=>/^ja/i.test(v.lang))||null;return _vjp}
-function vInit(){const S=vSyn();if(!S||_vok)return;_vok=true;try{vPick();S.onvoiceschanged=vPick;const u=new SpeechSynthesisUtterance(" ");u.volume=0;u.lang="ja-JP";S.speak(u)}catch(e){}}
+function vInit(){return;const S=vSyn();if(!S||_vok)return;_vok=true;try{vPick();S.onvoiceschanged=vPick;const u=new SpeechSynthesisUtterance(" ");u.volume=0;u.lang="ja-JP";S.speak(u)}catch(e){}}
+/* しゃべらず「ポポポ…」の声っぽい効果音で話す(どうぶつの森風)。セリフの母音に合わせて音色が変わる */
+const BAB={yone:{f:310,d:.095,w:"triangle",vib:.06,dec:.1},niya:{f:540,d:.062,w:"square",vib:0,dec:-.05,jit:.12},pon:{f:250,d:.085,w:"triangle",vib:.02,dec:.06},
+  robo:{f:190,d:.072,w:"square",vib:0,dec:0,jit:0,mono:1},luna:{f:430,d:.12,w:"sine",vib:.015,dec:.22,g:2.4},gou:{f:135,d:.09,w:"sawtooth",vib:.03,dec:.08,g:.55}};
+const VOW={a:"あかさたなはまやらわがざだばぱぁゃ",i:"いきしちにひみりぎじぢびぴぃ",u:"うくすつぬふむゆるぐずづぶぷぅゅゔ",e:"えけせてねへめれげぜでべぺぇ",o:"おこそとのほもよろをごぞどぼぽぉょ"};
+const FORM={a:[800,1200],i:[320,2300],u:[350,1300],e:[520,1900],o:[460,850],n:[260,1000]};
+function babParse(t){const out=[];t=String(t).replace(/<[^>]+>/g,"");
+  for(const ch0 of t){let ch=ch0;const cc=ch.charCodeAt(0);if(cc>=0x30a1&&cc<=0x30f6)ch=String.fromCharCode(cc-0x60);
+    if(/[、。,.…・\s]/.test(ch)){out.push({p:1});continue}
+    if(/[!!]/.test(ch)){if(out.length)out[out.length-1].ex=1;continue}
+    if(/[??]/.test(ch)){if(out.length)out[out.length-1].q=1;continue}
+    if(/[wwW草]/.test(ch)){out.push({v:"a",laugh:1});continue}
+    if(ch==="ー"||ch==="〜"||ch==="~"){if(out.length&&!out[out.length-1].p)out[out.length-1].long=1;continue}
+    if("ゃゅょぁぃぅぇぉ".includes(ch)&&out.length&&!out[out.length-1].p){out[out.length-1].v=ch==="ゃ"||ch==="ぁ"?"a":ch==="ゅ"||ch==="ぅ"?"u":ch==="ょ"||ch==="ぉ"?"o":ch==="ぃ"?"i":"e";continue}
+    if(ch==="っ"){out.push({p:.5});continue}
+    if(ch==="ん"){out.push({v:"n"});continue}
+    let v=null;for(const k in VOW)if(VOW[k].includes(ch)){v=k;break}
+    if(!v){if(/[0-9a-zA-Z0-9]/.test(ch))v="aiueo"[ch.charCodeAt(0)%5];else if(cc>=0x4e00){v="aiueo"[cc%5];out.push({v:"aiueo"[(cc>>3)%5]})}else continue}
+    out.push({v})}
+  return out.slice(0,26)}
+let _babG=null;
 function vSay(ch,text){
-  const S=vSyn();if(!S||!sndOn("voice"))return;
-  try{const x=VX[ch]||{p:1,r:1};
-    const t=String(text).replace(/w{2,}/gi,"わら").replace(/w\b/gi,"わら").replace(/草/g,"くさ").replace(/[!!]+/g,"!").replace(/…+/g,"、");
-    S.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="ja-JP";if(_vjp||vPick())u.voice=_vjp;
-    u.pitch=x.p;u.rate=x.r;u.volume=Math.min(1,sndVol()+.2);S.speak(u)}catch(e){}
+  if(!sndOn("voice")||!SND.ctx)return;
+  try{const c=SND.ctx,P=BAB[ch]||{f:360,d:.08,w:"triangle",vib:.03,dec:.08};
+    if(_babG){try{_babG.gain.setTargetAtTime(0,c.currentTime,.02)}catch(e){}}
+    const G0=c.createGain();G0.gain.value=1.1*(P.g||1);G0.connect(SND.master||c.destination);_babG=G0;
+    const seq=babParse(text);let t=c.currentTime+.03,i=0;const N=seq.filter(x=>!x.p).length||1;
+    for(const s of seq){
+      if(s.p){t+=P.d*1.6*s.p;continue}
+      const k=i/N,h=((i*7919+(text.length*31))%97)/97-.5;
+      let f=P.f*(1-(P.dec||0)*k)*(P.mono?1:1+h*(P.jit||.08))*(1+(P.vib||0)*Math.sin(i*1.7));
+      if(s.ex)f*=1.28;if(s.laugh)f*=1.35+.1*(i%2);
+      const d=P.d*(s.long?1.9:1)*(s.laugh?.7:1)*(s.ex?1.25:1);
+      const o=c.createOscillator();o.type=P.w;o.frequency.setValueAtTime(f,t);
+      if(s.q)o.frequency.exponentialRampToValueAtTime(f*1.5,t+d);else if(s.ex)o.frequency.exponentialRampToValueAtTime(f*.85,t+d);
+      if(P.vib)o.frequency.setTargetAtTime(f*(1+P.vib*.5),t+d*.4,d*.3);
+      const fm=FORM[s.v]||FORM.a,env=c.createGain(),mix=c.createGain();mix.gain.value=1;
+      [[fm[0],5,.9],[fm[1],7,.55]].forEach(([fq,q,g])=>{const bp=c.createBiquadFilter();bp.type="bandpass";bp.frequency.value=fq*(P.mono?1:1+(P.f-360)/2000);bp.Q.value=q;const gg=c.createGain();gg.gain.value=g;o.connect(bp);bp.connect(gg);gg.connect(env)});
+      const dir=c.createGain();dir.gain.value=P.w==="sine"?.5:.12;o.connect(dir);dir.connect(env);
+      env.gain.setValueAtTime(.0001,t);env.gain.exponentialRampToValueAtTime(P.w==="square"?.18:.32,t+.012);env.gain.setValueAtTime(P.w==="square"?.18:.32,t+d*.55);env.gain.exponentialRampToValueAtTime(.0001,t+d*.95);
+      env.connect(G0);o.start(t);o.stop(t+d);t+=d*(s.laugh?1.05:1.12);i++}
+  }catch(e){}
 }
 function sndVol(){return typeof REC.vol==="number"?REC.vol:0.7}
 function audioInit(){
@@ -2310,7 +2345,7 @@ function chainDemo(id){
   document.body.appendChild(ov);
   rdCalcMount({tgt:()=>"テスト",onIn:()=>{}});
   let N=8,run=0;
-  const close=()=>{run++;REC.eq.skin=keep;RDCALC=null;ov.remove();document.querySelectorAll("#chcut,.chtxt,.pp,.fz").forEach(x=>x.remove());try{vSyn()&&vSyn().cancel()}catch(e){}DEMO=null};
+  const close=()=>{run++;REC.eq.skin=keep;RDCALC=null;ov.remove();document.querySelectorAll("#chcut,.chtxt,.pp,.fz").forEach(x=>x.remove());try{if(_babG)_babG.gain.value=0}catch(e){}DEMO=null};
   DEMO={close};
   const play=async()=>{const my=++run;const cells=[...ov.querySelectorAll(".dmc")];const calc=ov.querySelector("#calc");
     cells.forEach((c,i)=>{c.className="dmc";c.style.display=i<=N?"":"none";c.textContent=i<N?"✓":"✕"});
@@ -5746,7 +5781,7 @@ function bfxKO(win,why){
 /* --- バトル終了 --- */
 function endBattle(win,why){
   if(!G||G.ended)return;G.ended=true;stopCpu();pause();stopTimer();bgmStop();se(win?"win":"lose");bfxPinch(false);setTimeout(()=>bfxKO(win,why),30);
-  document.querySelectorAll(".fb,.banner,#chcut").forEach(x=>x.remove());try{vSyn()&&vSyn().cancel()}catch(e){}
+  document.querySelectorAll(".fb,.banner,#chcut").forEach(x=>x.remove());try{if(_babG)_babG.gain.value=0}catch(e){}
   if(G.mode==="cpu"){win?REC.win.cpu++:REC.win.cpuL++}else{win?REC.win.on++:REC.win.onL++}
   if(!G.tut)bstatAdd(win);
   if(G.ranked&&!G.rankRes)G.rankRes=rankApply(G.ranked.gr,win,G.ranked.oppR,G.ranked.cpu);
