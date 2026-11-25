@@ -1665,7 +1665,7 @@ function isIndCat(cat){return ["CVP分析","標準原価計算","最適セール
 const _BL={};
 /* 難問判定:その級の大問のうち、電卓を打つ量が多い上位およそ3割 */
 const _HARD={};
-function hardGen(base,gen){if(!String(base).startsWith("vs:"))return false;const key=String(base).split("#")[1]||"1.all";
+function hardGen(base,gen){if(!String(base).startsWith("vs:")||String(base).endsWith("#tut"))return false;const key=String(base).split("#")[1]||"1.all";
   if(!_HARD[key]){const L=battleLists(base).big,cost=L.map(f=>{let t=0;for(let k=0;k<4;k++){try{const p=f(ctx(hashStr(f.name+k),0,1));t+=p.blanks.reduce((a,b)=>a+(b.t==="num"?(b.g?b.g.length:2):1),0)}catch(e){}}return[f,t]});
     const top=cost.slice().sort((a,b)=>b[1]-a[1]).slice(0,Math.ceil(cost.length*.3));_HARD[key]=new Set(top.map(x=>x[0]))}
   return _HARD[key].has(gen)}
@@ -1852,7 +1852,16 @@ G2GENS.push(...JRG2,...WS2);Q2GENS.push(jrSimple(JR2,"k6",10,500,DECOY2));
 
 function genIndexL(key,i,n){const cyc=Math.floor(i/n),r=mulberry32(hashStr(key+":perm:"+cyc)),o=[];for(let k=0;k<n;k++)o.push(k);
   for(let k=n-1;k>0;k--){const j=Math.floor(r()*(k+1));[o[k],o[j]]=[o[j],o[k]]}return o[i%n]}
+
+/* ===== チュートリアル対戦用:チュートリアルのロードでやったことだけで解ける問題 ===== */
+const TUT_GENS=[
+ function tutJr1(c){const a=c.M(2,9,1000);return jrProb(c,{ch:"c1",cat:"はじめての仕訳",q:`商品 ${yen(a)}円を仕入れ、代金は現金で支払った。`,L:[["仕入",a]],R:[["現金",a]],decoy:["売上","買掛金","売掛金","借入金"],ex:`(借)仕入 ${yen(a)} /(貸)現金 ${yen(a)} ロードでやったのと同じ形だよ`})},
+ function tutMul(c){const u=c.M(2,9,100),n=c.pick([2,3,4,5]),t=u*n;return{quick:1,ch:"c1",cat:"かけ算",title:`商品 1個 ${yen(u)}円を ${n}個 仕入れた。仕入の金額は?`,data:[["1個の値段",u],["個数",n]],lines:[["仕入",0]],blanks:[{t:"num",ans:t,g:K("AC",u,"*",n,"=")}],ex:`${yen(u)}×${n}=${yen(t)}`}},
+ function tutJr2(c){const a=c.M(3,9,1000);return jrProb(c,{ch:"c1",cat:"はじめての仕訳",q:`商品を ${yen(a)}円で売り、代金は現金で受け取った。`,L:[["現金",a]],R:[["売上",a]],decoy:["仕入","買掛金","売掛金","借入金"],ex:`現金(資産)が増えたので左。売上は右。(借)現金 ${yen(a)} /(貸)売上 ${yen(a)}`})},
+ function tutSub(c){const a=c.M(5,9,1000),b=c.M(1,4,1000),t=a-b;return{quick:1,ch:"c1",cat:"ひき算",title:`売上が ${yen(a)}円、仕入が ${yen(b)}円。もうけ(売上−仕入)は?`,data:[["売上",a],["仕入",b]],lines:[["もうけ",0]],blanks:[{t:"num",ans:t,g:K("AC",a,"-",b,"=")}],ex:`${yen(a)}−${yen(b)}=${yen(t)}`}},
+ function tutAdd(c){const a=c.M(1,5,1000),b=c.M(1,5,1000),t=a+b;return{quick:1,ch:"c1",cat:"たし算",title:`現金で ${yen(a)}円と ${yen(b)}円の商品を仕入れた。仕入は合計いくら?`,data:[["1回目",a],["2回目",b]],lines:[["仕入の合計",0]],blanks:[{t:"num",ans:t,g:K("AC",a,"+",b,"=")}],ex:`${yen(a)}+${yen(b)}=${yen(t)}`}}];
 function pickGen(base,i){
+  if(String(base).endsWith("#tut"))return TUT_GENS[i%TUT_GENS.length];
   if(base.startsWith("vs:")){const L=battleLists(base),q=i%2===0,list=q?L.quick:L.big;return list[genIndexL(base+(q?":q":":g"),Math.floor(i/2),list.length)]}
   if(base.includes("#")){const L=battleLists(base),list=L.big;return list[genIndexL(base+":g",i,list.length)]}
   return GENS[genIndex(base,i)];
@@ -4482,7 +4491,7 @@ function tutAfterRoad(){
     ["tsujo","次は電卓で戦う「バトル」。ニヤ豆が手加減してくれるってさ。","#btl"]],tutBattle);
 }
 function tutBattle(){
-  startBattle("cpu",{lv:0,seed:`${newCode()}:${Date.now()}#3.all`,oppName:"ニヤ豆(手加減)",cpuWho:0,cpuGr:"3"});
+  startBattle("cpu",{lv:0,seed:`${newCode()}:${Date.now()}#tut`,oppName:"ニヤ豆(手加減)",cpuWho:0,cpuGr:"3"});
   G.tut=1;G.cpuL={n:"手加減",read:45,spd:90,acc:.45,itm:0};
   setTimeout(()=>{if(!G||!G.tut||G.ended)return;pause();
     tutSay([["tsujo","上の問題の<b>空欄</b>をタップして、下の<b>電卓</b>で計算するよ。",".sheet"],
