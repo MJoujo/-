@@ -1334,6 +1334,10 @@ button{font-family:inherit;cursor:pointer}
 .rdtip b{color:#ffd23f}.rdtipf{flex:none;width:44px!important;height:44px!important}.rdtipf small{display:none}
 .bstg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.bstg div{background:#151b33;border:2px solid #2a3560;border-radius:12px;padding:8px 10px}.bstg small{display:block;color:var(--mute);font-size:11px;font-weight:800}.bstg b{font-size:18px}
 .bstn{display:block;color:var(--mute);font-size:11px;margin:4px 0 6px}.bst0{color:var(--mute);font-size:13px;margin-bottom:6px}
+
+.tfm{margin:6px 0 2px;min-width:min(270px,70vw)}.tfh,.tfb{display:grid;grid-template-columns:1fr 1fr}.tfh span{text-align:center;font-weight:900;font-size:13px;padding:2px 0;border-bottom:3px solid currentColor}
+.tfh span:first-child{color:#7cc4ff}.tfh span:last-child{color:#ff9fb3}.tfb span{text-align:center;padding:8px 4px;font-weight:900;font-size:15px;line-height:1.4}.tfb span:first-child{border-right:3px solid #cfd8f0}
+.tfb small{font-size:11px;font-weight:700;opacity:.8}.tfc{text-align:center;font-size:11.5px;color:var(--mute);margin-top:2px}
 </style>
 </head>
 <body>
@@ -4445,7 +4449,8 @@ function homeScreen(){
   $("#btl").onclick=()=>navTo("battle");$("#hroad").onclick=()=>navTo("road");$("#ta").onclick=()=>soloModal("ta");$("#sa").onclick=()=>soloModal("sa");
   $("#news").onclick=newsModal;const nbb=$("#nbb");if(nbb)nbb.onclick=nbModal;
   {const ng=$("#nag");if(ng)ng.onclick=()=>{hap("tap");navTo("road")};const xc=$("#xpc");if(xc)xc.onclick=()=>xpBoard();nagApply()}
-  if(nbReady()&&REC.name&&!TUT.on&&!TUT.asking&&!document.querySelector(".mdl")&&!$("#rdov"))setTimeout(()=>{if(NAV==="home"&&!TUT.on&&!TUT.asking&&!document.querySelector(".mdl")&&!$("#rdov"))nbModal()},REC._dailyNew?900:300);const cn=$("#cnudge");if(cn)cn.onclick=()=>navTo("set");$("#msb").onclick=()=>$("#mpanel").scrollIntoView({behavior:"smooth",block:"center"});
+  if(REC.name&&REC.tut&&!REC.notifAsked&&!TUT.on&&!TUT.asking&&!document.querySelector(".mdl")&&!$("#rdov")&&"Notification" in window&&Notification.permission==="default")setTimeout(()=>{if(!document.querySelector(".mdl"))notifAsk()},700);
+  else if(nbReady()&&REC.name&&!TUT.on&&!TUT.asking&&!document.querySelector(".mdl")&&!$("#rdov"))setTimeout(()=>{if(NAV==="home"&&!TUT.on&&!TUT.asking&&!document.querySelector(".mdl")&&!$("#rdov"))nbModal()},REC._dailyNew?900:300);const cn=$("#cnudge");if(cn)cn.onclick=()=>navTo("set");$("#msb").onclick=()=>$("#mpanel").scrollIntoView({behavior:"smooth",block:"center"});
   window.scrollTo(0,0);
 }
 
@@ -4483,7 +4488,18 @@ function titleCloud(){
 }
 /* ================= チュートリアル(ヨネばあちゃんが案内) ================= */
 const TUT={on:false};
+function notifAsk(cb){
+  if(REC.notifAsked||!("Notification" in window)||Notification.permission!=="default"){cb&&cb();return}
+  REC.notifAsked=1;saveRec();
+  const m=modal(`<div class="tutm">${castFace("tencho","nikkori","tutf")}<h3>🔔 通知をONにする?</h3>
+    <div class="dwarn">勉強をサボりそうな日に、ヨネが通知で声をかけるよ。<br>連続記録が途切れそうなときも教えてあげる。<br><small>あとから設定画面でいつでも変えられるよ。</small></div>
+    <button class="big" id="nfy">通知をONにする</button><button class="big sec" id="nfn">あとで</button></div>`);
+  m.onclick=null;
+  m.querySelector("#nfy").onclick=async()=>{m.remove();await notifSetup(true);cb&&cb()};
+  m.querySelector("#nfn").onclick=()=>{m.remove();cb&&cb()};
+}
 function tutAsk(){
+  if(!REC.notifAsked&&"Notification" in window&&Notification.permission==="default"){notifAsk(tutAsk);return}
   if(REC.tut){TUT.asking=false;return}
   const m=modal(`<div class="tutm">${castFace("tencho","nikkori","tutf")}<h3>チュートリアルをやる?</h3>
     <div class="dwarn">ヨネばあちゃんが<b>3分くらい</b>で遊び方を案内するよ。<br>終わるとガチャチケット×3がもらえる。あとから設定画面でいつでもやり直せるよ。</div>
@@ -4514,12 +4530,42 @@ function tutStart(){
     ["aramaa","ここは簿記をゲームで覚えるお店さ。あらまぁ、勉強になるねぇ。"],
     ["tsujo","まずは「簿記ロード」で、仕訳のきほんを1つやってみようかね。","#hroad"]],()=>rdRun({kind:"tut"}));
 }
-function tutRoadSteps(){return[
-  TALK([["tencho","お店のお金やモノの動きを記録するのが簿記。記録のしかたを「仕訳」っていうんだよ。"],["tencho","現金や商品みたいな「資産」は、増えたら左(借方)に書く。まずはそれだけ覚えようね。"]],{n:"仕訳のきほん",g:"",d:"<b>左(借方)</b>と<b>右(貸方)</b>に分けて書く。<br>資産が増えたら左、減ったら右。"}),
-  S("現金","現金はお金そのもの。持っているとうれしいもの=資産だよ。"),
+function tutRoadSteps(){const TF=(l,r,cap)=>`<div class="tfm"><div class="tfh"><span>借方(左)</span><span>貸方(右)</span></div><div class="tfb"><span>${l}</span><span>${r}</span></div>${cap?`<div class="tfc">${cap}</div>`:""}</div>`;
+  return[
+  TALK([["tencho","はじめまして、ヨネだよ。簿記をまったく知らなくても大丈夫。きほんの「き」から教えるからね。"],
+        ["tencho","<b>簿記</b>っていうのは、お店のお金やモノの出入りを、決まったルールでノートに記録することだよ。"],
+        ["tencho","ルールが決まってるから、だれが書いても、だれが読んでも同じようにわかる。お店の家計簿みたいなものだね。"]],
+       {n:"簿記(ぼき)",d:"お店のお金・モノの動きを、決まった書き方で記録すること。この書き方さえ覚えれば、ほかは全部その応用!"}),
+  TALK([["tencho","たとえば「商品を 5,000円 仕入れて、現金で払った」とするね。"],
+        ["tencho","このとき起きたことは2つ。<b>①商品を仕入れた</b> と <b>②現金が減った</b>。"],
+        ["tencho","簿記では、1つの取引をこんなふうに<b>2つに分けて、左と右に並べて</b>書くの。これを<b>仕訳(しわけ)</b>っていうよ。"]],
+       {n:"仕訳(しわけ)",d:TF("仕入 5,000","現金 5,000","取引を左と右に分けて書く")}),
+  TALK([["tencho","この「T」の字みたいな形を<b>T字勘定</b>(Tフォーム)っていうの。真ん中の線で左と右に分かれてるでしょ。"],
+        ["tencho","左側を<b>借方(かりかた)</b>、右側を<b>貸方(かしかた)</b>って呼ぶよ。"],
+        ["tencho","お金を「借りる」「貸す」とは関係ない、ただの名前だから気にしないでね。<b>借方=左、貸方=右</b>。これだけ覚えればいいよ。"],
+        ["tencho","覚え方はね、「か<b>り</b>」の「り」は最後を<b>左</b>にはらう、「か<b>し</b>」の「し」は最後を<b>右</b>にはらう。"]],
+       {n:"借方と貸方",d:TF("借方(かりかた)<br><small>「り」は左にはらう</small>","貸方(かしかた)<br><small>「し」は右にはらう</small>")}),
+  MC("借方(かりかた)は、左と右のどっち?",["左","右"],"左","「かり」の「り」は左にはらう。借方=左、貸方=右だよ。"),
+  TALK([["tencho","「現金」「仕入」「売上」みたいに、取引につける名前を<b>勘定科目(かんじょうかもく)</b>っていうよ。"],
+        ["tencho","じゃあ、どっちに書くかはどう決めるか。最初は<b>この3つだけ</b>覚えればOK!"],
+        ["tencho","①<b>現金</b>みたいな「持っているもの(資産)」は、<b>増えたら左、減ったら右</b>。"],
+        ["tencho","②<b>仕入</b>みたいな「お金を使ったこと(費用)」は<b>左</b>。"],
+        ["tencho","③<b>売上</b>みたいな「もうけ(収益)」は<b>右</b>。"]],
+       {n:"左右のきまり(はじめの3つ)",d:`<b>現金</b>(資産):増えたら<b>左</b>/減ったら<b>右</b><br><b>仕入</b>(費用):<b>左</b><br><b>売上</b>(収益):<b>右</b>`}),
+  S("現金","現金はお金そのもの。持っていてうれしいもの=資産。だから増えたら左だよ。"),
+  LR("商品 5,000円を仕入れ、代金は現金で支払った。それぞれ左と右のどっちに書く?",["仕入"],["現金"],[],"仕入(費用)は左。現金は減ったので右。"),
+  TALK([["tencho","左右が決まったら、あとは金額を書けば仕訳の完成。"],
+        ["tencho","ポイントは、<b>左の金額と右の金額は必ず同じ</b>になること。片方だけ書き忘れるとすぐわかるのが簿記のいいところだよ。"],
+        ["tencho","じゃあ実際に作ってみよう。①左の科目 → ❶左の金額 → ②右の科目 → ❷右の金額の順に埋めてね。"]],
+       {n:"仕訳の書き方",d:TF("① 科目 ❶ 金額","② 科目 ❷ 金額","左の金額=右の金額")}),
   JR("商品 5,000円を仕入れ、代金は現金で支払った。",[["仕入",5000]],[["現金",5000]],["売上","買掛金"]),
+  TALK([["tencho","よくできたね!じゃあ今度は、お店が商品を<b>売った</b>ときだよ。"],
+        ["tencho","商品を売って現金をもらった → <b>現金が増えた</b>から左。もうけの<b>売上</b>は右だね。"]],null),
+  JR("商品を 3,000円で売り、代金は現金で受け取った。",[["現金",3000]],[["売上",3000]],["仕入","買掛金"]),
+  TALK([["tencho","最後は電卓。簿記では計算もたくさん出てくるけど、ほとんどは<b>たし算・ひき算・かけ算</b>だよ。"]],null),
   CALC("商品 1個 1,200円を 3個 仕入れた。仕入の金額は?","仕入",3600,"1,200×3=3,600。電卓で「1200 × 3 =」と打って「入力」"),
-  TALK([["tencho","よくできたねぇ。この調子で、ロードでは毎日1レッスンずつ進めるんだよ。"]],null)]}
+  TALK([["tencho","これで仕訳のきほんはおしまい!「左と右に分けて、金額は同じ」。これがわかれば、もう簿記の入り口に立ってるよ。"],
+        ["tencho","ロードでは、ほかの勘定科目も1つずつ増やしていくから、毎日1レッスンずつ進めようね。"]],null)]}
 function tutAfterRoad(){
   navTo("home");
   tutSay([["nikkori","上手だねぇ!仕訳はブロックを置いて作るんだよ。"],
