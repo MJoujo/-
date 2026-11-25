@@ -1327,6 +1327,13 @@ button{font-family:inherit;cursor:pointer}
 .bsou b{position:relative;font-size:22px;font-weight:900;font-style:italic;color:#fff;-webkit-text-stroke:2px #2a6fd1;text-shadow:0 0 12px #6cc0ff;animation:bsb .9s forwards}
 .bsou small{position:relative;font-weight:900;color:#bfe4ff;font-size:12px;animation:bsb .9s forwards}
 @keyframes bsi{0%{transform:scale(.2)}50%{transform:scale(1.2)}100%{transform:scale(1.5);opacity:0}}@keyframes bsb{0%{transform:scale(1.8);opacity:0}20%{transform:scale(1);opacity:1}80%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
+
+.rklock{background:#151b33;border:2px dashed #3c4a75;border-radius:14px;padding:14px;text-align:center;color:#cfd8f0;margin-bottom:10px}.rklock small{color:var(--mute)}
+.rklbar{height:8px;background:#2a3355;border-radius:99px;margin-top:8px;overflow:hidden}.rklbar i{display:block;height:100%;background:#ffd23f}
+.rdtip{display:flex;gap:8px;align-items:center;text-align:left;background:rgba(255,210,63,.12);border:1.5px solid #8a7426;border-radius:12px;padding:8px 10px;margin:6px 0;font-size:13px;line-height:1.5;color:#ffe7a8;font-weight:700}
+.rdtip b{color:#ffd23f}.rdtipf{flex:none;width:44px!important;height:44px!important}.rdtipf small{display:none}
+.bstg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.bstg div{background:#151b33;border:2px solid #2a3560;border-radius:12px;padding:8px 10px}.bstg small{display:block;color:var(--mute);font-size:11px;font-weight:800}.bstg b{font-size:18px}
+.bstn{display:block;color:var(--mute);font-size:11px;margin:4px 0 6px}.bst0{color:var(--mute);font-size:13px;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -4167,6 +4174,7 @@ async function rdSeq(ev){
   const m=REC.rqm;
   let p=seqScreen(ov,`<h2 class="sqh pink">${allNow?"デイリークエスト<br>全コンプリート!":"デイリークエスト"}</h2>${bars}
     <div class="sqmon"><div><small>⏱ あと${rqDaysLeft()}日</small><b>${new Date().getMonth()+1}月のクエスト</b><em id="sqmn">${m.n} / ${RQ_MONTH}</em></div>${castFace("tencho","nikkori","sqmc")}</div>
+    ${tipOnce("quest")?`<div class="rdtip">${castFace("tencho","nikkori","rdtipf")}<span>毎日この<b>3つのクエスト</b>があるよ。達成すると宝箱、<b>3つ全部</b>でメガ宝箱!月に${RQ_MONTH}日そろえるとすごいことに…?</span></div>`:""}
     <button class="big ${newly.length?"blue":""}" data-next="1">${newly.length?"宝箱を開ける":"つづける"}</button>`,"s-quest");
   setTimeout(()=>{ov.querySelectorAll(".sqfill").forEach((f,i)=>setTimeout(()=>{const to=+f.dataset.to;if(parseFloat(f.style.width)===to)return;f.style.width=to+"%";const b=f.nextElementSibling;
       let a=+b.dataset.a;const tgt=+b.dataset.b,g=b.textContent.split("/")[1];const tk=setInterval(()=>{a++;b.textContent=`${Math.min(a,tgt)} /${g}`;if(a>=tgt)clearInterval(tk)},120);
@@ -4259,6 +4267,7 @@ function rdCheck(){
     <div class="rdfbb"><button class="rdxb" id="rdxd">📖 くわしい解説</button><button class="rdxb" id="rdnb">${ok?"✏️ メモする":"✏️ なぜまちがえた?"}</button></div>
     <button class="big" id="rdnx">${ok?"つぎへ":"わかった"}</button>`;
   ov.querySelector(".rdft").replaceWith(fb);
+  if(!ok&&RD.useBatt&&tipOnce("batt"))fb.querySelector(".rdfbt").insertAdjacentHTML("afterend",`<div class="rdtip">${castFace("tencho","konwaku","rdtipf")}<span>まちがえると<b>バッテリー🔋が1つ減る</b>よ。<b>3問連続正解</b>で1つ戻るからね。0になるとレッスンできないから気をつけて!</span></div>`);
   {const v0=RD.cur.val==null?null:JSON.parse(JSON.stringify(RD.cur.val));const open=()=>{se("key","IN");const el=rdDetail(s,v0,ok);if(!ok)setTimeout(()=>{},0);return el};
    $("#rdxd").onclick=()=>open();$("#rdnb").onclick=()=>{const el=open();const ta=el.querySelector("#rdxta");el.querySelector(".rdxn").scrollIntoView({block:"start"});setTimeout(()=>ta&&ta.focus(),250)}}
   ov.querySelectorAll(".rdbody button").forEach(b=>b.disabled=true);
@@ -4547,6 +4556,7 @@ function settingsScreen(){
    <div class="recs"><h3>⚡ スコアアタック 自己ベスト</h3>${list(REC.sa,r=>`<span class="mono">${r.pts}pt</span>`)}</div>
    <div class="rules">● 出題範囲:連結会計/税効果/退職給付/減損/外貨換算/標準原価計算/CVP分析/最適セールスミックス<br>● 電卓とメモは右側(左手モードなら左側)。プレイ中も⇄で入れ替えOK。電卓の「入力」で答えを欄に入れる<br>● PCなら数字キー=電卓、Tab=入力、Ctrl+Enter=解答<br>● 記録はこの端末のブラウザに保存されます</div>
    <div class="hand"><span>🔔 サボったときの催促通知</span><div class="seg"><button id="ntf1" class="${REC.notif?"on":""}">ON</button><button id="ntf0" class="${REC.notif?"":"on"}">OFF</button></div></div>
+   <h3 class="h3">📈 対戦の記録</h3>${bstatHTML()}
    <button class="big sec" id="tutre" style="margin:6px 0 12px">🎓 チュートリアルをもう一度</button>
    <div class="dzone"><b>⚠️ データを消す</b><small>すべてのデータを消してタイトル画面から最初に戻るよ(リセマラ用)。</small><button class="big del ol" id="dreset">🗑️ データを消して最初から</button></div>
    <button class="big sec" id="totitle" style="margin-top:10px">🏁 タイトル画面へ</button>
@@ -4581,7 +4591,8 @@ function cpuBtnsHTML(){
   return CC.map((c,i)=>`<button class="cpu c2" data-l="${i}">${castFace(c.who,null,"sm")}<b>${c.n}</b><small>${sub[i]}</small></button>`).join("");
 }
 function startCpuBattle(lv){const s=bset(),c2=CPUC[s.gr]?CPUC[s.gr][lv]:null;
-  startBattle("cpu",{lv,seed:battleBase(newCode()+":"+Date.now()),oppName:c2?c2.n:CPU_LV[lv].n,cpuWho:c2?lv:null,cpuGr:s.gr})}
+  startBattle("cpu",{lv,seed:battleBase(newCode()+":"+Date.now()),oppName:c2?c2.n:CPU_LV[lv].n,cpuWho:c2?lv:null,cpuGr:s.gr});
+  const bp=battlesPlayed();if(G&&bp<EASY_N){const L=CPU_LV[lv];G.cpuL={...L,read:L.read*1.4,spd:L.spd*1.4,acc:Math.max(.4,L.acc-.1)};G.easy=EASY_N-bp}}
 /* ================= ランクマッチ =================
    表:ティア(ブロンズ〜簿記マスター)+pt、裏:レート(イロ)でマッチングとCPUの強さを決める。
    順位表:public.rank_board(season,grade,user_id PK)。Googleログイン中だけ送信。 */
@@ -4702,6 +4713,8 @@ async function rkBoard(gr){
   const lg=$("#rklog");if(lg)lg.onclick=cloudLogin;
 }
 function rankMenuHTML(){
+  const bp=battlesPlayed();if(bp<RANK_UNLOCK)return`<h3 class="h3">🏆 ランクマッチ</h3><div class="rklock">🔒 <b>CPU対戦を${RANK_UNLOCK}回遊ぶと開放</b><br><small>あと${RANK_UNLOCK-bp}回。まずは下のCPU対戦で慣れよう!</small><div class="rklbar"><i style="width:${bp/RANK_UNLOCK*100}%"></i></div></div>`;
+  if(tipOnce("rkopen"))setTimeout(()=>toast("🏆 ランクマッチが開放されたよ!"),300);
   return`<h3 class="h3">🏆 ランクマッチ <small class="rksm">${seasonLabel()}</small></h3>
    <div class="rkcards">${["1","2","3"].map(gr=>{const R=rankOf(gr);return`<div class="rkc"><div class="rkg">${grL(gr)}</div>${rkBadge(R.pt)}${rkBar(R.pt)}<small>${R.w}勝${R.l}敗 ・ レート ${R.r}</small><button class="big rkgo" data-g="${gr}">ランクマッチ</button></div>`}).join("")}</div>
    <button class="sbtn rkbd" id="rkbd">📊 順位表を見る</button>`}
@@ -4734,7 +4747,7 @@ function vsMenu(){
    </details></div>`);bindShell();
   app.querySelectorAll(".cpu").forEach(b=>b.onclick=()=>startCpuBattle(+b.dataset.l));
   app.querySelectorAll(".rkgo").forEach(b=>b.onclick=()=>{const nm=($("#nm")&&$("#nm").value.trim())||REC.name||"プレイヤー";REC.name=nm;saveRec();audioInit();rankQueue(b.dataset.g)});
-  $("#rkbd").onclick=()=>rkBoard(["2","3"].includes(bset().gr)?bset().gr:"1");
+  if($("#rkbd"))$("#rkbd").onclick=()=>rkBoard(["2","3"].includes(bset().gr)?bset().gr:"1");
   app.querySelectorAll("[data-bs]").forEach(b=>b.onclick=()=>{const [k,v]=b.dataset.bs.split("=");const st=bset();st[k]=k==="road"?v==="true":v;saveRec();se("key","IN");vsMenu()});
   const rc=$("#rc");rc.oninput=()=>rc.value=rc.value.replace(/\D/g,"");
   $("#join").onclick=()=>{const nm=$("#nm").value.trim()||"プレイヤー";REC.name=nm;REC.room=rc.value||newCode();saveRec();lobby(REC.room,nm)};
@@ -5313,7 +5326,7 @@ function finishSolo(){
 }
 
 /* ================= HPバトル ================= */
-const CPU_LV=[{n:"見習い",read:14,spd:24,acc:.7,itm:.3},{n:"経理部員",read:10,spd:15,acc:.8,itm:.45},{n:"公認会計士",read:6,spd:9,acc:.9,itm:.6}];
+const CPU_LV=[{n:"見習い",read:16,spd:28,acc:.65,itm:.25},{n:"経理部員",read:10,spd:15,acc:.8,itm:.45},{n:"公認会計士",read:6,spd:9,acc:.9,itm:.6}];
 function startBattle(mode,opt){
   resetDesk();
   G={mode,base:"vs:"+opt.seed,qi:0,elapsed:0,running:false,t0:0,okBlanks:0,missBlanks:0,perfect:0,
@@ -5321,7 +5334,9 @@ function startBattle(mode,opt){
      myName:opt.myName||"あなた",oppName:opt.oppName,lv:opt.lv,gid:opt.gid||0,cpuWho:opt.cpuWho,cpuGr:opt.cpuGr,
      myAtks:[],blocked:[],seen:new Set(),seenBl:new Set(),ended:false,inc:[],dealt:0,oppPend:0};
   setTimeout(()=>{if(G&&!G.ended)bfxVS(()=>cdStart())},0);
-  const cdStart=()=>countdown(()=>{if(!G||G.ended)return;G.running=true;G.t0=performance.now();G.lastT=0;nextProblem();startTimer();bgmStart("vs");if(mode==="cpu")startCpu();if(mode==="online")netPub()});
+  const cdStart=()=>countdown(()=>{if(!G||G.ended)return;G.running=true;G.t0=performance.now();G.lastT=0;nextProblem();startTimer();bgmStart("vs");if(mode==="cpu")startCpu();if(mode==="online")netPub();
+    if(mode==="cpu"&&!G.tut&&G.easy)setTimeout(()=>banner(`🔰 はじめの${EASY_N}戦は相手が手加減してくれるよ(あと${G.easy}戦)`,"info"),400);
+    if(mode==="cpu"&&!G.tut&&!G.ranked&&tipOnce("b1")){setTimeout(()=>{if(!G||G.ended)return;pause();tutSay([["tsujo","空欄に正解するたびに<b>相手を攻撃</b>!右上の「次 ⚔」の数字が、次の正解の攻撃力だよ。",".hud"],["nikkori","連鎖が長いほど強くなって、<b>5連鎖目からは体力も回復</b>するからね。"]],()=>{if(G&&!G.ended)resume()})},600)}});
 }
 function myHP(){return Math.max(0,G.hp)}
 function oppDisp(){
@@ -5601,6 +5616,17 @@ function cpuReceive(t){
 
 
 
+
+/* ===== はじめて出会ったときだけ出る説明 ===== */
+function tipOnce(k){REC.tips=REC.tips||{};if(REC.tips[k])return false;REC.tips[k]=1;saveRec();return true}
+function battlesPlayed(){const w=REC.win||{};return(w.cpu||0)+(w.cpuL||0)+(w.on||0)+(w.onL||0)}
+const RANK_UNLOCK=3,EASY_N=3;
+/* 対戦の記録(最近30戦) */
+function bstatAdd(win){if(!G)return;REC.bstat=(REC.bstat||[]).concat([{t:Math.round(G.elapsed/1000),w:win?1:0,s:G.souN||0,d:G.dealt||0,m:G.mode,lv:G.lv}]).slice(-30);saveRec()}
+function bstatHTML(){const L=REC.bstat||[];if(!L.length)return`<div class="bst0">まだ対戦の記録がありません</div>`;
+  const av=k=>L.reduce((a,x)=>a+x[k],0)/L.length,m=Math.round(av("t"));
+  return`<div class="bstg"><div><small>平均試合時間</small><b>${Math.floor(m/60)}分${String(m%60).padStart(2,"0")}秒</b></div><div><small>勝率</small><b>${Math.round(av("w")*100)}%</b></div>
+    <div><small>相殺(1試合平均)</small><b>${av("s").toFixed(1)}回</b></div><div><small>与えたダメージ(平均)</small><b>${Math.round(av("d"))}</b></div></div><small class="bstn">最近${L.length}戦の記録。バランス調整の参考にスクショで送ってね</small>`}
 /* ================= 攻撃・着弾予告・相殺 =================
    正解1欄=攻撃。5連鎖目からは攻撃+その半分を回復。
    相手の攻撃は INC_MS ミリ秒後に着弾。それまでに自分が正解すると、その攻撃力ぶん打ち消せる(相殺)。余りは撃ち返す。 */
@@ -5627,7 +5653,10 @@ function vsGain(n){
 function incomingAtk(a,from){
   if(!G||G.ended||!(a>0))return;
   bfxOrb("#avop",".hpbar.me","#ff4d6d").then(()=>{if(!G||G.ended)return;
-    G.inc.push({a,land:now()+INC_MS});se("count",1);hap("ng");paintHP();if(G.mode==="online")netPub()});
+    G.inc.push({a,land:now()+INC_MS});se("count",1);hap("ng");paintHP();if(G.mode==="online")netPub();
+    if(!G.tut&&tipOnce("inc")){
+      if(G.mode==="cpu"){pause();tutSay([["odoroki","相手の攻撃がきたよ!HPバーの<b>赤いしましま</b>が、3秒後に減る分だよ。",".hud"],["nikkori","着弾する前に正解すると<b>相殺</b>して打ち消せるの。余った分は相手に撃ち返せるよ!",".hud"]],()=>{if(G&&!G.ended)resume()})}
+      else banner("💡 赤いしましまは3秒後に減る分。その前に正解すると相殺!","info")}});
 }
 /* 着弾チェック(drainTick から毎回) */
 function incLand(){
@@ -5640,6 +5669,7 @@ function incLand(){
     G.oppHp-=d;bfxHitBar(".hpbar.op",`-${d}`,"#ffd23f");bfxShake("#avop");bfxFace(OPP_HIT[oppWho()],1000)}}
 }
 function bfxSousai(n,mine){
+  if(mine&&G)G.souN=(G.souN||0)+1;
   se("block");hap("combo");const a=$(".hpbar.me"),b=$(".hpbar.op");if(!a||!b)return;
   const r1=a.getBoundingClientRect(),r2=b.getBoundingClientRect();
   const x=mine?r1.left+r1.width*.7:r2.left+r2.width*.7,y=mine?r1.top+r1.height/2:r2.top+r2.height/2;
@@ -5709,6 +5739,7 @@ function endBattle(win,why){
   if(!G||G.ended)return;G.ended=true;stopCpu();pause();stopTimer();bgmStop();se(win?"win":"lose");bfxPinch(false);setTimeout(()=>bfxKO(win,why),30);
   document.querySelectorAll(".fb,.banner,#chcut").forEach(x=>x.remove());try{vSyn()&&vSyn().cancel()}catch(e){}
   if(G.mode==="cpu"){win?REC.win.cpu++:REC.win.cpuL++}else{win?REC.win.on++:REC.win.onL++}
+  if(!G.tut)bstatAdd(win);
   if(G.ranked&&!G.rankRes)G.rankRes=rankApply(G.ranked.gr,win,G.ranked.oppR,G.ranked.cpu);
   gInit();const rw=addCoins(G.mode==="cpu"?(win?[30,40,60][G.lv]||30:10):(win?60:20));msAdd("play",1);if(win)msAdd("win",1);addXp(win?30:10);
   saveRec();
