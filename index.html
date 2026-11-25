@@ -1205,7 +1205,7 @@ button{font-family:inherit;cursor:pointer}
 /* デュオ風 */
 .batt{display:inline-flex;gap:3px;align-items:center}.batt i{width:11px;height:16px;border-radius:3px;background:#2a3355;border:1.5px solid #3c4a75}
 .batt i.on{background:linear-gradient(#7dffb8,#2fd17f);border-color:#2fd17f;box-shadow:0 0 6px rgba(57,255,154,.5)}.batt.low i.on{background:#ff7b86;border-color:#ff7b86;box-shadow:0 0 6px rgba(255,93,108,.6)}
-.rdhp.pop{animation:rdhpop .6s}@keyframes rdhpop{30%{transform:scale(1.5)}}
+.rdhp.hpop{animation:rdhpop .6s}@keyframes rdhpop{30%{transform:scale(1.5)}}
 .rdheal{position:fixed;left:50%;top:76px;transform:translateX(-50%);z-index:60;background:linear-gradient(90deg,#2fd17f,#39ff9a);color:#053;font-weight:900;font-size:17px;padding:9px 18px;border-radius:999px;box-shadow:0 6px 18px rgba(57,255,154,.45);animation:rdhl 1.6s forwards;white-space:nowrap}
 @keyframes rdhl{0%{opacity:0;transform:translate(-50%,-14px) scale(.7)}15%{opacity:1;transform:translate(-50%,0) scale(1.08)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-10px)}}
 .rdbatt{display:flex;align-items:center;gap:10px;background:#151b33;border:2px solid #2a3560;border-radius:12px;padding:8px 12px;margin:0 0 10px}.rdbatt small{color:var(--mute);font-size:12px;font-weight:700}
@@ -1227,6 +1227,40 @@ button{font-family:inherit;cursor:pointer}
 .adtag{position:absolute;left:12px;top:10px;font-size:10px;font-weight:900;color:#8d9bbd;border:1px solid #3c4a75;border-radius:5px;padding:0 5px}
 .adic{font-size:56px}.adw h3{margin:6px 0}.adw p{color:#cfd8f0;font-size:14px;line-height:1.6;margin:0 0 14px}
 .adx{position:absolute;right:10px;top:8px;background:#2a3355;color:#fff;border:none;border-radius:999px;padding:4px 10px;font-weight:900;font-size:12px;min-width:30px}.adx:disabled{opacity:.6}
+
+/* レッスン後シーケンス */
+#rdov.sqov{background:#151b2e}
+.sq{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(30px + env(safe-area-inset-top)) 22px calc(24px + env(safe-area-inset-bottom));text-align:center;color:#fff;animation:sqin .35s;overflow:auto}
+@keyframes sqin{from{opacity:0;transform:translateY(20px)}}
+.sq .big{width:100%;max-width:420px;margin-top:auto}.sq .big+.big{margin-top:0}
+.sq .big.blue{background:#6cc0f5;color:#13324d;box-shadow:0 5px 0 #3d8fc4}.sq .big.wht{background:#fff;color:#7b4fc9;box-shadow:0 5px 0 #d8c8f5}
+.sqh{font-size:30px;font-weight:900;line-height:1.25;margin:0}.sqh.fire{color:#ff9a3d;font-size:36px}.sqh.pink{color:#e15aa6;font-size:34px}
+.sqp{color:#cfd8f0;font-size:15px;line-height:1.6;margin:0}.sqp.big2{font-size:17px}.sqp b{color:#ffd23f}
+.s-fire{background:radial-gradient(circle at 50% 30%,#4a2a12,#151b2e 65%)}
+.sqfire{position:relative;margin-top:auto}.sqflame{font-size:150px;line-height:1;animation:flm 1.2s infinite;filter:drop-shadow(0 0 30px rgba(255,140,40,.7))}
+@keyframes flm{50%{transform:scale(1.06) rotate(-2deg)}}
+.sqnum{position:absolute;left:0;right:0;bottom:6px;font-size:64px;font-weight:900;color:#fff;-webkit-text-stroke:3px #c2410c;text-shadow:0 4px 0 #7c2d12}.sqnum.bump{animation:snb .6s}
+@keyframes snb{40%{transform:scale(1.6);color:#ffd23f}}
+.sqweek{display:flex;gap:8px;background:#1f2742;border-radius:16px;padding:12px 14px}
+.sqd{display:flex;flex-direction:column;align-items:center;gap:4px}.sqd i{width:30px;height:30px;border-radius:50%;background:#2f3a5f;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:900;color:#fff}
+.sqd.on i{background:#ff9a3d}.sqd.td small{color:#ffd23f}.sqd small{font-size:11px;color:#8d9bbd;font-weight:800}.sqd.new i{background:#2f3a5f;color:transparent}.sqd.new.sqpp i{background:#ff9a3d;color:#fff;animation:snb .6s}
+.sqcast{width:70px!important;height:70px!important}.sqcast small{display:none}
+.s-quest{justify-content:flex-start;align-items:stretch;text-align:left}.s-quest .sqh{text-align:center;margin:20px 0 10px}
+.sqq{margin:8px 0}.sqqn{font-size:17px;font-weight:900;margin-bottom:8px}.sqbar{position:relative;height:30px;background:#2f3a5f;border-radius:999px;margin-right:34px}
+.sqfill{position:absolute;left:0;top:0;bottom:0;background:#e15aa6;border-radius:999px;transition:width .7s cubic-bezier(.3,1.4,.6,1);min-width:0}
+.sqbar b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:15px}
+.sqch{position:absolute;right:-38px;top:50%;transform:translateY(-50%);width:62px}.sqch svg{width:62px}.sqq.sqpp .sqch{animation:snb .6s}
+.sqmon{display:flex;align-items:center;justify-content:space-between;border-top:2px solid #2f3a5f;margin-top:16px;padding-top:14px}
+.sqmon small{display:block;color:#8d9bbd;font-weight:800}.sqmon b{display:block;font-size:18px}.sqmon em.bump{display:inline-block;animation:snb .6s}.sqmon em{font-style:normal;color:#e15aa6;font-weight:900;font-size:22px}.sqmc{width:64px!important;height:64px!important}.sqmc small{display:none}
+.s-chest{background:#f19b38}.s-chest.mega{background:radial-gradient(circle,#ffb347,#e9792b)}.s-chest .sqh{font-size:34px;margin-top:auto}
+.sqbox{background:none;border:none;padding:0;width:min(78vw,320px)}.sqbox svg{width:100%;filter:drop-shadow(0 10px 0 rgba(0,0,0,.15))}
+.sqbox.shk{animation:shk .35s}@keyframes shk{20%{transform:rotate(-8deg) scale(1.05)}60%{transform:rotate(8deg) scale(1.08)}}
+.sqbox.burst{animation:bst .6s}@keyframes bst{40%{transform:scale(1.25)}}
+.chest.open .lid{transform:translateY(-14px) rotate(-12deg);transform-origin:20px 44px;transition:.3s}
+.sqtap{font-size:20px;font-weight:900;margin-bottom:auto;animation:flm 1.4s infinite}
+.sqrw{display:flex;flex-direction:column;gap:8px}.sqrw div{background:rgba(255,255,255,.9);color:#7a3b00;font-weight:900;font-size:18px;border-radius:14px;padding:10px 20px;animation:sqin .4s both}
+.s-boost .sqh{font-size:26px}.s-boost{background:linear-gradient(#8a5ad0,#5c38b0)}.sqpot{position:relative;margin-top:auto}.potion{width:190px;animation:flm 1.6s infinite}
+.sqlock,.sqtime{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);background:#6b6b6b;border:3px solid #fff;border-radius:999px;padding:3px 14px;font-weight:900;white-space:nowrap}.sqtime{background:#ffb03b;color:#3a2200}
 </style>
 </head>
 <body>
@@ -3561,7 +3595,7 @@ function rdUnlocked(ci,li){/* li=-1 ボス */
   return true;
 }
 function rdStreakTick(){const r=rdInit(),d=new Date().toDateString();if(r.st.d===d)return false;
-  const y=new Date(Date.now()-864e5).toDateString();r.st.n=r.st.d===y?r.st.n+1:1;r.st.d=d;return true}
+  const y=new Date(Date.now()-864e5).toDateString();r.st.n=r.st.d===y?r.st.n+1:1;r.st.d=d;r.days=(r.days||[]).filter(x=>Date.now()-new Date(x)<15*864e5);r.days.push(d);return true}
 
 /* ---------- ロード画面 ---------- */
 function roadScreen(){
@@ -3935,17 +3969,17 @@ function battModal(then){
   m.querySelector("#bcl").onclick=()=>m.remove();
 }
 /* --- XPブースト(時間限定2倍) --- */
-function xpMul(){return REC.boost&&Date.now()<REC.boost.until?2:1}
+function xpMul(){return REC.boost&&Date.now()<REC.boost.until?(REC.boost.mul||2):1}
 function boostLeft(){return REC.boost?Math.max(0,REC.boost.until-Date.now()):0}
-function giveBoost(min,why){const now=Date.now();REC.boost={until:Math.max(now,boostLeft()?REC.boost.until:now)+min*60000,why};saveRec();hap("boost");se("win");
-  const m=modal(`<div class="boostm"><div class="bst">⚡</div><h3>XPブースト獲得!</h3><div class="dwarn">${why}<br><b>${min}分間、もらえるXPが2倍!</b><br>時間内にどんどん解こう!</div><button class="big" id="bgo">今すぐロードへ</button><button class="big sec" id="bok">あとで</button></div>`);
+function giveBoost(min,why,mul,silent){const now=Date.now();mul=Math.max(mul||2,boostLeft()?(REC.boost.mul||2):0);REC.boost={until:Math.max(now,boostLeft()?REC.boost.until:now)+min*60000,why,mul};saveRec();hap("boost");se("win");boostBar();if(silent)return;
+  const m=modal(`<div class="boostm"><div class="bst">⚡</div><h3>XPブースト獲得!</h3><div class="dwarn">${why}<br><b>${min}分間、もらえるXPが${mul}倍!</b><br>時間内にどんどん解こう!</div><button class="big" id="bgo">今すぐロードへ</button><button class="big sec" id="bok">あとで</button></div>`);
   m.querySelector("#bgo").onclick=()=>{m.remove();rdClose&&$("#rdov")?rdClose():navTo("road")};m.querySelector("#bok").onclick=()=>m.remove();boostBar()}
 function boostBar(){
   let b=$("#boostbar");const left=boostLeft();
   if(!left){if(b)b.remove();return}
   if(!document.querySelector('.bnav')&&!$("#rdov")){if(b)b.style.display='none';return}
   if(b)b.style.display='';if(!b){b=document.createElement("div");b.id="boostbar";document.body.appendChild(b);b.onclick=()=>{if(!$("#rdov"))navTo("road")}}
-  const warn=left<3*60000;b.className=warn?"warn":"";b.innerHTML=`⚡ XP2倍 <b>${fmtMS(Math.ceil(left/1000))}</b>${warn?" いそいで!":""}`;
+  const warn=left<3*60000;b.className=warn?"warn":"";b.innerHTML=`⚡ XP${xpMul()}倍 <b>${fmtMS(Math.ceil(left/1000))}</b>${warn?" いそいで!":""}`;
   if(warn&&!boostBar._w){boostBar._w=1;hap("ng");toast("⚡ XPブーストがもうすぐ終わるよ!")}if(!warn)boostBar._w=0;
 }
 setInterval(boostBar,1000);
@@ -4030,7 +4064,86 @@ async function notifSetup(on){
   return"ok"}
 setInterval(()=>{if(document.visibilityState==="visible")nagApply()},60000);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")nagApply()});
-function rdHeal(txt,k){hap(k||"heal");se("item");const ov=$("#rdov");if(!ov)return;const hpw=ov.querySelector(".rdhp");if(hpw){hpw.innerHTML=RD&&RD.useBatt?battHTML():`❤️<b>${RD?RD.hp:""}</b>`;hpw.classList.remove("pop");void hpw.offsetWidth;hpw.classList.add("pop")}
+/* ================= レッスン後の演出シーケンス(何が起きたかを1画面ずつ見せる) ================= */
+const DQ=[
+ {id:"l",n:"レッスンを1回クリアする",goal:1,chest:"blue"},
+ {id:"m",n:"3分間レッスンをする",goal:3,chest:"purple",unit:"分"},
+ {id:"a",n:"3回のレッスンで正解率80%以上をとる",goal:3,chest:"gold"}];
+const RQ_MONTH=30;
+function rqState(){const d=new Date().toDateString(),mo=new Date().toISOString().slice(0,7);
+  if(!REC.rq||REC.rq.d!==d)REC.rq={d,l:0,m:0,a:0,got:{},sec:0,mega:0};
+  if(!REC.rqm||REC.rqm.mo!==mo)REC.rqm={mo,n:0,got:0};return REC.rq}
+function rqDaysLeft(){const n=new Date(),e=new Date(n.getFullYear(),n.getMonth()+1,0);return e.getDate()-n.getDate()+1}
+function chestSVG(c,open){const col={blue:["#4aa3ff","#2a6fd1"],purple:["#a46bff","#7440d6"],gold:["#ff7b4a","#e0512a"],mega:["#ff7b4a","#e0512a"]}[c]||["#4aa3ff","#2a6fd1"];
+  return`<svg viewBox="0 0 120 100" class="chest ${open?"open":""}"><g class="lid"><path d="M14 44 Q14 14 60 14 Q106 14 106 44 Z" fill="${col[0]}"/><path d="M14 44 Q14 14 60 14 Q106 14 106 44 Z" fill="none" stroke="#f5c542" stroke-width="7"/><rect x="50" y="14" width="20" height="30" fill="#f5c542"/></g>
+  <rect x="12" y="44" width="96" height="46" rx="8" fill="${col[1]}"/><rect x="12" y="44" width="96" height="10" fill="#f5c542"/><rect x="50" y="44" width="20" height="46" fill="#f5c542"/><circle cx="60" cy="58" r="8" fill="#fff8d0"/>${open?`<ellipse cx="60" cy="46" rx="40" ry="8" fill="#fff6a8" opacity=".9"/>`:""}</svg>`}
+function seqScreen(ov,html,cls){return new Promise(res=>{ov.innerHTML=`<div class="sq ${cls||""}">${html}</div>`;const b=ov.querySelector("[data-next]");if(b)b.onclick=()=>{hap("tap");res(b.dataset.next)};ov._res=res})}
+async function rdSeq(ev){
+  const ov=$("#rdov");if(!ov){adMaybe(rdClose);return}
+  ov.classList.add("sqov");
+  /* 1) 連続記録 */
+  if(ev.streakUp){const r=rdInit(),n=r.st.n,days=r.days||[];
+    const mon=new Date();mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+    const wk=["月","火","水","木","金","土","日"].map((w,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);const ds=d.toDateString(),td=ds===new Date().toDateString();
+      return`<div class="sqd ${days.includes(ds)?(td?"new":"on"):""} ${td?"td":""}"><i>${days.includes(ds)?"✓":""}</i><small>${w}</small></div>`}).join("");
+    const p=seqScreen(ov,`<div class="sqfire"><div class="sqflame">🔥</div><div class="sqnum" id="sqn">${Math.max(0,n-1)}</div></div>
+      <h2 class="sqh fire">${n}日連続!</h2><div class="sqweek">${wk}</div>
+      <p class="sqp">${n===1?"今日から連続記録スタート!明日も1レッスンでつながるよ":n<7?`あと${7-n}日で1週間連続!`:`すごい!${n}日間 1日も休んでない!`}</p>
+      ${castFace("tencho",n>=7?"nikkori":"nikkori","sqcast")}<button class="big" data-next="1">つづける</button>`,"s-fire");
+    setTimeout(()=>{const e=$("#sqn");if(e){e.textContent=n;e.classList.add("bump");hap("heal");se("item")}},650);
+    setTimeout(()=>{const t=ov.querySelector(".sqd.new");if(t)t.classList.add("sqpp")},900);
+    await p}
+  /* 2) デイリークエスト */
+  const rq=rqState(),bef=ev.rqBefore,newly=DQ.filter(q=>bef[q.id]<q.goal&&rq[q.id]>=q.goal);
+  const allNow=DQ.every(q=>rq[q.id]>=q.goal),allNew=allNow&&!DQ.every(q=>bef[q.id]>=q.goal);
+  const bars=DQ.map(q=>{const a=Math.min(bef[q.id],q.goal),b=Math.min(rq[q.id],q.goal),done=b>=q.goal;
+    return`<div class="sqq ${done?"done":""} ${newly.includes(q)?"newq":""}"><div class="sqqn">${q.n}</div><div class="sqbar"><div class="sqfill" style="width:${a/q.goal*100}%" data-to="${b/q.goal*100}"></div><b data-a="${a}" data-b="${b}">${a} / ${q.goal}</b><div class="sqch">${chestSVG(q.chest,rq.got[q.id])}</div></div></div>`}).join("");
+  const m=REC.rqm;
+  let p=seqScreen(ov,`<h2 class="sqh pink">${allNow?"デイリークエスト<br>全コンプリート!":"デイリークエスト"}</h2>${bars}
+    <div class="sqmon"><div><small>⏱ あと${rqDaysLeft()}日</small><b>${new Date().getMonth()+1}月のクエスト</b><em id="sqmn">${m.n} / ${RQ_MONTH}</em></div>${castFace("tencho","nikkori","sqmc")}</div>
+    <button class="big ${newly.length?"blue":""}" data-next="1">${newly.length?"宝箱を開ける":"つづける"}</button>`,"s-quest");
+  setTimeout(()=>{ov.querySelectorAll(".sqfill").forEach((f,i)=>setTimeout(()=>{const to=+f.dataset.to;if(parseFloat(f.style.width)===to)return;f.style.width=to+"%";const b=f.nextElementSibling;
+      let a=+b.dataset.a;const tgt=+b.dataset.b,g=b.textContent.split("/")[1];const tk=setInterval(()=>{a++;b.textContent=`${Math.min(a,tgt)} /${g}`;if(a>=tgt)clearInterval(tk)},120);
+      hap("tap");se("ok",i+1);if(f.closest(".newq"))setTimeout(()=>{f.closest(".sqq").classList.add("sqpp");hap("combo");se("item")},650)},i*450))},500);
+  if(allNew){REC.rqm.n++;saveRec();setTimeout(()=>{const e=$("#sqmn");if(e){e.textContent=`${REC.rqm.n} / ${RQ_MONTH}`;e.classList.add("bump");hap("combo")}},500+DQ.length*450+700)}
+  await p;
+  /* 3) 宝箱 */
+  const chests=newly.map(q=>({k:q.chest,t:q.id==="a"?"金の宝箱":q.id==="m"?"紫の宝箱":"青い宝箱",rw:q.id==="a"?{tix:1}:{coin:q.id==="m"?80:50},id:q.id}));
+  if(allNew)chests.push({k:"mega",t:"メガ宝箱",rw:{tix:2,boost:15,coin:100},id:"mega"});
+  for(const c of chests){
+    const p2=seqScreen(ov,`<h2 class="sqh">${c.t}</h2><button class="sqbox" id="sqbox">${chestSVG(c.k,false)}</button><p class="sqtap">タップして開けよう!</p>`,"s-chest "+(c.k==="mega"?"mega":c.k));
+    await new Promise(res=>{const bx=$("#sqbox");let n=0;bx.onclick=()=>{n++;hap(n<3?"tap":"clear");se(n<3?"ok":"win",n);bx.classList.remove("shk");void bx.offsetWidth;bx.classList.add("shk");
+      if(n<(c.k==="mega"?3:2))return;bx.onclick=null;bx.innerHTML=chestSVG(c.k,true);bx.classList.add("burst");res()}});
+    const rw=c.rw,items=[];
+    if(rw.coin){addCoins(rw.coin);items.push(`🪙 ${rw.coin}コイン`)}
+    if(rw.tix){REC.tix=(REC.tix||0)+rw.tix;items.push(`🎟️ ガチャチケット ×${rw.tix}`)}
+    if(c.id!=="mega")rq.got[c.id]=1;else rq.mega=1;saveRec();
+    setTimeout(()=>{const s=ov.querySelector(".sq");if(!s)return;s.insertAdjacentHTML("beforeend",`<div class="sqrw">${items.map((x,i)=>`<div style="animation-delay:${i*.2}s">${x}</div>`).join("")}${rw.boost?`<div style="animation-delay:${items.length*.2}s">⚡ XPブースト +${rw.boost}分</div>`:""}</div><button class="big" data-next="1">受け取る</button>`);
+      ov.querySelector(".sqtap").remove();ov.querySelector("[data-next]").onclick=()=>{hap("tap");ov._res()}},500);
+    await p2;if(rw.boost)giveBoost(rw.boost,"メガ宝箱から!",2,true)}
+  /* 4) ブースト */
+  for(const b of ev.boosts){giveBoost(b.min,b.why,b.mul,true);
+    const p3=seqScreen(ov,`<div class="sqpot">${potionSVG(b.mul)}<div class="sqtime">⏱ ${b.min}分</div></div>
+      <h2 class="sqh">${b.mul>2?"トリプル":"ダブル"}XPブースト獲得!</h2><p class="sqp big2">${b.why}<br><b>${b.min}分間</b>、もらえるXPが<b>${b.mul}倍</b>!</p>
+      <button class="big wht" data-next="go">今すぐ次のレッスン</button><button class="big sec" data-next="1">あとで</button>`,"s-boost");
+    ov.querySelectorAll("[data-next]").forEach(x=>x.onclick=()=>{hap("tap");ov._res(x.dataset.next)});
+    if(await p3==="go"){ev.goNext=true;break}}
+  /* 5) 明日のおあずけ */
+  if(ev.streakUp&&!ev.goNext){const ms=new Date();ms.setHours(24,0,0,0);
+    const p4=seqScreen(ov,`<div class="sqpot">${potionSVG(3)}<div class="sqlock">🔒 <span id="sqlk">${fmtHM(ms-Date.now())}</span></div></div>
+      <h2 class="sqh"><span style="color:#ffd23f">明日</span>戻ってくると<br>トリプルXPブーストがもらえるよ!</h2>
+      <p class="sqp">明日の最初のレッスンで、15分間 XP3倍。忘れずにね!</p><button class="big wht" data-next="1">次へ</button>`,"s-boost");
+    const tk=setInterval(()=>{const e=$("#sqlk");if(!e){clearInterval(tk);return}e.textContent=fmtHM(ms-Date.now())},1000);
+    await p4;clearInterval(tk)}
+  ov.classList.remove("sqov");
+  adMaybe(()=>{rdClose();if(ev.goNext)setTimeout(()=>navTo("road"),100)});
+}
+function fmtHM(ms){const m=Math.max(0,Math.ceil(ms/60000));return m>=60?`${Math.floor(m/60)}時間${m%60?m%60+"分":""}`:`${m}分`}
+function potionSVG(mul){const c=mul>2?["#ffd23f","#ff9a3d"]:["#c47bff","#9a4fe8"];
+  return`<svg viewBox="0 0 120 140" class="potion"><rect x="46" y="6" width="28" height="18" rx="4" fill="#b5764e"/><rect x="38" y="20" width="44" height="20" rx="8" fill="#f4e4ff"/>
+  <circle cx="60" cy="88" r="46" fill="#f0dcff"/><path d="M18 90 Q30 66 60 72 Q90 78 102 82 A42 42 0 0 1 18 90Z" fill="${c[0]}"/><circle cx="44" cy="96" r="9" fill="${c[1]}" opacity=".7"/><circle cx="62" cy="112" r="6" fill="${c[1]}" opacity=".7"/>
+  <text x="60" y="104" text-anchor="middle" font-size="26" font-weight="900" fill="#fff">×${mul}</text></svg>`}
+function rdHeal(txt,k){hap(k||"heal");se("item");const ov=$("#rdov");if(!ov)return;const hpw=ov.querySelector(".rdhp");if(hpw){hpw.innerHTML=RD&&RD.useBatt?battHTML():`❤️<b>${RD?RD.hp:""}</b>`;hpw.classList.remove("hpop");void hpw.offsetWidth;hpw.classList.add("hpop")}
   const d=document.createElement("div");d.className="rdheal";d.textContent=txt;ov.appendChild(d);setTimeout(()=>d.remove(),1600)}
 function rdCheck(){
   const s=RD.steps[RD.i],ok=rdGrade(s,RD.cur.val),r=rdInit();
@@ -4069,7 +4182,10 @@ function rdDone(){
   const r=rdInit(),o=RD.o,ov=$("#rdov");
   const acc=Math.round(RD.ok/Math.max(1,RD.ok+RD.ng)*100),sec=Math.round((Date.now()-RD.t0)/1000);
   let xp=10+RD.ok*2,coin=10,extra="",star="";
+  const tmr=REC.tmrBoost===new Date().toDateString();
   const st=rdStreakTick();
+  const rq=rqState(),rqBefore={l:rq.l,m:rq.m,a:rq.a};
+  if(o.kind!=="exam"&&o.kind!=="tut"){rq.l++;rq.sec+=sec;rq.m=Math.floor(rq.sec/60);if(acc>=80)rq.a++}
   if(o.kind==="lesson"){const l=ROAD[o.ci].lessons[o.li];const first=!r.done[l.id];r.done[l.id]=(r.done[l.id]||0)+1;coin=first?40:15;
     const c=Math.min(r.done[l.id],5);star=`<div class="rdesb"><b>王冠 ${c} / 5</b><div class="rdcr big">${"★".repeat(c)}${"☆".repeat(5-c)}</div><small>${c>=2?"王冠2以上は端数のある数字が出るよ":"もう一度やると王冠アップ"}</small></div>`}
   if(o.kind==="boss"){const ch=ROAD[o.ci];const first=!r.boss[ch.id];r.boss[ch.id]=1;coin=first?100:30;xp+=20;if(first){REC.tix=(REC.tix||0)+1;extra=`<div class="rdrw">🎟️ ガチャチケット ×1</div>`}}
@@ -4083,8 +4199,12 @@ function rdDone(){
     <div class="rdesb fire"><span>🔥</span><div><b>${r.st.n}日連続!</b><small>${st?"今日のぶん達成!":"明日も1レッスンでストリーク継続"}</small></div></div>
     ${star}${extra}
     <button class="big" id="rdbk">つづける</button>${o.kind==="boss"?`<button class="big sec" id="rdbt">ボキバトルで腕だめし</button>`:""}</div>`;
-  $("#rdbk").onclick=()=>adMaybe(rdClose);const bt=$("#rdbt");if(bt)bt.onclick=()=>{ov.remove();RD=null;navTo("battle")};
-  if(st&&o.kind!=="exam"){const n=r.st.n,ms=[3,7,14,30,50,100,365].includes(n);setTimeout(()=>giveBoost(ms?30:15,ms?`🔥 連続${n}日達成!`:"今日の1レッスン目クリアボーナス!"),900)}
+  const ev={streakUp:st,rqBefore,boosts:[]};
+  if(st){const n=r.st.n,ms=[3,7,14,30,50,100,365].includes(n);
+    if(tmr){ev.boosts.push({min:15,mul:3,why:"約束どおり戻ってきたね!"});REC.tmrBoost=""}
+    else ev.boosts.push({min:ms?30:15,mul:2,why:ms?`🔥 連続${n}日達成!`:"今日の1レッスン目クリアボーナス!"});
+    const t=new Date(Date.now()+864e5);REC.tmrBoost=t.toDateString();saveRec()}
+  $("#rdbk").onclick=()=>rdSeq(ev);const bt=$("#rdbt");if(bt)bt.onclick=()=>{ov.remove();RD=null;navTo("battle")};
 }
 
 
