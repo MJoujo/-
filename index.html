@@ -1341,7 +1341,7 @@ button{font-family:inherit;cursor:pointer}
 
 /* ボス戦 */
 #rdov.bossmode{background:radial-gradient(ellipse at 50% 30%,#3a1020 0%,#14091a 55%,#0b0d18 100%)}
-#rdov.bossmode.lastboss{background:radial-gradient(ellipse at 50% 30%,#4a1838 0%,#1a0a24 55%,#0b0d18 100%)}
+#rdov.bossmode.lastboss{background:radial-gradient(ellipse at 50% 30%,#3e2a12 0%,#1c0f24 55%,#0b0d18 100%)}#rdov.lastboss .bossbg{filter:drop-shadow(0 0 40px rgba(255,200,80,.6))}
 #rdov.bossmode .rdin{position:relative;z-index:1}
 .bossbg{position:fixed;left:50%;top:52%;transform:translate(-50%,-50%);width:min(88vw,460px);aspect-ratio:1;z-index:0;pointer-events:none;opacity:.17;filter:saturate(1.2) drop-shadow(0 0 40px rgba(255,60,90,.6));animation:bbr 4s ease-in-out infinite}
 .bossbg img{width:100%;height:100%;object-fit:contain;image-rendering:auto}.bossbg.full img,.bint.last .binti img,.bdef.last .bdefi img,.bfail img{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 10%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 10%,#000 88%,transparent)}.bossbg.full{width:min(70vw,360px);aspect-ratio:104/180;opacity:.2}
@@ -1352,7 +1352,7 @@ button{font-family:inherit;cursor:pointer}
 .bossay{position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:6;max-width:calc(100% - 120px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#2a0f1c;border:2px solid #ff5d6c;color:#fff;font-weight:900;font-size:12.5px;border-radius:12px;padding:4px 10px;animation:bsay .25s;pointer-events:none}
 .bossay.st{transform:none;white-space:normal}.bossay.hit{border-color:#ffd23f;background:#2a2008}.bossay.st{position:static;display:inline-block;max-width:none;margin-top:8px;font-size:14px}
 .bint{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;color:#fff;background:radial-gradient(circle at 50% 40%,#5a1426,#120612 70%)}
-.bint.last{background:radial-gradient(circle at 50% 40%,#6a1a52,#12061a 70%)}
+.bint.last{background:radial-gradient(circle at 50% 40%,#5a3e14,#14081c 70%)}.bint.last .binti{filter:drop-shadow(0 0 34px rgba(255,200,80,.75))}
 .bintc{font-weight:900;color:#ff9fb0;letter-spacing:3px;animation:sqin .4s}.bintc b{font-size:34px;color:#ffd23f;letter-spacing:6px;text-shadow:0 0 20px #ff3b4f}
 .binti{width:min(60vw,240px);aspect-ratio:1;display:flex;align-items:center;justify-content:center;animation:bvl .6s .15s cubic-bezier(.2,1.3,.5,1) both;filter:drop-shadow(0 0 30px rgba(255,60,90,.7))}
 .bint.last .binti{aspect-ratio:104/180;width:min(46vw,200px)}.binti img{width:100%;height:100%;object-fit:contain}
@@ -3832,7 +3832,7 @@ function rdClose(){if(RD&&RD.tick)clearInterval(RD.tick);const xp=$("#rdxp");if(
    b:ふだん h:ダメージ t:あおり d:たおされた v:勝った */
 const BFACE={pon:{b:"ikari",h:"bikkuri",t:"takuramu",d:"naki",v:"egao"},robo:{b:"doya",h:"error",t:"doya",d:"ochikomi",v:"seikai"},
   niya:{b:"nichaa",h:"aseri",t:"www",d:"naki",v:"kusa"},luna:{b:"jito",h:"odoroki",t:"dokuzetsu",d:"taoreru",v:"akire"},
-  gou:{b:"nekketsu",h:"bikkuri",t:"katsu",d:"naki",v:"doya"},yone:{b:"ikari2",h:"bikkuri",t:"okashi2",d:"naki",v:"manzoku"}};
+  gou:{b:"nekketsu",h:"bikkuri",t:"katsu",d:"naki",v:"doya"},yone:{b:"nikkori2",h:"bikkuri",t:"yorokobi",d:"manzoku",v:"okashi2"}};
 const BOSS3={
  c1:{w:"pon",t:"開業の壁",in:"このあたりで店を開くなら、まずオイラの問題を解いてみな!",hit:["ぐぬぬ…やるな!","うわっ、正解かよ!"],ng:["へっへーん、まだまだだな!","それじゃ開業できないぞ〜"],d:"ま、まいった…開業おめでとう!",v:"出直してきな!"},
  c2:{w:"robo",t:"金庫番",in:"ピピッ。金庫ニ近ヅク者ハ、現金ノ仕訳デ認証シテクダサイ。",hit:["ERROR…認証サレマシタ…","ピ…ピピッ!?"],ng:["認証失敗。ザンネンデシタ","ソノ現金、合ッテマセン"],d:"金庫…開放シマス…ガクッ",v:"アクセス拒否。マタノオ越シヲ"},
@@ -3847,7 +3847,7 @@ const BOSS3={
  c11:{w:"niya",t:"小口の小鬼",in:"小口現金ちょろまかしてもバレねーよなw",hit:["げっ、バレた","細かすぎだろお前"],ng:["補給の仕訳ミスってて草","雑費どこいったwww"],d:"…わかったよ、全部返すよ",v:"ちょろまかし成功www"},
  c12:{w:"robo",t:"貸倒れゾンビ",in:"カシ…ダオレ…ウリカケキン…カエセ…",hit:["グ…グギギ…","ピ…ガガッ"],ng:["貸倒引当金…足リナイ…","ゾンビ…増殖…"],d:"引当…十分…成仏…シマス",v:"アナタモ…貸倒レ…"},
  c13:{w:"luna",t:"在庫の迷宮",in:"…しいくりくりしの迷宮へようこそ。迷子になっても知らない。",hit:["…出口、見つけた?","…やるじゃん"],ng:["…売上原価、ずれてる","…迷子"],d:"…抜けたんだ。すごいね",v:"…一生ここで棚卸ししてて"},
- c14:{w:"yone",t:"ラスボス",in:"よくここまで来たねぇ。でもね、精算表は甘くないよ。おばあちゃん、本気でいくからね!",hit:["あらまぁ…やるじゃないか","くっ…成長したねぇ"],ng:["まだまだ甘いねぇ!","そんなんじゃ店は任せられないよ!"],d:"…ふふ、合格だよ。もう、あんたに教えることは何もないねぇ",v:"出直しておいで。おばあちゃんは逃げないからね"}};
+ c14:{w:"yone",t:"ラスボス",in:"ふふ…よくここまで来たねぇ。さあ、精算表をおばあちゃんに見せてごらん。手加減はしないよ",hit:["あらまぁ、やるじゃないか","ふふ、少しは成長したねぇ"],ng:["あらあら、まだまだだねぇ","ふふ…お茶でも飲んで落ち着きな"],d:"…ふふ、合格だよ。もう、あんたに教えることは何もないねぇ",v:"ふふ、また来なさい。おばあちゃんはいつでも待ってるよ"}};
 Object.entries(BOSS3).forEach(([k,b])=>{b.nm=b.w==="yone"?"ヨネばあちゃん":CAST[b.w].n});
 function boss3(){if(!RD||RD.o.kind!=="boss"||ROAD!==ROAD3)return null;return BOSS3[ROAD[RD.o.ci].id]||null}
 function bossImg(w,f){const k=BFACE[w][f]||BFACE[w].b;if(w==="yone")return chCutImg("yone",k)||castImg(castOf("tencho"),"ikari");return castImg(castOf(w),k)||castImg(castOf(w),"main")}
