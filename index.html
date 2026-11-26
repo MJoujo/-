@@ -1432,6 +1432,18 @@ button{font-family:inherit;cursor:pointer}
 .vtb{position:relative;height:12px;background:#2a3355;border-radius:99px;margin:6px 0;overflow:visible}.vtb i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#c9a24a,#ffd23f)}
 .vtb em{position:absolute;top:-4px;bottom:-4px;width:3px;background:#ff5d6c;border-radius:2px}.vote small{color:var(--mute);font-size:11.5px;font-weight:700}
 .vote.won{border-color:#39ff9a}.vote.won .vtb i{background:linear-gradient(90deg,#2fd17f,#39ff9a)}
+
+.xpc.frh{border-color:#3d7fd1}.xpc.frh b{color:#8db8ff}
+.frme{display:flex;align-items:center;justify-content:space-between;background:#151b33;border:2px solid #3d7fd1;border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.frme small{display:block;color:var(--mute);font-size:11px;font-weight:800}.frme b{font-size:22px;color:#8db8ff;letter-spacing:1px}
+.frbtn{background:#26325f;border:2px solid #3c4a75;color:#fff;border-radius:10px;padding:8px 12px;font-weight:900}.frbtn.go{background:#3d7fd1;border-color:#3d7fd1}
+.fradd{display:flex;gap:6px;margin-bottom:12px}.fradd input{flex:1;min-width:0;background:#0f1428;border:2px solid #3c4a75;border-radius:10px;color:#fff;padding:8px 10px;font-size:16px;font-weight:800;text-transform:uppercase}
+.frcard{background:#151b33;border:2px solid #2a3560;border-radius:14px;padding:10px;margin:8px 0}.frtop{display:flex;align-items:center;gap:10px}.frtop img{width:44px;height:44px;border-radius:50%;object-fit:cover}
+.frinfo{flex:1;min-width:0}.frinfo b{display:block}.frinfo small{display:block;color:var(--mute);font-size:11.5px;font-weight:700}
+.frx{background:none;border:none;color:var(--mute);font-size:20px;padding:4px 8px}
+.fract{display:flex;gap:6px;margin-top:8px}.fract button{flex:1;background:#222b4a;border:1.5px solid #3c4a75;color:#fff;border-radius:10px;padding:7px 0;font-weight:800;font-size:13px}.fract button:disabled{opacity:.45}
+.frlog{text-align:center;color:#cfd8f0}.frlog p{line-height:1.6}
+.frmsg{display:flex;align-items:center;gap:8px;text-align:left;background:#151b33;border-radius:10px;padding:8px;margin:6px 0;font-size:13.5px}.frmsg img{width:32px;height:32px;border-radius:50%}.frmsg.bt{border:2px solid #ffb03b}
 </style>
 </head>
 <body>
@@ -2110,7 +2122,7 @@ function applyCloud(d){
   REC.ta=REC.ta||[];REC.sa=REC.sa||[];REC.win=REC.win||{cpu:0,cpuL:0,on:0,onL:0};
   try{localStorage.setItem(KEY,JSON.stringify(REC))}catch(e){}gInit();
 }
-async function cloudOnLogin(){
+async function cloudOnLogin(){setTimeout(()=>{frSync().then(()=>{frPending();frInbox(true)})},2500);
   let row=null;
   try{row=await cloudFetch()}catch(e){CLOUD.err="データの読み込みに失敗:"+((e&&e.message)||"");cloudRefreshUI();toast("クラウドに接続できなかった");return}
   const uid=CLOUD.user.id;
@@ -4450,12 +4462,86 @@ setInterval(boostBar,1000);
 /* --- 週間XP --- */
 function weekKey(d){d=new Date((d||new Date()).getTime()+9*3600e3);const day=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-day);return d.toISOString().slice(0,10)}
 function wxp(){const k=weekKey();if(!REC.wxp||REC.wxp.wk!==k)REC.wxp={wk:k,xp:0};return REC.wxp}
+
+/* ================= フレンド(片方向フォロー) ================= */
+const FR={list:[],busy:false,last:0,inboxT:0};
+function frPriv(){REC.priv=REC.priv||{road:true,seen:true};return REC.priv}
+function frStreak(){const r=rdInit(),y=new Date(Date.now()-864e5).toDateString();return(r.st.d===new Date().toDateString()||r.st.d===y)?(r.st.n||0):0}
+function frRoad(){const r=rdInit(),g=r.grade==="2"?"2級":r.grade==="1"?"1級":"3級";const ci=ROAD.findIndex(c=>!r.boss[c.id]);return ci<0?`${g} 全章クリア`:`${g} 第${ROAD[ci].no}章`}
+async function frSync(){const sb=sbClient();if(!sb||!CLOUD.user)return null;const w=wxp();
+  try{const{data,error}=await sb.rpc("upsert_profile",{p_name:(REC.name||"プレイヤー").slice(0,10),p_av:REC.av||"",p_lv:lvInfo().lv,p_streak:frStreak(),p_week:w.wk,p_wxp:w.xp,p_road:frPriv().road?frRoad():null,p_show_seen:frPriv().seen!==false});
+    if(error)throw error;if(data&&REC.frCode!==data){REC.frCode=data;saveRec()}return data}catch(e){FR.err=e;return null}}
+function agoTxt(t){if(!t)return"";const m=Math.floor((Date.now()-Date.parse(t))/60000);return m<5?"🟢 オンライン":m<60?`${m}分前`:m<1440?`${Math.floor(m/60)}時間前`:`${Math.floor(m/1440)}日前`}
+async function frLoad(){const sb=sbClient();if(!sb||!CLOUD.user)return[];
+  const{data:fl,error}=await sb.from("follows").select("followee").eq("follower",CLOUD.user.id);if(error)throw error;
+  const ids=(fl||[]).map(x=>x.followee);if(!ids.length){FR.list=[];return[]}
+  const{data:ps,error:e2}=await sb.from("profiles").select("user_id,code,name,av,lv,streak,week,wxp,road,last_seen").in("user_id",ids);if(e2)throw e2;
+  FR.list=ps||[];return FR.list}
+async function frFollow(code){const sb=sbClient();if(!sb||!CLOUD.user)return"login";code=String(code||"").toUpperCase().replace(/\s/g,"");if(!/^BK-?[A-Z0-9]{4}$/.test(code))return"bad";if(!code.includes("-"))code="BK-"+code.slice(2);
+  const{data,error}=await sb.from("profiles").select("user_id,name").eq("code",code).maybeSingle();if(error)return"err";if(!data)return"none";if(data.user_id===CLOUD.user.id)return"me";
+  const{error:e2}=await sb.from("follows").insert({follower:CLOUD.user.id,followee:data.user_id});if(e2&&!/duplicate|23505/.test(e2.code+e2.message))return"err";return{ok:1,name:data.name}}
+async function frUnfollow(uid){const sb=sbClient();if(!sb||!CLOUD.user)return;await sb.from("follows").delete().eq("follower",CLOUD.user.id).eq("followee",uid)}
+async function frCheer(uid,kind,room){const sb=sbClient();if(!sb||!CLOUD.user)return"login";const{data,error}=await sb.rpc("send_cheer",{p_to:uid,p_kind:kind,p_room:room||null});if(error)return"err";return data}
+const CHEER={nice:{i:"👏",t:"ナイス!",m:n=>`<b>${n}</b>から「👏 ナイス!」が届いたよ。いい友達だねぇ`},nudge:{i:"🔥",t:"今日まだだよ!",m:n=>`<b>${n}</b>から「🔥 今日まだだよ!」って催促が来てるよ。ほら、1レッスンやっときな`},battle:{i:"⚔",t:"対戦しよう",m:n=>`<b>${n}</b>から対戦の申し込みだよ!`}};
+async function frInbox(force){const sb=sbClient();if(!sb||!CLOUD.user||document.querySelector(".mdl")||$("#rdov")||(typeof G!=="undefined"&&G&&G.running))return;
+  if(!force&&Date.now()-FR.inboxT<45000)return;FR.inboxT=Date.now();
+  try{const{data}=await sb.from("cheers").select("id,from_id,kind,room,created_at").eq("to_id",CLOUD.user.id).eq("seen",false).order("created_at",{ascending:true}).limit(10);
+    if(!data||!data.length)return;const ids=[...new Set(data.map(x=>x.from_id))];
+    const{data:ps}=await sb.from("profiles").select("user_id,name,av").in("user_id",ids);const nm={};(ps||[]).forEach(p=>nm[p.user_id]=p);
+    await sb.from("cheers").update({seen:true}).in("id",data.map(x=>x.id));
+    const live=data.filter(x=>x.kind!=="battle"||Date.now()-Date.parse(x.created_at)<10*60000);if(!live.length)return;
+    const bt=live.filter(x=>x.kind==="battle").pop(),rest=live.filter(x=>x.kind!=="battle");
+    const rows=rest.map(x=>{const p=nm[x.from_id]||{name:"だれか"};return`<div class="frmsg"><img src="${avSrc(p.av)}" alt=""><span>${CHEER[x.kind].m(esc(p.name))}</span></div>`}).join("");
+    const bp=bt?nm[bt.from_id]||{name:"だれか"}:null;
+    const m=modal(`<div class="tutm">${castFace("tencho",bt?"bikkuri":"nikkori","tutf")}<h3>📮 フレンドから届いたよ</h3>${rows}
+      ${bt?`<div class="frmsg bt"><img src="${avSrc(bp.av)}" alt=""><span>${CHEER.battle.m(esc(bp.name))}</span></div><button class="big" id="frjoin">⚔ 対戦に参加する</button>`:""}
+      <button class="big sec" id="frok">${bt?"あとで":"ありがとう!"}</button></div>`);hap("heal");se("item");
+    if(bt)m.querySelector("#frjoin").onclick=()=>{m.remove();lobby(bt.room,REC.name||"プレイヤー")};
+    m.querySelector("#frok").onclick=()=>m.remove();
+  }catch(e){}}
+setInterval(()=>{if(document.visibilityState==="visible")frInbox()},60000);
+async function frScreen(){
+  app.innerHTML=shell("home",`<div class="title"><button class="back" id="bk">← もどる</button><div class="pgh">👥 フレンド</div><div id="frbox"><div class="ls">読み込み中…</div></div></div>`);bindShell();
+  $("#bk").onclick=()=>navTo("home");const box=$("#frbox"),sb=sbClient();
+  if(!sb){box.innerHTML=`<div class="ls">オンラインにつながらないので、フレンドを使えません</div>`;return}
+  if(!CLOUD.user){box.innerHTML=`<div class="frlog">${castFace("tencho","nikkori","tutf")}<p>フレンド機能は<b>Googleログイン</b>した人どうしで使えるよ。ログインすると、あなたのフレンドコードがもらえるからね。</p><button class="big" id="frlg">☁️ Googleでログイン</button></div>`;$("#frlg").onclick=cloudLogin;return}
+  const code=await frSync()||REC.frCode;let list=[];
+  try{list=await frLoad()}catch(e){box.innerHTML=`<div class="ls">フレンドを読み込めませんでした${e&&e.code==="42P01"?"(サーバーにフレンド用の表がまだありません)":""}<br><small class="mono">${esc(String(e&&(e.code||e.message)||e))}</small></div>`;return}
+  if(!$("#frbox"))return;
+  const w=wxp(),meRow={user_id:CLOUD.user.id,name:REC.name||"あなた",av:REC.av||"",wxp:w.xp,week:w.wk,me:1};
+  const rank=[meRow].concat(list.map(f=>({...f,wxp:f.week===w.wk?f.wxp:0}))).sort((a,b)=>b.wxp-a.wxp),mi=rank.findIndex(x=>x.me);
+  const nextTxt=mi>0?`🔥 あと <b>${rank[mi-1].wxp-rank[mi].wxp+1} XP</b> で ${esc(rank[mi-1].name)} を抜ける!`:rank.length>1?"👑 フレンドの中で今週1位!":"";
+  box.innerHTML=`
+    <div class="frme"><div><small>あなたのフレンドコード</small><b class="mono" id="frcode">${esc(code||"取得中…")}</b></div><button class="frbtn" id="frshare">📤 共有</button></div>
+    <div class="fradd"><input id="frin" placeholder="友達のコード(BK-XXXX)" maxlength="7" autocapitalize="characters"><button class="frbtn go" id="frgo">追加</button></div>
+    ${list.length?`<h3 class="h3">🏆 今週のフレンドランキング</h3>${nextTxt?`<div class="xpn">${nextTxt}</div>`:""}
+      <div class="rklist">${rank.map((x,i)=>`<div class="rkrow ${x.me?"me":""} ${i<3?"top":""}"><span class="rkn">${["🥇","🥈","🥉"][i]||i+1}</span><img src="${avSrc(x.av)}" alt=""><b>${esc(x.name)}</b><span class="rkp mono">${x.wxp} XP</span></div>`).join("")}</div>
+      <h3 class="h3">👥 フォロー中(${list.length}人)</h3>
+      ${list.map(f=>`<div class="frcard" data-u="${f.user_id}"><div class="frtop"><img src="${avSrc(f.av)}" alt=""><div class="frinfo"><b>${esc(f.name)}</b><small>Lv.${f.lv} ・ 🔥${f.streak}日 ・ 今週 ${f.week===w.wk?f.wxp:0} XP</small><small>${f.road?`📍 ${esc(f.road)}`:""}${f.road&&f.last_seen?" ・ ":""}${f.last_seen?agoTxt(f.last_seen):""}</small></div><button class="frx" data-un="${f.user_id}" aria-label="フォローをやめる">⋯</button></div>
+        <div class="fract"><button data-c="nice">👏 ナイス</button><button data-c="nudge">🔥 催促</button><button data-c="battle">⚔ 対戦</button></div></div>`).join("")}`
+    :`<div class="frlog">${castFace("tencho","nikkori","tutf")}<p>まだだれもフォローしていないよ。友達のコードを入れるか、あなたのコードを送ってみよう!</p></div>`}`;
+  $("#frshare").onclick=async()=>{const url=location.origin+location.pathname+"?f="+encodeURIComponent(code||"");const txt=`ボキバトルでフォローしてね!フレンドコード:${code}`;
+    try{if(navigator.share){await navigator.share({title:"ボキバトル",text:txt,url});return}}catch(e){return}
+    try{await navigator.clipboard.writeText(txt+"\n"+url);toast("コピーしたよ")}catch(e){toast(code)}};
+  const add=async()=>{const v=$("#frin").value;const r=await frFollow(v);
+    if(r&&r.ok){toast(`${r.name} をフォローしたよ!`);hap("heal");frScreen()}else toast({login:"ログインしてね",bad:"コードの形がちがうよ(例 BK-7F3Q)",none:"そのコードの人は見つからなかったよ",me:"それはあなたのコードだよ",err:"うまく追加できなかったよ"}[r]||"エラー")};
+  $("#frgo").onclick=add;$("#frin").onkeydown=e=>{if(e.key==="Enter")add()};
+  box.querySelectorAll(".frcard").forEach(c=>{const uid=c.dataset.u;
+    c.querySelectorAll(".fract button").forEach(b=>b.onclick=async()=>{const k=b.dataset.c;
+      if(k==="battle"){const room=newCode();const r=await frCheer(uid,"battle",room);if(r==="ok"){toast("招待を送ったよ!部屋で待とう");lobby(room,REC.name||"プレイヤー")}else toast(r==="wait"?"少し待ってからもう一度":"送れなかったよ");return}
+      const r=await frCheer(uid,k);toast(r==="ok"?`${CHEER[k].i} ${CHEER[k].t} を送ったよ`:r==="wait"?"同じ相手には6時間に1回までだよ":"送れなかったよ");if(r==="ok"){hap("tap");b.disabled=true}})});
+  box.querySelectorAll(".frx").forEach(b=>b.onclick=async()=>{if(!confirm("フォローをやめますか?"))return;await frUnfollow(b.dataset.un);frScreen()});
+}
+/* 共有リンク ?f=BK-XXXX から開いたとき */
+function frFromUrl(){const m=location.search.match(/[?&]f=([^&]+)/);if(!m)return;const code=decodeURIComponent(m[1]);try{history.replaceState(null,"",location.pathname)}catch(e){}REC._pendF=code}
+async function frPending(){const code=REC._pendF;if(!code||!CLOUD.user)return;delete REC._pendF;const r=await frFollow(code);if(r&&r.ok)toast(`${r.name} をフォローしたよ!`)}
+frFromUrl();
 async function xpUpload(){
   const sb=sbClient();if(!sb||!CLOUD.user)return;const w=wxp();
   try{let{error}=await sb.rpc("submit_xp",{p_week:w.wk,p_xp:w.xp,p_total:REC.xp||0,p_name:(REC.name||"プレイヤー").slice(0,10),p_av:REC.av||""});
     if(error&&/PGRST202|42883/.test(error.code||""))await sb.from("xp_board").upsert({week:w.wk,user_id:CLOUD.user.id,name:(REC.name||"プレイヤー").slice(0,10),av:REC.av||"",xp:w.xp,total:REC.xp||0,updated_at:new Date().toISOString()})}catch(e){}
 }
-let _xpUpT=0;function xpUploadSoon(){clearTimeout(_xpUpT);_xpUpT=setTimeout(xpUpload,12000)}
+let _xpUpT=0;function xpUploadSoon(){clearTimeout(_xpUpT);_xpUpT=setTimeout(()=>{xpUpload();frSync()},12000)}
 async function xpBoard(){
   const w=wxp();
   app.innerHTML=shell("home",`<div class="title"><button class="back" id="bk">← もどる</button><div class="pgh">🏆 週間XPランキング</div>
@@ -4772,6 +4858,7 @@ function homeScreen(){
   const myCalc=eq.skin?miniCalc(eq.skin):miniCalc("_");
   app.innerHTML=shell("home",`
    ${nagHTML()}
+   <button class="xpc frh" id="frh"><span>👥 フレンド</span><span>応援・ランキング・対戦 ›</span></button>
    <button class="xpc" id="xpc"><span>📊 今週のXP <b>${wxp().xp}</b></span><span>${xpMul()>1?`<em>⚡2倍中</em>`:""}週間ランキング ›</span></button>
    <div class="hbnr" id="bnr">
     <div class="bntx"><em>PICK UP</em><b>電卓ガチャ</b><span>UR「黄金の電卓」「宇宙の電卓」排出中!</span><small>10連でSR以上1つ確定</small></div>
@@ -4794,7 +4881,7 @@ function homeScreen(){
   $("#bnr").onclick=()=>navTo("gacha");$("#myc").onclick=()=>navTo("col");
   $("#btl").onclick=()=>navTo("battle");$("#hroad").onclick=()=>navTo("road");$("#ta").onclick=()=>soloModal("ta");$("#sa").onclick=()=>soloModal("sa");
   $("#news").onclick=newsModal;const nbb=$("#nbb");if(nbb)nbb.onclick=nbModal;
-  {const ng=$("#nag");if(ng)ng.onclick=()=>{hap("tap");navTo("road")};const xc=$("#xpc");if(xc)xc.onclick=()=>xpBoard();nagApply()}
+  {const ng=$("#nag");if(ng)ng.onclick=()=>{hap("tap");navTo("road")};const xc=$("#xpc");if(xc)xc.onclick=()=>xpBoard();const fh=$("#frh");if(fh)fh.onclick=()=>frScreen();setTimeout(()=>{frPending();frInbox()},1500);nagApply()}
   if(REC.name&&REC.tut&&!REC.notifAsked&&!TUT.on&&!TUT.asking&&!document.querySelector(".mdl")&&!$("#rdov")&&"Notification" in window&&Notification.permission==="default")setTimeout(()=>{if(!document.querySelector(".mdl"))notifAsk()},700);
   else if(nbReady()&&REC.name&&!TUT.on&&!TUT.asking&&!document.querySelector(".mdl")&&!$("#rdov"))setTimeout(()=>{if(NAV==="home"&&!TUT.on&&!TUT.asking&&!document.querySelector(".mdl")&&!$("#rdov"))nbModal()},REC._dailyNew?900:300);const cn=$("#cnudge");if(cn)cn.onclick=()=>navTo("set");$("#msb").onclick=()=>$("#mpanel").scrollIntoView({behavior:"smooth",block:"center"});
   window.scrollTo(0,0);
@@ -4992,13 +5079,18 @@ function settingsScreen(){
    <div class="recs"><h3>⚡ スコアアタック 自己ベスト</h3>${list(REC.sa,r=>`<span class="mono">${r.pts}pt</span>`)}</div>
    <div class="rules">● 出題範囲:連結会計/税効果/退職給付/減損/外貨換算/標準原価計算/CVP分析/最適セールスミックス<br>● 電卓とメモは右側(左手モードなら左側)。プレイ中も⇄で入れ替えOK。電卓の「入力」で答えを欄に入れる<br>● PCなら数字キー=電卓、Tab=入力、Ctrl+Enter=解答<br>● 記録はこの端末のブラウザに保存されます</div>
    <div class="hand"><span>🔔 サボったときの催促通知</span><div class="seg"><button id="ntf1" class="${REC.notif?"on":""}">ON</button><button id="ntf0" class="${REC.notif?"":"on"}">OFF</button></div></div>
+   <h3 class="h3">👥 フレンドに見せる情報</h3>
+   <div class="hand"><span>📍 今いる章</span><div class="seg"><button id="pv_r1" class="${frPriv().road?"on":""}">見せる</button><button id="pv_r0" class="${frPriv().road?"":"on"}">かくす</button></div></div>
+   <div class="hand"><span>🕒 最終ログイン</span><div class="seg"><button id="pv_s1" class="${frPriv().seen!==false?"on":""}">見せる</button><button id="pv_s0" class="${frPriv().seen!==false?"":"on"}">かくす</button></div></div>
+   <small class="bstn">レベル・連続日数・今週のXPは、いつもフレンドに見えるよ</small>
    <h3 class="h3">📈 対戦の記録</h3>${bstatHTML()}
    <button class="big sec" id="tutre" style="margin:6px 0 12px">🎓 チュートリアルをもう一度</button>
    <div class="dzone"><b>⚠️ データを消す</b><small>すべてのデータを消してタイトル画面から最初に戻るよ(リセマラ用)。</small><button class="big del ol" id="dreset">🗑️ データを消して最初から</button></div>
    <button class="big sec" id="totitle" style="margin-top:10px">🏁 タイトル画面へ</button>
   </div>`);bindShell();bindCloud();
   $("#dreset").onclick=resetModal;$("#totitle").onclick=titleScreen;$("#tutre").onclick=()=>{audioInit();tutStart()};
-  $("#ntf1").onclick=async()=>{await notifSetup(true);navTo("set")};$("#ntf0").onclick=async()=>{await notifSetup(false);navTo("set")};
+  $("#ntf1").onclick=async()=>{await notifSetup(true);navTo("set")};
+  [["pv_r1","road",true],["pv_r0","road",false],["pv_s1","seen",true],["pv_s0","seen",false]].forEach(([id,k,v])=>{const b=$("#"+id);if(b)b.onclick=()=>{frPriv()[k]=v;saveRec();frSync();navTo("set")}});$("#ntf0").onclick=async()=>{await notifSetup(false);navTo("set")};
   const ci=$("#code");ci.oninput=()=>{ci.value=ci.value.replace(/\D/g,"");CODE=ci.value};
   $("#nc").onclick=()=>{CODE=newCode();ci.value=CODE};
   app.querySelectorAll(".csl button").forEach(b=>b.onclick=()=>{REC.calc=b.dataset.c;saveRec();app.querySelectorAll(".csl button").forEach(x=>x.classList.toggle("on",x===b));se("ok",2)});
