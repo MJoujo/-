@@ -1366,17 +1366,17 @@ button{font-family:inherit;cursor:pointer}
 .bdefs{font-weight:800;font-size:15px;line-height:1.6;max-width:420px;animation:sqin .4s .8s both}.bdef small{color:var(--mute);animation:sqin .4s 1.5s both}
 .bfail{display:flex;flex-direction:column;align-items:center}.bfail img{width:120px;height:120px;object-fit:contain}
 
-.rdbc{background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;position:absolute;top:-104px;left:50%;transform:translateX(-50%);width:100px;height:118px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer}
-.rdbc.bcr,.rdbc.bcl{}
-.rdbc img{position:relative;z-index:1;width:86px;height:86px;object-fit:contain;animation:rdbb 1.6s ease-in-out infinite;transform-origin:bottom}
-.rdbc.bcyone img{width:62px;height:106px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 10%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 10%,#000 88%,transparent)}
+.rdbch{background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;position:absolute;top:-104px;left:50%;transform:translateX(-50%);width:100px;height:118px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer}
+
+.rdbch img{position:relative;z-index:1;width:86px;height:86px;object-fit:contain;animation:rdbb 1.6s ease-in-out infinite;transform-origin:bottom}
+.rdbch.bcyone img{width:62px;height:106px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 10%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 10%,#000 88%,transparent)}
 .rdbcs{width:64px;height:14px;border-radius:50%;background:rgba(0,0,0,.45);margin-top:-8px}
-.rdbc.bclk img{filter:brightness(0) opacity(.55);animation:none}.rdbc.bclk::after{content:"?";position:absolute;top:38%;font-size:30px;font-weight:900;color:#5a6890;z-index:2}
-.rdbc.bcdn img{animation:none;filter:saturate(.8)}
+.rdbch.bclk img{filter:brightness(0) opacity(.55);animation:none}.rdbch.bclk::after{content:"?";position:absolute;top:38%;font-size:30px;font-weight:900;color:#5a6890;z-index:2}
+.rdbch.bcdn img{animation:none;filter:saturate(.8)}
 .rdbcx{position:absolute;top:-4px;right:8px;z-index:2;width:24px;height:24px;border-radius:50%;background:#ff3b4f;color:#fff;font-style:normal;font-weight:900;display:flex;align-items:center;justify-content:center;animation:mkb .5s infinite alternate}
 .rdbcst{position:absolute;top:-16px;font-size:14px;color:#ffd23f;letter-spacing:2px;text-shadow:0 2px 0 #7a5a00}
 @keyframes rdbb{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-6px) scaleY(1.03)}}
-.rdn.boss{margin-top:110px}.rdn.boss .rdb.bs{position:relative;z-index:0}.rdbc{z-index:2}
+.rdn.boss{margin-top:110px}.rdn.boss .rdb.bs{position:relative;z-index:0}.rdbch{z-index:2}
 </style>
 </head>
 <body>
@@ -3781,7 +3781,7 @@ function roadScreen(){
     });
     const bu=rdUnlocked(ci,-1),bd=r.boss[ch.id];
     const B3=ROAD===ROAD3&&BOSS3[ch.id],side=ci%2?"l":"r";
-    const bch=B3?`<div class="rdbc bc${side} ${bd?"bcdn":bu?"bccur":"bclk"} ${B3.w==="yone"?"bcyone":""}" data-bc="${ci}">${bu&&!bd?`<i class="rdbcx">!</i>`:""}<img src="${bossImg(B3.w,bd?"d":"b")}" alt="${B3.nm}"><span class="rdbcs"></span>${bd?`<div class="rdbcst">★★★</div>`:""}</div>`:"";
+    const bch=B3?`<div class="rdbch bc${side} ${bd?"bcdn":bu?"bccur":"bclk"} ${B3.w==="yone"?"bcyone":""}" data-bc="${ci}">${bu&&!bd?`<i class="rdbcx">!</i>`:""}<img src="${bossImg(B3.w,bd?"d":"b")}" alt="${B3.nm}"><span class="rdbcs"></span>${bd?`<div class="rdbcst">★★★</div>`:""}</div>`:"";
     html+=`<div class="rdn boss">${bch}<button class="rdb bs ${bd?"dn":bu?"cur":"lk"}" data-c="${ci}" data-l="-1" ${bu?"":"disabled"} aria-label="ボス戦">${bd?"👑":bu?"⚔️":"🔒"}</button><small>${B3?`${bu||bd?`vs ${B3.t} ${B3.nm}`:"??? のボス"}`:`ボス戦 vs ${BOSSN[ch.id]}`}</small></div></div>`;
   });
   const ex=examRec(gr),EX=EXAMS[gr];
@@ -3789,7 +3789,7 @@ function roadScreen(){
 `;
   app.innerHTML=shell("road",html);bindShell();
   app.querySelectorAll(".rdb").forEach(b=>b.onclick=()=>{const ci=+b.dataset.c,li=+b.dataset.l;rdStartModal(ci,li)});
-  app.querySelectorAll(".rdbc").forEach(c=>c.onclick=()=>{const b=c.parentElement.querySelector(".rdb.bs");if(b&&!b.disabled)b.click();else{c.classList.remove("bshk");void c.offsetWidth;c.classList.add("bshk");toast("前のレッスンをクリアすると挑戦できるよ")}});
+  app.querySelectorAll(".rdbch").forEach(c=>c.onclick=()=>{const b=c.parentElement.querySelector(".rdb.bs");if(b&&!b.disabled)b.click();else{c.classList.remove("bshk");void c.offsetWidth;c.classList.add("bshk");toast("前のレッスンをクリアすると挑戦できるよ")}});
   const rv=$("#rdrv");if(rv)rv.onclick=()=>rdRun({kind:"rv"});nagApply();
   $("#rdnt").onclick=()=>{se("key","IN");rdNoteScreen("")};
   app.querySelectorAll(".rdjump").forEach(b=>b.onclick=()=>rdJumpModal(+b.dataset.c));
