@@ -3779,7 +3779,17 @@ function rdReached(ci){const r=rdInit(),J=r.jump||{};for(let k=ci+1;k<ROAD.lengt
 function rvChOf(s){if(!RD)return"etc";const o=RD.o;if(o.kind==="jump"&&o.ci>0)return ROAD[o.ci-1].id;if(o.ci!=null&&ROAD[o.ci])return ROAD[o.ci].id;return"etc"}
 function rvChFind(id){for(const [g,R] of [["3級",ROAD3],["2級",ROAD2],["1級",ROAD1]]){const c=R.find(x=>x.id===id);if(c)return{g,c}}return null}
 function rvChName(id){if(/^exam/.test(id))return`${id.slice(4)}級 模擬試験`;const f=rvChFind(id);return f?`${f.g} 第${f.c.no}章 ${f.c.title}`:"その他"}
+/* 単元の記録がない古いカードは、問題文の形から章を推定する */
+function rvSig(x){return(x.t||"")+"|"+(x.acct||"")+"|"+String(x.q||x.title||"").replace(/<[^>]+>/g,"").replace(/[\d,.@円個%]+/g,"#").replace(/\s+/g,"")}
+function rvSig2(x){return(x.t||"")+"|"+String(x.q||x.title||"").replace(/<[^>]+>/g,"").replace(/[\d,.@円個%]+/g,"#").replace(/\s+/g,"").slice(0,10)}
+let _rvIdx=null;
+function rvIndex(){if(_rvIdx)return _rvIdx;const A={},B={};
+  for(const R of [ROAD3,ROAD2,ROAD1])R.forEach(ch=>ch.lessons.forEach(l=>{for(const lv of [1,2,1,2,3])try{l.make(lv).forEach(st=>{if(st.t==="talk")return;const k=rvSig(st),k2=rvSig2(st);if(!A[k])A[k]=ch.id;if(!B[k2])B[k2]=ch.id})}catch(e){}}));
+  return _rvIdx={A,B}}
+function rvFixOld(){const r=rdInit();let ch=0;if(!r.rv.some(x=>!x.ch))return;const I=rvIndex();
+  r.rv.forEach(x=>{if(x.ch)return;const k=I.A[rvSig(x)]||I.B[rvSig2(x)]||(x.acct&&Object.entries(I.A).find(([s])=>s.startsWith(x.t+"|"+x.acct+"|"))?.[1]);x.ch=k||"etc";ch++});if(ch)saveRec()}
 function rvPick(){
+  try{rvFixOld()}catch(e){}
   const r=rdInit(),cnt={};r.rv.forEach(x=>{const k=x.ch||"etc";cnt[k]=(cnt[k]||0)+1});
   const order=k=>{if(k==="etc")return 9e3;if(/^exam/.test(k))return 8e3+ +k.slice(4);const f=rvChFind(k);return f?({"3級":0,"2級":1000,"1級":2000}[f.g]+f.c.no):9e3};
   const keys=Object.keys(cnt).sort((a,b)=>order(a)-order(b));
