@@ -1403,6 +1403,29 @@ button{font-family:inherit;cursor:pointer}
 .rvpk h3{margin:0 0 6px}.rvrow{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:#151b33;border:2px solid #2a3560;border-radius:12px;color:#eef3ff;padding:10px 12px;margin:6px 0;font-size:13.5px}
 .rvrow b{font-weight:800}.rvrow span{color:#c79bff;font-weight:900;white-space:nowrap;margin-left:8px}.rvrow.all{border-color:#7a5ad8}
 .rvpk{max-height:75vh;overflow:auto}
+
+/* ===== 新しい電卓 ===== */
+.shockw{position:fixed;z-index:70;pointer-events:none;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;border:4px solid rgba(255,255,255,.95);box-shadow:0 0 14px 4px rgba(120,220,255,.7),inset 0 0 10px rgba(120,220,255,.6);animation:shw .55s ease-out forwards}
+@keyframes shw{0%{transform:scale(.4);opacity:1}100%{transform:scale(14);opacity:0;border-width:1px}}
+.ck.shk2{animation:shk2 .3s ease-out}@keyframes shk2{30%{transform:translate(var(--sx),var(--sy))}60%{transform:translate(calc(var(--sx)*-.4),calc(var(--sy)*-.4))}}
+.calc.fx-real .ck{border-radius:9px;background-image:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.08) 45%,rgba(0,0,0,.08) 100%)!important;box-shadow:0 5px 0 rgba(0,0,0,.45),0 7px 8px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.8),inset 0 -2px 0 rgba(0,0,0,.15)!important;transform:translateY(-2px);transition:transform .05s,box-shadow .05s}
+.calc.fx-real .ck.dn{transform:translateY(3px);box-shadow:0 0 0 rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.35),inset 0 2px 4px rgba(0,0,0,.25)!important}
+.calc.fx-real .cdisp{box-shadow:inset 0 3px 8px rgba(0,0,0,.45),inset 0 -1px 0 rgba(255,255,255,.3)}
+.calc.fx-slot .cnum{display:flex;justify-content:flex-end;gap:2px;align-items:center}
+.reel{display:inline-block;min-width:.66em;text-align:center;background:linear-gradient(#fff,#e9e9e9 45%,#cfcfcf);color:#222;border-radius:4px;padding:0 1px;box-shadow:inset 0 3px 4px rgba(0,0,0,.35),inset 0 -3px 4px rgba(0,0,0,.25);font-weight:900;line-height:1.15}
+.reel.spin{animation:reel .35s cubic-bezier(.2,.8,.3,1.2)}@keyframes reel{0%{transform:translateY(-70%);filter:blur(2px)}60%{filter:blur(0)}}
+.reel.r7,.ck .s7{color:#e3001b;-webkit-text-stroke:1px #ffd23f;text-shadow:0 1px 0 #8a0010;font-style:italic}
+.rsep{opacity:.7}
+.calc.sk-shibui{background:linear-gradient(160deg,#2a2420,#0e0b09);border:2px solid #8a6a2a}
+.calc.sk-shibui .cdisp{background:linear-gradient(#efe6cf,#e2d4b0);box-shadow:inset 0 0 0 2px #8a6a2a}.calc.sk-shibui .cnum{color:#1a1410;font-family:"Yuji Boku","Hiragino Mincho ProN","Yu Mincho",serif;letter-spacing:.04em}
+.calc.sk-shibui .ck:not(.in){background:#1c1714;color:#e8d6a8;box-shadow:0 2px 0 #000,inset 0 0 0 1px #5a4520;font-family:"Yuji Boku","Hiragino Mincho ProN","Yu Mincho",serif}
+.calc.sk-shibui .ck.dg{font-size:1.25em}.calc.sk-shibui .ck.clr,.calc.sk-shibui .ck.pink{background:#8a1a14;color:#f5e6c0}.calc.sk-shibui .ck.in{background:#c9a24a;color:#1a1410}
+.calc.sk-rainbow{--rbh:200;background:linear-gradient(160deg,hsl(var(--rbh),75%,62%),hsl(calc(var(--rbh) + 40),70%,45%));transition:background .4s}
+.calc.sk-rainbow .cdisp{background:hsl(var(--rbh),60%,92%)}.calc.sk-rainbow .ck:not(.in){background:hsl(var(--rbh),80%,97%);color:hsl(var(--rbh),60%,28%);box-shadow:0 2px 0 hsl(var(--rbh),50%,45%)}
+.calc.sk-rainbow .ck.op:not(.in),.calc.sk-rainbow .ck.eq,.calc.sk-rainbow .ck.fn,.calc.sk-rainbow .ck.mem,.calc.sk-rainbow .ck.teal{background:hsl(calc(var(--rbh) + 30),75%,58%);color:#fff}
+.calc.sk-rainbow.rb7{background:linear-gradient(120deg,#ff4d4d,#ffb03b,#ffe14a,#4dff8a,#4dc3ff,#7a5cff,#ff5cc8,#ff4d4d);background-size:300% 300%;animation:rbw 2.4s linear infinite}
+.calc.sk-rainbow.rb7 .ck:not(.in){background:rgba(255,255,255,.88);color:#5a2a8a}.calc.sk-rainbow.rbpop{animation:rbw 2.4s linear infinite,rbp .6s}
+@keyframes rbw{to{background-position:300% 0}}@keyframes rbp{40%{transform:scale(1.05)}}
 </style>
 </head>
 <body>
@@ -2277,6 +2300,11 @@ const GITEMS=[
  {id:"ripple",r:"SR",t:"fx",n:"波紋キー",d:"押したキーから光の波紋"},
  {id:"dot",r:"SR",t:"fx",n:"ドット液晶",d:"液晶がレトロなドット文字に"},
  {id:"bounce",r:"SR",t:"fx",n:"ぴょんぴょん",d:"正解すると電卓が跳ねる"},
+ {id:"shock",r:"SR",t:"fx",n:"スーパー波紋",d:"押すと⭕の波紋が広がって、まわりのキーが衝撃波で揺れる"},
+ {id:"real",r:"SR",t:"fx",n:"本物?",d:"キーに本物みたいな立体感。押すとカチッと沈む"},
+ {id:"slot",r:"SR",t:"fx",n:"スロット",d:"液晶の数字がスロットのリールに。7は🎰の赤い7"},
+ {id:"shibui",r:"UR",t:"skin",n:"渋い電卓",d:"漆黒のボディに、数字はすべて筆で書いた漢数字"},
+ {id:"rainbow",r:"UR",t:"skin",n:"レインボー!",d:"連鎖するたびに電卓の色が変わる。7連鎖で虹色に!"},
  {id:"s_xylo",r:"SR",t:"snd",n:"木琴サウンド",d:"キーごとに木琴の音階"},
  {id:"s_type",r:"SR",t:"snd",n:"タイプライター",d:"カシャッと打鍵音"},
  {id:"s_8bit",r:"SR",t:"snd",n:"8bitサウンド",d:"ピコピコゲーム音"},
@@ -2352,7 +2380,18 @@ function pull(n,pay){
   }
   saveRec();return out;
 }
-function equipClass(){const e=REC.eq||{};return(e.skin?" sk-"+e.skin:"")+(e.fx==="dot"?" fx-dot":"")}
+function equipClass(){const e=REC.eq||{};if(e.skin==="shibui")kanjiFont();return(e.skin?" sk-"+e.skin:"")+(e.fx?" fx-"+e.fx:"")}
+/* ---- 新しい電卓の演出 ---- */
+const KJ="〇一二三四五六七八九";const toKJ=t=>String(t).replace(/[0-9]/g,d=>KJ[+d]);
+function kanjiFont(){if(document.getElementById("kjfont"))return;const l=document.createElement("link");l.id="kjfont";l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family=Yuji+Boku&display=swap";document.head.appendChild(l)}
+function eqSkin(){return(REC.eq||{}).skin||""}function eqFx(){return(REC.eq||{}).fx||""}
+function curStreak(){if(typeof G!=="undefined"&&G&&G.running&&!G.ended)return G.streak||0;if(typeof RD!=="undefined"&&RD)return RD.combo||0;return 0}
+function rainbowPaint(){const c=$("#calc");if(!c||eqSkin()!=="rainbow")return;const n=curStreak();c.style.setProperty("--rbh",(n*47+200)%360);
+  const was=c.classList.contains("rb7");c.classList.toggle("rb7",n>=7);if(n>=7&&!was){c.classList.remove("rbpop");void c.offsetWidth;c.classList.add("rbpop")}}
+function shockFx(btn){const box=btn.closest(".calc");if(!box)return;const b=btn.getBoundingClientRect(),cx=b.left+b.width/2,cy=b.top+b.height/2;
+  const w=document.createElement("div");w.className="shockw";w.style.left=cx+"px";w.style.top=cy+"px";document.body.appendChild(w);setTimeout(()=>w.remove(),600);
+  box.querySelectorAll(".ck").forEach(k=>{if(k===btn)return;const r=k.getBoundingClientRect(),dx=r.left+r.width/2-cx,dy=r.top+r.height/2-cy,d=Math.hypot(dx,dy);if(d>170)return;
+    k.style.setProperty("--sx",(dx/d*6).toFixed(1)+"px");k.style.setProperty("--sy",(dy/d*6).toFixed(1)+"px");k.style.animationDelay=(d/900).toFixed(2)+"s";k.classList.remove("shk2");void k.offsetWidth;k.classList.add("shk2")})}
 
 /* --- ミニ電卓プレビュー --- */
 function miniCalc(id){
@@ -2553,7 +2592,7 @@ SE.key=function(k){
   else _keySE(k);
 };
 /* 波紋・ぴょんぴょん */
-function keyFx(btn){if(!REC.eq||REC.eq.fx!=="ripple"||!btn)return;const r=document.createElement("span");r.className="rip";btn.appendChild(r);setTimeout(()=>r.remove(),500)}
+function keyFx(btn){if(!btn||!REC.eq)return;if(REC.eq.fx==="shock"){shockFx(btn);return}if(REC.eq.fx!=="ripple")return;const r=document.createElement("span");r.className="rip";btn.appendChild(r);setTimeout(()=>r.remove(),500)}
 function calcHop(){if(!REC.eq||REC.eq.fx!=="bounce")return;const c=$("#calc");if(c){c.classList.remove("hop");void c.offsetWidth;c.classList.add("hop")}}
 
 const APPICON="img/appicon.png";
@@ -4500,7 +4539,7 @@ function potionSVG(mul){const c=mul>2?["#ffd23f","#ff9a3d"]:["#c47bff","#9a4fe8"
   <circle cx="60" cy="88" r="46" fill="#f0dcff"/><path d="M18 90 Q30 66 60 72 Q90 78 102 82 A42 42 0 0 1 18 90Z" fill="${c[0]}"/><circle cx="44" cy="96" r="9" fill="${c[1]}" opacity=".7"/><circle cx="62" cy="112" r="6" fill="${c[1]}" opacity=".7"/>
   <text x="60" y="104" text-anchor="middle" font-size="26" font-weight="900" fill="#fff">×${mul}</text></svg>`}
 /* ===== 連続正解の演出 ===== */
-function rdCombo(ok){
+function rdCombo(ok){setTimeout(()=>{try{rainbowPaint()}catch(e){}},0);
   const ov=$("#rdov");if(!ov)return;const top=ov.querySelector(".rdtop");
   const old=ov.querySelector(".cmbtag");if(old)old.remove();
   if(!ok){if(ov.classList.contains("fever")){ov.classList.remove("fever");if(top){top.insertAdjacentHTML("beforeend",`<div class="cmbtag lost">コンボ終了…</div>`);setTimeout(()=>{const t=ov.querySelector(".cmbtag.lost");if(t)t.remove()},1200)}}return}
@@ -5388,7 +5427,10 @@ function renderCalcKeys(){
   box.style.gridAutoRows="";
   const sh=shufActive(),perm=sh?G.fx.perm:null;
   box.innerHTML=L.keys.map(([k,l,c,col,row,cs,rs])=>{let key=k,lab=l;const dig=/^\d$/.test(k);if(sh&&dig){key=String(perm[+k]);lab=key}
+    if(eqSkin()==="shibui"&&/^\d+$/.test(lab))lab=toKJ(lab);
+    if(eqFx()==="slot"&&lab==="7")lab=`<span class="s7">7</span>`;
     return`<button class="ck ${c||""} ${dig?"dg":""} ${sh&&dig?"shuf":""} ${k==="NOP"?"nop":""}" data-k="${key}" style="grid-column:${col} / span ${cs||1};grid-row:${row} / span ${rs||1}">${lab}</button>`}).join("");
+  rainbowPaint();
   box.querySelectorAll(".ck").forEach(b=>{b.addEventListener("pointerdown",e=>{e.preventDefault();b.classList.add("dn");keyFx(b);HELD.add(b.dataset.k);calcKey(b.dataset.k)});
     ["pointerup","pointerleave","pointercancel"].forEach(t=>b.addEventListener(t,()=>{b.classList.remove("dn");HELD.delete(b.dataset.k)}))});
   paintGuide();
@@ -5495,7 +5537,12 @@ function paintCalc(){
   if(C.egg){n.textContent="CASIO";ind.innerHTML="";return}
   let s=C.disp;const neg=s.startsWith("-");if(neg)s=s.slice(1);
   let [ip,fp]=s.split(".");ip=Number(ip).toLocaleString("en-US");
-  n.textContent=(neg?"−":"")+ip+(fp!==undefined?"."+fp:"");
+  const txt=(neg?"−":"")+ip+(fp!==undefined?"."+fp:"");
+  if(eqSkin()==="shibui")n.textContent=toKJ(txt);
+  else if(eqFx()==="slot"){const prev=n.dataset.v||"";n.dataset.v=txt;const pa=prev.split("").reverse();
+    n.innerHTML=txt.split("").map((ch,i,a)=>{const changed=pa[a.length-1-i]!==ch;return /\d/.test(ch)?`<span class="reel ${ch==="7"?"r7":""} ${changed?"spin":""}">${ch}</span>`:`<span class="rsep">${ch}</span>`}).join("")}
+  else n.textContent=txt;
+  rainbowPaint();
   const tl=P&&!P.locked&&P.lines?(P.lines.find(l=>l[1]===P.active)||[""])[0]:(!P&&RDCALC&&RDCALC.tgt?RDCALC.tgt():"");
   if(!P&&RDCALC&&RDCALC.onDisp)RDCALC.onDisp(cur());
   ind.innerHTML=`<span class="tgt">${tl?"→ "+esc(tl.replace(/\(.*?\)/g,"")):""}</span><span>${C.gt?"GT":""}</span><span>${C.k?"K":""}</span><span>${C.mem!==0?"M":""}</span><span>${C.err?"E":""}</span><span>${C.op?{"+":"+","-":"−","*":"×","/":"÷"}[C.op]:""}</span>`;
@@ -6024,7 +6071,7 @@ function oppAv(face){const w=oppWho();if(w){const c=castOf(w);return castImg(c,f
 function oppBig(face){const w=oppWho();if(!w)return oppAv();return chCutImg(castOf(w).set||w,face||"main")||oppAv(face)}
 function bfxFace(face,ms){const im=$("#avop");if(!im||!oppWho())return;im.src=oppAv(face);clearTimeout(bfxFace.t);bfxFace.t=setTimeout(()=>{const x=$("#avop");if(x)x.src=oppAv()},ms||1000)}
 function bfxShake(sel){const e=$(sel);if(!e)return;e.classList.remove("bshk");void e.offsetWidth;e.classList.add("bshk")}
-function bfxBadges(){const a=$("#stme"),b=$("#stop");if(!G)return;
+function bfxBadges(){try{rainbowPaint()}catch(e){}const a=$("#stme"),b=$("#stop");if(!G)return;
   if(a){const n=G.streak||0;a.textContent=n>=2?"🔥"+n:"";a.className="bstk"+(n>=5?" hot":"")}
   if(b){const n=G.oppStreak||0;b.textContent=n>=2?"🔥"+n:"";b.className="bstk op"+(n>=5?" hot":"")}}
 /* 光の弾:HPバーの帯の中だけを飛ぶ */
