@@ -1395,6 +1395,9 @@ button{font-family:inherit;cursor:pointer}
 .drawbar.on .dmain{background:#ff5d6c;border-color:#fff}
 .drawbar .dtools{display:none;position:absolute;top:42px;flex-direction:column;gap:6px;background:#151b33;border:2px solid #3c4a75;border-radius:999px;padding:6px 4px}.drawbar.on .dtools{display:flex}
 .drawbar .dtools button{width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#222b4a;font-size:15px}.drawbar .dc{background:var(--c)!important}.drawbar .dtools button.on{border-color:#fff}
+
+.rdl.tw,.rdcard.tw{display:none}.rdbb.typing::after,.tutx.typing::after{content:"▍";opacity:.6;animation:mkb .5s infinite alternate}
+.bintc small{display:block;font-size:12px;letter-spacing:0;color:#ffd0d8;margin-top:4px}
 </style>
 </head>
 <body>
@@ -2147,7 +2150,7 @@ function babParse(t){const out=[];t=String(t).replace(/<[^>]+>/g,"");
     let v=null;for(const k in VOW)if(VOW[k].includes(ch)){v=k;break}
     if(!v){if(/[0-9a-zA-Z0-9]/.test(ch))v="aiueo"[ch.charCodeAt(0)%5];else if(cc>=0x4e00){v="aiueo"[cc%5];out.push({v:"aiueo"[(cc>>3)%5]})}else continue}
     out.push({v})}
-  return out.slice(0,26)}
+  return out.slice(0,70)}
 let _babG=null;
 function vSay(ch,text){
   if(!sndOn("voice")||!SND.ctx)return;
@@ -3857,7 +3860,7 @@ function rdRun(o){
   RD={o,steps,i:0,hp,hp0:hp,ok:0,ng:0,title,t0:Date.now(),retry:[],total:steps.filter(s=>s.t!=="talk").length,cleared:[],combo:0,useBatt:o.kind==="lesson",earnBatt:o.kind==="rv"||o.kind==="nt"};
   const old=$("#rdov");if(old)old.remove();const ov=document.createElement("div");ov.className="rd";ov.id="rdov";document.body.appendChild(ov);
   if(o.kind==="exam"){const E=EXAMS[o.gr];RD.exam={t0:Date.now(),lim:E.lim,gr:o.gr,got:Object.fromEntries(E.secs.map((_,i)=>[i+1,0]))};RD.tick=setInterval(()=>{const el=$("#rdtime");if(!RD||!RD.exam){return}const left=RD.exam.lim-Math.floor((Date.now()-RD.exam.t0)/1000);if(el)el.textContent=fmtMS(left);if(left<=0)rdExamEnd(true)},500)}
-  if(o.kind==="boss"&&boss3())bossIntro(rdRender);else rdRender();
+  if((o.kind==="boss"||o.kind==="jump")&&boss3())bossIntro(rdRender);else rdRender();
 }
 function fmtMS(t){t=Math.max(0,t);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0")}
 function rdClose(){const db=$("#drawbtn");if(db)db.remove();if(RD&&RD.tick)clearInterval(RD.tick);const xp=$("#rdxp");if(xp)xp.remove();const ov=$("#rdov");if(ov)ov.remove();RD=null;roadScreen()}
@@ -3883,7 +3886,7 @@ const BOSS3={
  c13:{w:"luna",t:"在庫の迷宮",in:"…しいくりくりしの迷宮へようこそ。迷子になっても知らない。",hit:["…出口、見つけた?","…やるじゃん"],ng:["…売上原価、ずれてる","…迷子"],d:"…抜けたんだ。すごいね",v:"…一生ここで棚卸ししてて"},
  c14:{w:"yone",t:"ラスボス",in:"ふふ…よくここまで来たねぇ。さあ、精算表をおばあちゃんに見せてごらん。手加減はしないよ",hit:["あらまぁ、やるじゃないか","ふふ、少しは成長したねぇ"],ng:["あらあら、まだまだだねぇ","ふふ…お茶でも飲んで落ち着きな"],d:"…ふふ、合格だよ。もう、あんたに教えることは何もないねぇ",v:"ふふ、また来なさい。おばあちゃんはいつでも待ってるよ"}};
 Object.entries(BOSS3).forEach(([k,b])=>{b.nm=b.w==="yone"?"ヨネばあちゃん":CAST[b.w].n});
-function boss3(){if(!RD||RD.o.kind!=="boss"||ROAD!==ROAD3)return null;return BOSS3[ROAD[RD.o.ci].id]||null}
+function boss3(){if(!RD||ROAD!==ROAD3)return null;if(RD.o.kind==="boss")return BOSS3[ROAD[RD.o.ci].id]||null;if(RD.o.kind==="jump"&&RD.o.ci>0)return BOSS3[ROAD[RD.o.ci-1].id]||null;return null}
 function bossImg(w,f){const k=BFACE[w][f]||BFACE[w].b;if(w==="yone")return chCutImg("yone",k)||castImg(castOf("tencho"),"ikari");return castImg(castOf(w),k)||castImg(castOf(w),"main")}
 function bossBg(){const B=boss3(),ov=$("#rdov");if(!B||!ov)return;ov.classList.add("bossmode");ov.classList.toggle("lastboss",B.w==="yone");
   let bg=ov.querySelector(".bossbg");if(!bg){bg=document.createElement("div");bg.className="bossbg "+(B.w==="yone"?"full":"");bg.innerHTML=`<img alt="">`;ov.prepend(bg)}
@@ -3899,15 +3902,16 @@ function bossReact(ok){const B=boss3();if(!B)return;const bg=$("#rdov .bossbg");
 /* 登場シーン */
 function bossIntro(cb){const B=boss3(),ov=$("#rdov");if(!B||!ov){cb();return}
   const ch=ROAD[RD.o.ci],last=B.w==="yone";
-  ov.innerHTML=`<div class="bint ${last?"last":""}"><div class="bintc">第${ch.no}章 ボス${last?"<br><b>FINAL</b>":""}</div>
+  const jp=RD.o.kind==="jump";
+  ov.innerHTML=`<div class="bint ${last?"last":""}"><div class="bintc">${jp?`⏩ 飛び級テスト<br><small>第${ROAD[RD.o.ci-1].no}章のボスを倒せば第${ch.no}章へ</small>`:`第${ch.no}章 ボス${last?"<br><b>FINAL</b>":""}`}</div>
     <div class="binti"><img src="${bossImg(B.w,"b")}" alt=""></div><div class="bintn"><small>${B.t}</small>${B.nm}</div>
     <div class="bints">「${B.in}」</div><button class="big" id="bgo">⚔️ たたかう</button></div>`;
   se(last?"phase":"atk");hap("boost");setTimeout(()=>{try{vSay(last?"yone":B.w,B.in)}catch(e){}},700);
   $("#bgo").onclick=()=>{hap("tap");cb()}}
 /* 撃破シーン(結果画面の上に重ねる) */
 function bossDefeat(){const B=boss3();if(!B)return;const last=B.w==="yone";
-  const d=document.createElement("div");d.className="bdef "+(last?"last":"");
-  d.innerHTML=`<div class="bdefi"><img src="${bossImg(B.w,"d")}" alt=""></div><div class="bdeft">${last?"ラスボス撃破!!":"ボス撃破!"}</div><div class="bdefs">「${B.d}」</div><small>タップでつづける</small>`;
+  const d=document.createElement("div");d.className="bdef "+(last?"last":"");const jp=RD&&RD.o.kind==="jump";
+  d.innerHTML=`<div class="bdefi"><img src="${bossImg(B.w,"d")}" alt=""></div><div class="bdeft">${jp?"飛び級成功!":last?"ラスボス撃破!!":"ボス撃破!"}</div><div class="bdefs">「${B.d}」</div><small>タップでつづける</small>`;
   document.body.appendChild(d);hap("clear");setTimeout(()=>{try{vSay(last?"yone":B.w,B.d)}catch(e){}},500);
   d.onclick=()=>{d.classList.add("out");setTimeout(()=>d.remove(),300)}}
 
@@ -3964,13 +3968,31 @@ function drawSetup(body){
   bar.querySelector(".der").onclick=e=>{DRAW.er=true;bar.querySelectorAll(".dc,.der").forEach(z=>z.classList.remove("on"));e.currentTarget.classList.add("on")};
   bar.querySelector(".dclr").onclick=()=>{x().clearRect(0,0,cv.width,cv.height)};
 }
+
+/* ===== 声に合わせて1文字ずつ出す ===== */
+function babDur(ch,text){const P=BAB[ch];if(!P)return 0;let t=0;for(const s of babParse(text)){if(s.p){t+=P.d*1.6*s.p;continue}const d=P.d*(s.long?1.9:1)*(s.laugh?.7:1)*(s.ex?1.25:1);t+=d*(s.laugh?1.05:1.12)}return t}
+function voiceKey(who){const c=castOf(who);return c&&c.set&&BAB[c.set]?c.set:null}
+/* el に html を1文字ずつ表示。戻り値 {skip()} */
+function typeOut(el,html,who,done){
+  el.innerHTML=html;const nodes=[];const walk=n=>{n.childNodes.forEach(c=>{if(c.nodeType===3){nodes.push([c,c.nodeValue]);c.nodeValue=""}else walk(c)})};walk(el);
+  const plain=nodes.map(x=>x[1]).join(""),total=plain.length;
+  const vk=voiceKey(who),voiceOn=vk&&sndOn("voice")&&SND.ctx;
+  if(voiceOn)try{vSay(vk,plain)}catch(e){}
+  const dur=voiceOn?babDur(vk,plain)*1000:total*38;const per=Math.max(18,Math.min(90,dur/Math.max(1,total)));
+  let k=0,fin=false,tm=null;el.classList.add("typing");
+  const put=n=>{let left=n;for(const [node,full] of nodes){const L=full.length;if(left>=L){node.nodeValue=full;left-=L}else{node.nodeValue=full.slice(0,Math.max(0,left));left=0}}};
+  const end=()=>{if(fin)return;fin=true;clearTimeout(tm);put(total);el.classList.remove("typing");done&&done()};
+  const step=()=>{if(fin)return;k++;put(k);if(k>=total)return end();const c=plain[k-1];tm=setTimeout(step,per*(/[、。!?!?…]/.test(c)?3.2:1))};
+  if(!total)end();else tm=setTimeout(step,per);
+  return{skip:()=>{if(!fin){try{if(_babG)_babG.gain.value=0}catch(e){}end()}},get done(){return fin}};
+}
 function rdRender(){setTimeout(()=>{if(RD&&RD.combo>=2&&!$("#rdov .cmbtag")){const t=$("#rdov .rdtop");if(t)t.insertAdjacentHTML("beforeend",`<div class="cmbtag still ${RD.combo>=3?"hot":""}">コンボ×${RD.combo}</div>`)}},0);
   const ov=$("#rdov");if(!ov||!RD)return;
   RDCALC=null;
   const s=RD.steps[RD.i];
   const done=RD.steps.slice(0,RD.i).filter(x=>x.t!=="talk").length;
   const prog=Math.min(100,done/Math.max(1,RD.steps.filter(x=>x.t!=="talk").length)*100);
-  const boss=RD.o.kind==="boss";
+  const boss=RD.o.kind==="boss"||(RD.o.kind==="jump"&&!!boss3());
   ov.innerHTML=`<div class="rdin">
    <div class="rdtop"><button class="rdx" id="rdx" aria-label="やめる">✕</button><div class="rdpb"><i style="width:${prog}%"></i></div>${RD.exam?`<div class="rdtime">⏱ <b id="rdtime">${fmtMS(RD.exam.lim-Math.floor((Date.now()-RD.exam.t0)/1000))}</b></div>`:`<div class="rdhp">${RD.useBatt?battHTML():`❤️<b>${RD.hp}</b>`}</div>`}</div>
    ${RD.exam?`<div class="rdexh">${(()=>{const sc=EXAMS[RD.exam.gr].secs[s.sec-1];return`${sc.n}${sc.name!==sc.n?" "+sc.name:""}${s.of>1?` ${s.no}/${s.of}`:""}(${sc.pts}点)`})()}<button class="rdskip" id="rdskip">${RD.i>=RD.steps.length-1?"提出する":"とばす"}</button></div>`:""}
@@ -3987,9 +4009,17 @@ function rdRender(){setTimeout(()=>{if(RD&&RD.combo>=2&&!$("#rdov .cmbtag")){con
   const tag=t=>`<div class="rdtag">${t}</div>`;
   const qcard=t=>`<div class="rdq">${txTable(t)}</div>`;
   if(s.t==="talk"){
-    body.innerHTML=`${tag(RD.title)}${s.lines.map(([w,t,f])=>`<div class="rdl ${castOf(w)===CAST.me?"me":""}">${castFace(w,f)}<div class="rdbb">${t}</div></div>`).join("")}
-      ${s.card?`<div class="rdcard"><div class="rdcn">📇 ${s.card.g?"NEW 勘定科目":"ポイント"}</div><div class="rdcnm">${s.card.n}${s.card.g?` <span class="rdg g-${s.card.g}">${s.card.g}</span>`:""}</div><div class="rdcd">${s.card.d}</div></div>`:""}`;
-    chk.textContent="つぎへ";chk.disabled=false;chk.onclick=()=>{se("key","IN");rdNext()};return;
+    body.innerHTML=`${tag(RD.title)}${s.lines.map(([w,t,f],i)=>`<div class="rdl ${castOf(w)===CAST.me?"me":""} tw" data-i="${i}">${castFace(w,f)}<div class="rdbb"></div></div>`).join("")}
+      ${s.card?`<div class="rdcard tw"><div class="rdcn">📇 ${s.card.g?"NEW 勘定科目":"ポイント"}</div><div class="rdcnm">${s.card.n}${s.card.g?` <span class="rdg g-${s.card.g}">${s.card.g}</span>`:""}</div><div class="rdcd">${s.card.d}</div></div>`:""}`;
+    let li=0,cur=null,allDone=false;const rows=[...body.querySelectorAll(".rdl.tw")],card=body.querySelector(".rdcard.tw");
+    const finishAll=()=>{if(cur)cur.skip();rows.forEach((r,i)=>{r.classList.remove("tw");const bb=r.querySelector(".rdbb");if(i>li||!bb.textContent)bb.innerHTML=s.lines[i][1]});li=rows.length;if(card)card.classList.remove("tw");allDone=true;chk.textContent="つぎへ"};
+    const next=()=>{if(li>=rows.length){if(card)card.classList.remove("tw");allDone=true;chk.textContent="つぎへ";return}
+      const r=rows[li],[w,t]=s.lines[li];r.classList.remove("tw");r.scrollIntoView({block:"nearest",behavior:"smooth"});
+      cur=typeOut(r.querySelector(".rdbb"),t,w,()=>{li++;setTimeout(()=>{if(RD&&RD.steps[RD.i]===s)next()},260)})};
+    chk.textContent="▶ スキップ";chk.disabled=false;
+    chk.onclick=()=>{se("key","IN");if(!allDone){finishAll();return}rdNext()};
+    body.onclick=e=>{if(!allDone&&cur&&!cur.done){cur.skip()}};
+    next();return;
   }
   if(s.t==="sort"){
     body.innerHTML=`${tag("仕分けタップ")}<h2 class="rdp">この勘定科目は、どのグループ?</h2><div class="rdbig">${s.acct}</div>
@@ -4490,7 +4520,7 @@ function rdCheck(){
    $("#rdxd").onclick=()=>open();$("#rdnb").onclick=()=>{const el=open();const ta=el.querySelector("#rdxta");el.querySelector(".rdxn").scrollIntoView({block:"start"});setTimeout(()=>ta&&ta.focus(),250)}}
   ov.querySelectorAll(".rdbody button").forEach(b=>b.disabled=true);
   const hpw=ov.querySelector(".rdhp");if(hpw)hpw.innerHTML=RD.useBatt?battHTML():`❤️<b>${RD.hp}</b>`;
-  if(RD.o.kind==="boss"){const bh=ov.querySelector(".rdbh i");if(bh)bh.style.width=(100-RD.ok/RD.total*100)+"%";if(ok){const bn=ov.querySelector(".rdboss");bn.classList.remove("hit");void bn.offsetWidth;bn.classList.add("hit")}bossReact(ok)}
+  if(RD.o.kind==="boss"||boss3()){const bh=ov.querySelector(".rdbh i");if(bh)bh.style.width=(100-RD.ok/RD.total*100)+"%";if(ok){const bn=ov.querySelector(".rdboss");bn.classList.remove("hit");void bn.offsetWidth;bn.classList.add("hit")}bossReact(ok)}
   $("#rdnx").onclick=()=>{se("key","IN");const xp=$("#rdxp");if(xp)xp.remove();if(RD.hp<=0)return rdFail();if(RD.healPend){RD.healPend=0;return rdHealScene(1,rdNext)}rdNext()};
 }
 function rdNext(){RD.i++;if(RD.i>=RD.steps.length)return RD.exam?rdExamEnd(false):rdDone();rdRender()}
@@ -4512,7 +4542,7 @@ function rdDone(){
   if(o.kind!=="exam"&&o.kind!=="tut"){rq.l++;rq.sec+=sec;rq.m=Math.floor(rq.sec/60);if(acc>=80)rq.a++}
   if(o.kind==="lesson"){const l=ROAD[o.ci].lessons[o.li];const first=!r.done[l.id];r.done[l.id]=(r.done[l.id]||0)+1;coin=first?40:15;
     const c=Math.min(r.done[l.id],5);star=`<div class="rdesb"><b>王冠 ${c} / 5</b><div class="rdcr big">${"★".repeat(c)}${"☆".repeat(5-c)}</div><small>${c>=2?"王冠2以上は端数のある数字が出るよ":"もう一度やると王冠アップ"}</small></div>`}
-  if(o.kind==="boss"&&boss3())setTimeout(bossDefeat,50);
+  if((o.kind==="boss"||o.kind==="jump")&&boss3())setTimeout(bossDefeat,50);
   if(o.kind==="boss"){const ch=ROAD[o.ci];const first=!r.boss[ch.id];r.boss[ch.id]=1;coin=first?100:30;xp+=20;if(first){REC.tix=(REC.tix||0)+1;extra=`<div class="rdrw">🎟️ ガチャチケット ×1</div>`}}
   if(o.kind==="jump"){for(let i=0;i<o.ci;i++){ROAD[i].lessons.forEach(l=>{if(!r.done[l.id])r.done[l.id]=1});r.boss[ROAD[i].id]=1}coin=50;xp+=10}
   if(o.kind==="rv"){const keys=new Set(RD.cleared.map(s=>s.t+"|"+s.q+"|"+(s.acct||"")));r.rv=r.rv.filter(s=>!keys.has(s.t+"|"+s.q+"|"+(s.acct||"")));coin=10}
@@ -4689,10 +4719,10 @@ function tutSay(lines,done){
     const[face,text,sel]=lines[i];const t=sel&&document.querySelector(sel);let ring="",pos="bottom";
     if(t){t.scrollIntoView({block:"center"});const r=t.getBoundingClientRect();ring=`<div class="tutring" style="left:${r.left-6}px;top:${r.top-6}px;width:${r.width+12}px;height:${r.height+12}px"></div>`;if(r.top+r.height/2>innerHeight*.55)pos="top"}
     ov.className=t?"spot":"";
-    ov.innerHTML=`${ring}<div class="tutbox ${pos}">${castFace("tencho",face,"tutf")}<div class="tutt"><b>ヨネばあちゃん</b><div>${text}</div><small>${i+1}/${lines.length} ・ タップで次へ</small></div></div>`;
-    vSay&&sndOn("voice")&&vSay("yone",text.replace(/<[^>]+>/g,""));
+    ov.innerHTML=`${ring}<div class="tutbox ${pos}">${castFace("tencho",face,"tutf")}<div class="tutt"><b>ヨネばあちゃん</b><div class="tutx"></div><small>${i+1}/${lines.length} ・ タップで次へ</small></div></div>`;
+    ov._tw=typeOut(ov.querySelector(".tutx"),text,"tencho");
   };
-  ov.onclick=()=>{se("key","IN");i++;show()};
+  ov.onclick=()=>{if(ov._tw&&!ov._tw.done){ov._tw.skip();return}se("key","IN");i++;show()};
   setTimeout(show,t0Delay(lines));
 }
 function t0Delay(lines){return lines[0]&&lines[0][2]?250:0}
