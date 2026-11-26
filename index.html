@@ -1377,6 +1377,24 @@ button{font-family:inherit;cursor:pointer}
 .rdbcst{position:absolute;top:-16px;font-size:14px;color:#ffd23f;letter-spacing:2px;text-shadow:0 2px 0 #7a5a00}
 @keyframes rdbb{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-6px) scaleY(1.03)}}
 .rdn.boss{margin-top:110px}.rdn.boss .rdb.bs{position:relative;z-index:0}.rdbch{z-index:2}
+
+/* 表の分割 */
+.tbpart{font-size:11.5px;font-weight:800;color:#ffd23f;margin:2px 0 4px}
+.rdtb.hasHi tr:not(.hi):not(.foldbtn) td{color:#66739a}.rdtb tr.hi td{background:rgba(255,210,63,.09)}.rdtb tr.hi td:first-child{box-shadow:inset 3px 0 0 #ffd23f}
+.rdtb th.hc{color:#ffd23f}
+.rdtb tr.fold{display:none}.rdtb.unfold tr.fold{display:table-row}.rdtb tr.foldbtn td{text-align:center;padding:2px}.rdtb tr.foldbtn button{background:none;border:none;color:#8db8ff;font-weight:800;font-size:12px;padding:4px}
+/* 取引の表 */
+.txh{font-weight:900;margin-bottom:6px}.txq{margin-top:8px;font-weight:800}
+.txt{width:100%;border-collapse:collapse;font-size:14px}.txt th{font-size:11px;color:var(--mute);font-weight:800;text-align:left;padding:2px 6px;border-bottom:1.5px solid #3c4a75}
+.txt td{padding:5px 6px;border-bottom:1px solid #2a3355;font-weight:800}.txt td.n{text-align:right;font-family:ui-monospace,monospace}.txt tr.out td{color:#ffb38a}.txt tr.out td:nth-child(2)::before{content:"↗ "}
+/* 書き込みモード */
+.drawwrap{position:absolute;left:0;top:0;right:0;z-index:4;pointer-events:none}.drawwrap.on{pointer-events:auto;touch-action:none;outline:2px dashed rgba(255,93,108,.5);outline-offset:-2px;border-radius:12px}
+.drawcv{width:100%;height:100%;display:block}
+.drawbar{position:relative;flex:none;z-index:66;display:flex;flex-direction:column;align-items:center;margin:0 4px}
+.drawbar .dmain{width:36px;height:36px;padding:0;border-radius:50%;border:2px solid #3c4a75;background:#151b33;font-size:20px;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.drawbar.on .dmain{background:#ff5d6c;border-color:#fff}
+.drawbar .dtools{display:none;position:absolute;top:42px;flex-direction:column;gap:6px;background:#151b33;border:2px solid #3c4a75;border-radius:999px;padding:6px 4px}.drawbar.on .dtools{display:flex}
+.drawbar .dtools button{width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:#222b4a;font-size:15px}.drawbar .dc{background:var(--c)!important}.drawbar .dtools button.on{border-color:#fff}
 </style>
 </head>
 <body>
@@ -3835,13 +3853,14 @@ function rdRun(o){
   else if(o.kind==="nt"){const N=rdNotes();steps=(o.ids||[]).map(id=>N.find(n=>n.id===id)).filter(Boolean).map(n=>JSON.parse(JSON.stringify(n.s)));title="まちがいノート";if(!steps.length)return}
   else if(o.kind==="tut"){steps=tutRoadSteps();title="チュートリアル";hp=99}
   else{steps=r.rv.slice(0,10).map(x=>JSON.parse(JSON.stringify(x)));title="復習";if(!steps.length)return}
+  if(o.kind!=="exam"&&o.kind!=="tut")steps=steps.flatMap(rdTblSplit);
   RD={o,steps,i:0,hp,hp0:hp,ok:0,ng:0,title,t0:Date.now(),retry:[],total:steps.filter(s=>s.t!=="talk").length,cleared:[],combo:0,useBatt:o.kind==="lesson",earnBatt:o.kind==="rv"||o.kind==="nt"};
   const old=$("#rdov");if(old)old.remove();const ov=document.createElement("div");ov.className="rd";ov.id="rdov";document.body.appendChild(ov);
   if(o.kind==="exam"){const E=EXAMS[o.gr];RD.exam={t0:Date.now(),lim:E.lim,gr:o.gr,got:Object.fromEntries(E.secs.map((_,i)=>[i+1,0]))};RD.tick=setInterval(()=>{const el=$("#rdtime");if(!RD||!RD.exam){return}const left=RD.exam.lim-Math.floor((Date.now()-RD.exam.t0)/1000);if(el)el.textContent=fmtMS(left);if(left<=0)rdExamEnd(true)},500)}
   if(o.kind==="boss"&&boss3())bossIntro(rdRender);else rdRender();
 }
 function fmtMS(t){t=Math.max(0,t);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0")}
-function rdClose(){if(RD&&RD.tick)clearInterval(RD.tick);const xp=$("#rdxp");if(xp)xp.remove();const ov=$("#rdov");if(ov)ov.remove();RD=null;roadScreen()}
+function rdClose(){const db=$("#drawbtn");if(db)db.remove();if(RD&&RD.tick)clearInterval(RD.tick);const xp=$("#rdxp");if(xp)xp.remove();const ov=$("#rdov");if(ov)ov.remove();RD=null;roadScreen()}
 
 /* ================= 3級ボキロードのボス(キャラクター) =================
    b:ふだん h:ダメージ t:あおり d:たおされた v:勝った */
@@ -3891,6 +3910,60 @@ function bossDefeat(){const B=boss3();if(!B)return;const last=B.w==="yone";
   d.innerHTML=`<div class="bdefi"><img src="${bossImg(B.w,"d")}" alt=""></div><div class="bdeft">${last?"ラスボス撃破!!":"ボス撃破!"}</div><div class="bdefs">「${B.d}」</div><small>タップでつづける</small>`;
   document.body.appendChild(d);hap("clear");setTimeout(()=>{try{vSay(last?"yone":B.w,B.d)}catch(e){}},500);
   d.onclick=()=>{d.classList.add("out");setTimeout(()=>d.remove(),300)}}
+
+/* ===== 大きな表は「1問=空欄4つまで」に分ける(模擬試験は分けない) ===== */
+const TBL_MAX=4,TBL_PARTS=3;
+function rdTblSplit(s){
+  if(!s||s.t!=="tbl"||s.sec)return[s];
+  const bl=[];s.rows.forEach((r,ri)=>r.forEach((c,ci)=>{if(c&&typeof c==="object")bl.push([ri,ci])}));
+  if(bl.length<=TBL_MAX)return[Object.assign({},s,{hiR:[...new Set(bl.map(x=>x[0]))]})];
+  const groups=[];let cur=[];
+  const rowsB={};bl.forEach(x=>(rowsB[x[0]]=rowsB[x[0]]||[]).push(x));
+  Object.keys(rowsB).map(Number).sort((a,b)=>a-b).forEach(ri=>{let rb=rowsB[ri];
+    while(rb.length>TBL_MAX){if(cur.length){groups.push(cur);cur=[]}groups.push(rb.slice(0,TBL_MAX));rb=rb.slice(TBL_MAX)}
+    if(cur.length+rb.length>TBL_MAX){groups.push(cur);cur=[]}cur=cur.concat(rb)});
+  if(cur.length)groups.push(cur);
+  let pick=groups.map((_,i)=>i);
+  if(groups.length>TBL_PARTS){const st=(groups.length-1)/(TBL_PARTS-1);pick=Array.from({length:TBL_PARTS},(_,i)=>Math.round(i*st))}
+  return pick.map((gi,k)=>{const g=groups[gi],key=new Set(g.map(x=>x[0]+"-"+x[1]));
+    const rows=s.rows.map((r,ri)=>r.map((c,ci)=>c&&typeof c==="object"&&!key.has(ri+"-"+ci)?c.a:c));
+    return Object.assign({},s,{rows,hiR:[...new Set(g.map(x=>x[0]))],part:[k+1,pick.length],
+      q:s.q.replace(/を完成させよう。|の空欄をうめよう。|をうめよう。/,"の<b>光っている行</b>をうめよう。")})});
+}
+/* ===== 取引の文章を表にする(「5日 仕入 40個 @290円」のような並び) ===== */
+function txTable(q){
+  const re=/(前月繰越|前期繰越|\d+日\s*(?:仕入|売上|払出|受入|返品))\s*(\d[\d,]*)個(?:\s*@\s*([\d,]+)円)?/g;
+  const m=[...String(q).matchAll(re)];if(m.length<3)return q;
+  const head=q.slice(0,m[0].index).replace(/[、。\s]+$/,""),tail=q.slice(m[m.length-1].index+m[m.length-1][0].length).replace(/^[、。\s]+/,"");
+  const rows=m.map(x=>{const lab=x[1].replace(/\s+/," ");const d=(lab.match(/^(\d+)日/)||[])[1]||"1",kind=lab.replace(/^\d+日\s*/,"");
+    return`<tr class="${/売上|払出/.test(kind)?"out":""}"><td>${d}日</td><td>${kind}</td><td class="n">${x[2]}個</td><td class="n">${x[3]?"@"+x[3]:"―"}</td></tr>`}).join("");
+  return`${head?`<div class="txh">${head}</div>`:""}<table class="txt"><thead><tr><th>日付</th><th>内容</th><th>数量</th><th>単価</th></tr></thead><tbody>${rows}</tbody></table>${tail?`<div class="txq">${tail}</div>`:""}`}
+/* ===== ✏️ 書き込みモード(問題の上に指で書ける。電卓はそのまま使える) ===== */
+const DRAW={on:false,col:"#ff5d6c",er:false};
+function drawSetup(body){
+  const old=$("#drawbtn");if(old)old.remove();DRAW.on=false;
+  if(!body||RD&&RD.steps[RD.i]&&["talk"].includes(RD.steps[RD.i].t))return;
+  const calc=body.querySelector("#calc,.rdtpad,.jrpad");
+  const wrap=document.createElement("div");wrap.className="drawwrap";body.style.position="relative";
+  const h=()=>{const top=0,bot=calc?calc.offsetTop:body.scrollHeight;return Math.max(80,bot-top)};
+  const cv=document.createElement("canvas");cv.className="drawcv";wrap.appendChild(cv);body.appendChild(wrap);
+  const fit=()=>{const r=window.devicePixelRatio||1,w=body.clientWidth,hh=h();if(cv.width===Math.round(w*r)&&cv.height===Math.round(hh*r))return;
+    const img=cv.width?cv.getContext("2d").getImageData(0,0,cv.width,cv.height):null;cv.width=Math.round(w*r);cv.height=Math.round(hh*r);wrap.style.height=hh+"px";const x=cv.getContext("2d");x.setTransform(r,0,0,r,0,0);if(img)x.putImageData(img,0,0)};
+  fit();
+  const x=()=>cv.getContext("2d");let last=null;
+  const pt=e=>{const b=cv.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
+  cv.addEventListener("pointerdown",e=>{if(!DRAW.on)return;e.preventDefault();cv.setPointerCapture(e.pointerId);last=pt(e);const c=x();c.beginPath();c.arc(last[0],last[1],DRAW.er?0:1.5,0,7);c.fillStyle=DRAW.col;if(!DRAW.er)c.fill()});
+  cv.addEventListener("pointermove",e=>{if(!DRAW.on||!last)return;e.preventDefault();const p=pt(e),c=x();c.globalCompositeOperation=DRAW.er?"destination-out":"source-over";c.strokeStyle=DRAW.col;c.lineWidth=DRAW.er?22:3;c.lineCap="round";c.lineJoin="round";c.beginPath();c.moveTo(last[0],last[1]);c.lineTo(p[0],p[1]);c.stroke();last=p});
+  ["pointerup","pointercancel"].forEach(t=>cv.addEventListener(t,()=>last=null));
+  const bar=document.createElement("div");bar.id="drawbtn";bar.className="drawbar";
+  bar.innerHTML=`<button class="dmain" aria-label="書き込みモード">✏️</button><span class="dtools"><button data-c="#ff5d6c" class="dc on" style="--c:#ff5d6c" aria-label="赤ペン"></button><button data-c="#5aaeff" class="dc" style="--c:#5aaeff" aria-label="青ペン"></button><button class="der" aria-label="消しゴム">🧽</button><button class="dclr" aria-label="全部消す">🗑</button></span>`;
+  const top=$("#rdov .rdtop"),hp=top&&top.querySelector(".rdhp,.rdtime");if(top){if(hp)top.insertBefore(bar,hp);else top.appendChild(bar)}else return;
+  const set=on=>{DRAW.on=on;fit();wrap.classList.toggle("on",on);bar.classList.toggle("on",on);hap("tap")};
+  bar.querySelector(".dmain").onclick=()=>set(!DRAW.on);
+  bar.querySelectorAll(".dc").forEach(b=>b.onclick=()=>{DRAW.col=b.dataset.c;DRAW.er=false;bar.querySelectorAll(".dc,.der").forEach(z=>z.classList.remove("on"));b.classList.add("on")});
+  bar.querySelector(".der").onclick=e=>{DRAW.er=true;bar.querySelectorAll(".dc,.der").forEach(z=>z.classList.remove("on"));e.currentTarget.classList.add("on")};
+  bar.querySelector(".dclr").onclick=()=>{x().clearRect(0,0,cv.width,cv.height)};
+}
 function rdRender(){setTimeout(()=>{if(RD&&RD.combo>=2&&!$("#rdov .cmbtag")){const t=$("#rdov .rdtop");if(t)t.insertAdjacentHTML("beforeend",`<div class="cmbtag still ${RD.combo>=3?"hot":""}">コンボ×${RD.combo}</div>`)}},0);
   const ov=$("#rdov");if(!ov||!RD)return;
   RDCALC=null;
@@ -3912,7 +3985,7 @@ function rdRender(){setTimeout(()=>{if(RD&&RD.combo>=2&&!$("#rdov .cmbtag")){con
   RD.cur={ready:false,val:null};
   const setReady=v=>{RD.cur.ready=v;chk.disabled=!v};
   const tag=t=>`<div class="rdtag">${t}</div>`;
-  const qcard=t=>`<div class="rdq">${t}</div>`;
+  const qcard=t=>`<div class="rdq">${txTable(t)}</div>`;
   if(s.t==="talk"){
     body.innerHTML=`${tag(RD.title)}${s.lines.map(([w,t,f])=>`<div class="rdl ${castOf(w)===CAST.me?"me":""}">${castFace(w,f)}<div class="rdbb">${t}</div></div>`).join("")}
       ${s.card?`<div class="rdcard"><div class="rdcn">📇 ${s.card.g?"NEW 勘定科目":"ポイント"}</div><div class="rdcnm">${s.card.n}${s.card.g?` <span class="rdg g-${s.card.g}">${s.card.g}</span>`:""}</div><div class="rdcd">${s.card.d}</div></div>`:""}`;
@@ -3980,7 +4053,10 @@ function rdRender(){setTimeout(()=>{if(RD&&RD.combo>=2&&!$("#rdov .cmbtag")){con
     const cell=(v,ri,ci)=>{const k=ri+"-"+ci;if(v&&typeof v==="object")return`<td><button class="rdtc ${k===act?"act":""} ${vals[k]!=null?"f":""}" data-k="${k}">${vals[k]!=null?yn(vals[k]):""}</button></td>`;
       return`<td class="${typeof v==="number"?"n":ci===0?"h":""}">${typeof v==="number"?yn(v):v}</td>`};
     body.innerHTML=`${tag(RD.o.kind==="exam"?EXAMS[RD.exam.gr].secs[s.sec-1].n:(s.title||"表をうめる"))}${qcard(s.q)}
-      <div class="rdtw"><table class="rdtb"><thead><tr>${s.cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${s.rows.map((row,ri)=>`<tr>${row.map((v,ci)=>cell(v,ri,ci)).join("")}</tr>`).join("")}</tbody></table></div>
+      ${s.part?`<div class="tbpart">パート ${s.part[0]} / ${s.part[1]}・残りの欄は埋めてあるよ</div>`:""}
+      <div class="rdtw"><table class="rdtb ${s.hiR&&s.part?"hasHi":""}"><thead><tr>${s.cols.map((c,ci)=>`<th class="${s.rows.some(r=>r[ci]&&typeof r[ci]==="object")?"hc":""}">${c}</th>`).join("")}</tr></thead><tbody>${(()=>{const hi=new Set(s.hiR||[]),big=s.part&&s.rows.length>7;
+        const near=ri=>[...hi].some(h=>Math.abs(h-ri)<=1)||/合計|計$|純利益|純損失/.test(String(s.rows[ri][0]));let folded=0;
+        return s.rows.map((row,ri)=>{const f=big&&!near(ri);if(f)folded++;return`<tr class="${hi.has(ri)&&s.part?"hi":""} ${f?"fold":""}">${row.map((v,ci)=>cell(v,ri,ci)).join("")}</tr>`}).join("")+(folded?`<tr class="foldbtn"><td colspan="${s.cols.length}"><button id="tbfold">▼ ほかの${folded}行も見る</button></td></tr>`:"")})()}</tbody></table></div>
       <div class="rdtpad"><div class="rdtcur"><span id="rdtlab"></span><button class="rdk nx" data-k="次">次の空欄 ›</button></div>${rdCalcHTML()}</div>
       <div class="rdhint">空欄をタップ → 電卓で計算して「入力」・${blanks.length}か所</div>`;
     const lab=k=>{const [r,cc]=k.split("-").map(Number);return`${rdRowName(s,r)} / ${s.cols[cc]}`};
@@ -3991,10 +4067,12 @@ function rdRender(){setTimeout(()=>{if(RD&&RD.combo>=2&&!$("#rdov .cmbtag")){con
     rdCalcMount({compact:1,tgt:()=>act?lab(act):"",onIn:v=>{if(!act)return;vals[act]=v;const was=act;sync();if(blanks.some(x=>vals[x]==null))sel(nxt());else sync();const b=body.querySelector(`.rdtc[data-k="${was}"]`);if(b){b.classList.remove("flash");void b.offsetWidth;b.classList.add("flash")}}});
     body.querySelectorAll(".rdtc").forEach(b=>b.onclick=()=>{sel(b.dataset.k);se("key","IN")});
     body.querySelector(".rdtpad .nx").onclick=()=>{sel(nxt());se("key","IN")};
+    {const fb=body.querySelector("#tbfold");if(fb)fb.onclick=()=>{const t=body.querySelector(".rdtb");const op=t.classList.toggle("unfold");fb.textContent=op?"▲ たたむ":`▼ ほかの${t.querySelectorAll(".fold").length}行も見る`}}
     sync();setTimeout(()=>{const b=body.querySelector(".rdtc.act"),w=body.querySelector(".rdtw");if(b&&w)w.scrollLeft+=b.getBoundingClientRect().left-w.getBoundingClientRect().left-w.clientWidth/2+b.offsetWidth/2},50);
   }
   if(RD.exam)chk.textContent="解答して次へ";
   chk.onclick=()=>{if(RD.cur.ready)rdCheck()};
+  setTimeout(()=>{if(RD&&$("#rdbody")===body)drawSetup(body)},60);
 }
 function rdChId(){return RD&&RD.o&&RD.o.ci!=null?ROAD[RD.o.ci].id:null}
 function rdSpotWho(s){const c=CHCAST[rdChId()];return (c&&c.spot)||s.who||"robo"}
