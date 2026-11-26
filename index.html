@@ -4780,7 +4780,7 @@ function tutBattle(){
     tutSay([["tsujo","上の問題の<b>空欄</b>をタップして、下の<b>電卓</b>で計算するよ。",".sheet"],
       ["nikkori","計算できたら<b>「入力」</b>キー。正解すると相手にダメージ!","#calc"],
       ["odoroki","続けて正解すると<b>連鎖</b>がのびて、どんどん強い攻撃になるよ。"],
-      ["konwaku","相手の攻撃は<b>赤いしましま</b>で予告されるよ。3秒以内に正解すると<b>相殺</b>して打ち消せるからね。",".hud"],
+      ["konwaku","相手の攻撃は<b>赤いしましま</b>で予告されるよ。当たるまでに正解すると<b>相殺</b>して打ち消せるからね。大きい攻撃ほど、当たるまで時間があるよ。",".hud"],
       ["aramaa","わからないときは少し待つと、打ち方の<b>ガイド</b>が出るからね。さあ、やってごらん。"]],()=>{if(G&&!G.ended)resume()})},5700);
 }
 function tutAfterBattle(win){
@@ -5030,7 +5030,7 @@ function vsMenu(){
     <div>⏳ 体力は${HP0}からスタートして<b>じわじわ減っていく</b>。1分ごとに減るスピードが上がる(第1四半期→第2四半期→…→決算期末)</div>
     <div>⚔ 欄を1つ正解するごとに<b>相手を攻撃</b>。先に体力が0になった方の負け</div>
     <div>🔗 正解が続くと<b>連鎖</b>!攻撃は 1〜2連鎖=1、3〜4連鎖=2、5連鎖〜=3。<b>5連鎖目からは攻撃の半分だけ体力も回復</b>(上限${MAXHP})。まちがえる・スキップすると連鎖は0に</div>
-    <div>⚠ 相手の攻撃は<b>${INC_MS/1000}秒後に着弾</b>(HPバーの赤い縞)。それまでに正解すると<b>相殺</b>して打ち消せる。余った分は撃ち返す!</div>
+    <div>⚠ 相手の攻撃は<b>少し後に着弾</b>(1ダメージは3秒、大きい攻撃ほど長く最大6秒)(HPバーの赤い縞)。それまでに正解すると<b>相殺</b>して打ち消せる。余った分は撃ち返す!</div>
     <div>⚡ 対戦では1欄だけの<b>速攻問題</b>と大問が交互に出る。欄は「入力」した瞬間に判定</div>
     <div>🔥 <b>5連鎖・8連鎖・11連鎖…</b>は大攻撃(攻撃+2)</div>
     <div>🎁 1題まるごと全欄正解するとアイテムを1つゲット(最大${MAX_ITEMS}個)</div>
@@ -5923,6 +5923,8 @@ function bstatHTML(){const L=REC.bstat||[];if(!L.length)return`<div class="bst0"
    正解1欄=攻撃。5連鎖目からは攻撃+その半分を回復。
    相手の攻撃は INC_MS ミリ秒後に着弾。それまでに自分が正解すると、その攻撃力ぶん打ち消せる(相殺)。余りは撃ち返す。 */
 const INC_MS=3000;
+/* 着弾までの時間:大きい攻撃ほど長い(1→3秒、2→4秒、3→5秒、4→5.5秒、5以上→6秒) */
+function incWin(a){return[0,3000,4000,5000,5500,6000][Math.max(1,Math.min(5,Math.round(a)))]}
 function atkFor(n){return Math.min(3,Math.ceil(n/2))+(n>=5&&(n-5)%3===0?2:0)}
 function healFor(n,a){return n>=5?Math.ceil(a/2):0}
 function incSum(l){return(l||[]).reduce((s,x)=>s+x.a,0)}
@@ -5936,7 +5938,7 @@ function vsGain(n){
   if(rest>0){G.dealt+=rest;const big=n>=5&&(n-5)%3===0;
     if(G.mode==="online"){const id=Math.random().toString(36).slice(2,10);G.myAtks.push({id,t:"dmg",n:rest});G.myAtks=G.myAtks.slice(-12)}
     bfxOrb("#avme",".hpbar.op",big?"#ff7a2f":"#ffd23f",big).then(()=>{if(!G||G.ended)return;
-      if(G.mode==="cpu")CPU.inc.push({a:rest,land:now()+INC_MS});
+      if(G.mode==="cpu")CPU.inc.push({a:rest,land:now()+incWin(rest)});
       if(big){banner(`🔥 ${n}連鎖!大攻撃 ⚔${rest}`,"atk");se("atk")}
       bfxShake("#avop");paintHP()})}
   paintHP();if(G.mode==="online")netPub();
@@ -5945,10 +5947,10 @@ function vsGain(n){
 function incomingAtk(a,from){
   if(!G||G.ended||!(a>0))return;
   bfxOrb("#avop",".hpbar.me","#ff4d6d").then(()=>{if(!G||G.ended)return;
-    G.inc.push({a,land:now()+INC_MS});se("count",1);hap("ng");paintHP();if(G.mode==="online")netPub();
+    G.inc.push({a,land:now()+incWin(a)});se("count",1);hap("ng");paintHP();if(G.mode==="online")netPub();
     if(!G.tut&&tipOnce("inc")){
-      if(G.mode==="cpu"){pause();tutSay([["odoroki","相手の攻撃がきたよ!HPバーの<b>赤いしましま</b>が、3秒後に減る分だよ。",".hud"],["nikkori","着弾する前に正解すると<b>相殺</b>して打ち消せるの。余った分は相手に撃ち返せるよ!",".hud"]],()=>{if(G&&!G.ended)resume()})}
-      else banner("💡 赤いしましまは3秒後に減る分。その前に正解すると相殺!","info")}});
+      if(G.mode==="cpu"){pause();tutSay([["odoroki","相手の攻撃がきたよ!HPバーの<b>赤いしましま</b>が、もうすぐ減る分だよ。大きい攻撃ほど、当たるまで少し時間があるからね。",".hud"],["nikkori","着弾する前に正解すると<b>相殺</b>して打ち消せるの。余った分は相手に撃ち返せるよ!",".hud"]],()=>{if(G&&!G.ended)resume()})}
+      else banner("💡 赤いしましまはもうすぐ減る分。その前に正解すると相殺!","info")}});
 }
 /* 着弾チェック(drainTick から毎回) */
 function incLand(){
