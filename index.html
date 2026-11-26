@@ -1426,6 +1426,12 @@ button{font-family:inherit;cursor:pointer}
 .calc.sk-rainbow.rb7{background:linear-gradient(120deg,#ff4d4d,#ffb03b,#ffe14a,#4dff8a,#4dc3ff,#7a5cff,#ff5cc8,#ff4d4d);background-size:300% 300%;animation:rbw 2.4s linear infinite}
 .calc.sk-rainbow.rb7 .ck:not(.in){background:rgba(255,255,255,.88);color:#5a2a8a}.calc.sk-rainbow.rbpop{animation:rbw 2.4s linear infinite,rbp .6s}
 @keyframes rbw{to{background-position:300% 0}}@keyframes rbp{40%{transform:scale(1.05)}}
+
+.vote{background:linear-gradient(135deg,rgba(138,106,42,.25),rgba(106,90,205,.18));border:2px solid #8a6a2a;border-radius:14px;padding:10px 12px;margin:0 0 10px}
+.vote .vth{display:flex;justify-content:space-between;align-items:center}.vote .vth span{font-size:22px;font-weight:900;color:#ffd23f}
+.vtb{position:relative;height:12px;background:#2a3355;border-radius:99px;margin:6px 0;overflow:visible}.vtb i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#c9a24a,#ffd23f)}
+.vtb em{position:absolute;top:-4px;bottom:-4px;width:3px;background:#ff5d6c;border-radius:2px}.vote small{color:var(--mute);font-size:11.5px;font-weight:700}
+.vote.won{border-color:#39ff9a}.vote.won .vtb i{background:linear-gradient(90deg,#2fd17f,#39ff9a)}
 </style>
 </head>
 <body>
@@ -3859,6 +3865,7 @@ function roadScreen(){
   let html=`<div class="rdgt">${["3","2","1"].map(g=>`<button class="${gr===g?"on":""}" data-g="${g}">日商${g}級</button>`).join("")}</div>
     <div class="rdh"><div class="rdtt"><b>日商${gr}級ロード</b><small>${gr==="1"?"商業簿記・会計学12章+工業簿記・原価計算4章":gr==="2"?"商業簿記12章+工業簿記4章":"1レッスン2〜3分"}</small></div>
     <div class="rdst ${today?"on":""}">🔥<b>${r.st.n||0}</b><small>日連続</small></div></div>
+    ${voteHTML()}
     <div class="rdbatt" id="rdbatt">${battHTML()}<small>${batt()>=BATT_MAX?"バッテリー満タン":`次の回復まで ${fmtMS(Math.ceil(battNext()/1000))}`} ・ 3問連続正解で+1</small></div>
     ${r.rv.length?`<button class="rdrv" id="rdrv">🃏 復習カード <b>${r.rv.length}</b>枚 <span>単元を選ぶ ›</span></button>`:""}
     <button class="rdrv nt" id="rdnt">📝 まちがいノート <b>${(r.notes||[]).length}</b>件 <span>見る ›</span></button>`;
@@ -3874,7 +3881,7 @@ function roadScreen(){
         <small>${l.name}</small>${cr?`<div class="rdcr">${"★".repeat(Math.min(cr,5))}${"☆".repeat(5-Math.min(cr,5))}</div>`:""}</div>`;
     });
     const bu=rdUnlocked(ci,-1),bd=r.boss[ch.id];
-    const B3=ROAD===ROAD3&&BOSS3[ch.id],side=ci%2?"l":"r";
+    const B3=bossTab()&&bossTab()[ch.id],side=ci%2?"l":"r";
     const bch=B3?`<div class="rdbch bc${side} ${bd?"bcdn":bu?"bccur":"bclk"} ${B3.w==="yone"?"bcyone":""}" data-bc="${ci}">${bu&&!bd?`<i class="rdbcx">!</i>`:""}<img src="${bossImg(B3.w,bd?"d":"b")}" alt="${B3.nm}"><span class="rdbcs"></span>${bd?`<div class="rdbcst">★★★</div>`:""}</div>`:"";
     html+=`<div class="rdn boss">${bch}<button class="rdb bs ${bd?"dn":bu?"cur":"lk"}" data-c="${ci}" data-l="-1" ${bu?"":"disabled"} aria-label="ボス戦">${bd?"👑":bu?"⚔️":"🔒"}</button><small>${B3?`${bu||bd?`vs ${B3.t} ${B3.nm}`:"??? のボス"}`:`ボス戦 vs ${BOSSN[ch.id]}`}</small></div></div>`;
   });
@@ -3903,7 +3910,7 @@ function rdJumpModal(ci){
 function rdStartModal(ci,li){
   const ch=ROAD[ci],r=rdInit();
   if(li===-1){
-    const m=modal(`<div class="rdmh">⚔️ ボス戦</div><div class="rdmt">vs ${ROAD===ROAD3&&BOSS3[ch.id]?`${BOSS3[ch.id].t} ${BOSS3[ch.id].nm}`:BOSSN[ch.id]}</div><div class="rdmd">第${ch.no}章の問題が8問。ハートは3つ。<br>正解するたびにボスにダメージ!</div><button class="big gold" id="rgo">挑戦する</button><button class="big sec" id="rno">やめる</button>`);
+    const m=modal(`<div class="rdmh">⚔️ ボス戦</div><div class="rdmt">vs ${bossTab()&&bossTab()[ch.id]?`${bossTab()[ch.id].t} ${bossTab()[ch.id].nm}`:BOSSN[ch.id]}</div><div class="rdmd">第${ch.no}章の問題が8問。ハートは3つ。<br>正解するたびにボスにダメージ!</div><button class="big gold" id="rgo">挑戦する</button><button class="big sec" id="rno">やめる</button>`);
     m.querySelector("#rgo").onclick=()=>{m.remove();rdRun({kind:"boss",ci})};m.querySelector("#rno").onclick=()=>m.remove();return;
   }
   const l=ch.lessons[li],cr=r.done[l.id]||0;
@@ -3919,7 +3926,8 @@ let RD=null;
 function rdRun(o){
   audioInit();const r=rdInit();let steps=[],title="",hp=5;
   if(o.kind==="lesson"&&batt()<=0){battModal(()=>rdRun(o));return}
-  if(o.kind==="lesson"){hp=batt();const l=ROAD[o.ci].lessons[o.li];steps=l.make(Math.min(r.done[l.id]||0,4)).map(s=>(s.lid=l.id,s));title=l.name}
+  if(o.kind==="lesson"){hp=batt();const l=ROAD[o.ci].lessons[o.li];steps=l.make(Math.min(r.done[l.id]||0,4)).map(s=>(s.lid=l.id,s));title=l.name;
+    const ch=ROAD[o.ci],sc=ROAD===ROAD2&&STORY2[ch.id];r.story=r.story||{};if(sc&&o.li===0&&!r.story[ch.id]){r.story[ch.id]=1;saveRec();steps.unshift(TALK(sc,null))}}
   else if(o.kind==="boss"){const ch=ROAD[o.ci];let pool=[];ch.lessons.forEach(l=>pool=pool.concat(l.make(2).filter(s=>s.t!=="talk").map(s=>(s.lid=l.id,s))));steps=rshuf(pool).slice(0,8);title="ボス戦";hp=3}
   else if(o.kind==="exam"){o.gr=o.gr||r.grade||"3";steps=examSteps(o.gr);title=EXAMS[o.gr].title;hp=999}
   else if(o.kind==="jump"){const pv=ROAD[o.ci-1];let pool=[];for(let k=0;k<4&&pool.length<JUMP_N*2;k++)pv.lessons.forEach(l=>pool=pool.concat(l.make(k?2:1).filter(s=>s.t!=="talk").map(s=>(s.lid=l.id,s))));
@@ -3959,7 +3967,69 @@ const BOSS3={
  c13:{w:"luna",t:"在庫の迷宮",in:"…しいくりくりしの迷宮へようこそ。迷子になっても知らない。",hit:["…出口、見つけた?","…やるじゃん"],ng:["…売上原価、ずれてる","…迷子"],d:"…抜けたんだ。すごいね",v:"…一生ここで棚卸ししてて"},
  c14:{w:"yone",t:"ラスボス",in:"ふふ…よくここまで来たねぇ。さあ、精算表をおばあちゃんに見せてごらん。手加減はしないよ",hit:["あらまぁ、やるじゃないか","ふふ、少しは成長したねぇ"],ng:["あらあら、まだまだだねぇ","ふふ…お茶でも飲んで落ち着きな"],d:"…ふふ、合格だよ。もう、あんたに教えることは何もないねぇ",v:"ふふ、また来なさい。おばあちゃんはいつでも待ってるよ"}};
 Object.entries(BOSS3).forEach(([k,b])=>{b.nm=b.w==="yone"?"ヨネばあちゃん":CAST[b.w].n});
-function boss3(){if(!RD||ROAD!==ROAD3)return null;if(RD.o.kind==="boss")return BOSS3[ROAD[RD.o.ci].id]||null;if(RD.o.kind==="jump"&&RD.o.ci>0)return BOSS3[ROAD[RD.o.ci-1].id]||null;return null}
+
+/* ================= 2級ストーリー:よね屋 乗っ取り騒動編 ================= */
+/* 仮の顔絵(本物の絵が届いたら AVS の同じ名前に差し替え) */
+const NEWCH={
+  gonzo:{n:"権蔵爺ちゃん",col:"#8a6a2a",e:"👴",acc:"🎩"},doza:{n:"ドーザ",col:"#d98a2b",e:"👷",acc:"🔨"},ren:{n:"借島レン",col:"#3d7fd1",e:"😎",acc:"🔑"},
+  sonae:{n:"備ソナエ",col:"#5f9e6a",e:"😟",acc:"🎒"},rate:{n:"ミスター・レート",col:"#1f9e6e",e:"🤑",acc:"💱"},zure:{n:"ズレ丸",col:"#3a3a52",e:"🥷",acc:"📜"},
+  kabu:{n:"秘書カブ子",col:"#6a5acd",e:"👩‍💼",acc:"📊"},anzu:{n:"アンズ",col:"#e86f8e",e:"😆",acc:"🛍️"},ura:{n:"ウラ",col:"#7a2a3a",e:"🙂",acc:"🎭"}};
+const NEWFACE={tsujo:"",main:"",bikkuri:"💦",doya:"✨",naki:"😭",katsu:"👑",ikari:"💢",nikkori:"🎵"};
+(function(){const svg=(c,badge)=>"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><defs><radialGradient id="g" cx="50%" cy="38%" r="65%"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity=".25"/></radialGradient></defs><circle cx="64" cy="64" r="61" fill="${c.col}"/><circle cx="64" cy="64" r="61" fill="url(#g)"/><circle cx="64" cy="64" r="59" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="3"/><text x="64" y="86" font-size="64" text-anchor="middle">${c.e}</text><text x="26" y="40" font-size="26" text-anchor="middle">${c.acc}</text>${badge?`<text x="100" y="116" font-size="34" text-anchor="middle">${badge}</text>`:""}</svg>`);
+  window.newChAv=()=>{for(const k in NEWCH){const c=NEWCH[k];for(const f in NEWFACE)if(!AVS[k+"_"+f])AVS[k+"_"+f]=[c.n,svg(c,NEWFACE[f])]}};
+  for(const k in NEWCH){const c=NEWCH[k];CAST[k]={n:c.n,col:c.col,set:k,face:"tsujo"};BFACE[k]={b:"tsujo",h:"bikkuri",t:"doya",d:"naki",v:"katsu"}}
+  Object.assign(BAB,{gonzo:{f:140,d:.11,w:"triangle",vib:.05,dec:.1},doza:{f:125,d:.085,w:"sawtooth",vib:.02,dec:.05,g:.55},ren:{f:330,d:.068,w:"square",dec:.08},
+    sonae:{f:430,d:.09,w:"sine",vib:.06,dec:.05,g:2.2},rate:{f:390,d:.055,w:"square",jit:.16,dec:-.04},zure:{f:200,d:.1,w:"triangle",mono:1},
+    kabu:{f:370,d:.08,w:"sine",mono:1,g:2.2},anzu:{f:520,d:.06,w:"triangle",jit:.12,dec:-.06},ura:{f:250,d:.08,w:"square",jit:.22}});
+})();
+const BOSS2={
+ k1:{w:"pon",t:"お祝い試合",in:"株式会社おめでとうだポン!記念に、オイラと腕試しだポン!",hit:["やるポン!","さすが経理部長だポン"],ng:["まだまだだポン〜","株式会社の名が泣くポン"],d:"負けたポン…でも、なんだか胸さわぎがするポン",v:"出直すポン!"},
+ k2:{w:"robo",t:"銀行の照合マシン",in:"銀行残高ト帳簿残高、一致シマセン。原因ヲ特定シテクダサイ。",hit:["原因…判明…","ピピッ、一致"],ng:["不一致。再計算ヲ","未取付小切手ヲ確認シテクダサイ"],d:"残高…一致シマシタ…プシュー",v:"照合失敗デス"},
+ k3:{w:"luna",t:"株の情報屋",in:"…よね屋の株、誰かが買い集めてる。教えてほしかったら、勝って。",hit:["…へぇ","…ちょっと見直した"],ng:["…売買目的と満期保有、ちがうよ","…情報はあげない"],d:"…買い集めてるの、ゴンゾウ・ホールディングス。気をつけて",v:"…出直して"},
+ k4:{w:"doza",t:"解体屋",in:"ゴンゾウ・ホールディングスの解体屋ドーザだぜ!よね屋の古い倉庫、ぶっ壊しに来た!",hit:["ぐおっ!?","やるじゃねぇか!"],ng:["その機械、帳簿の価値なんか残ってねぇぜ!","除却損だぜ、ガハハ!"],d:"減価償却…ちゃんと計算してたのか…",v:"更地にしてやったぜ!"},
+ k5:{w:"ren",t:"リースの貴公子",in:"どーも、借島レン。持つなんてダサくない?よね屋の車、全部うちのリースにしてあげるよ",hit:["…は?やるじゃん","ちょ、マジ?"],ng:["ファイナンスとオペレーティング、見分けつく?","それ、資産に計上しちゃう?ダサ"],d:"…このサングラスも、返却期限だわ",v:"レンタル延長〜♪"},
+ k6:{w:"sonae",t:"心配性の幹部",in:"あ、あの…よね屋さんの将来が心配で…引当金、ぜんぜん足りてない気がして…",hit:["ひゃっ…!","す、すごい…"],ng:["も、もしもの時は…どうするんですか…?","引当金、足りません…!"],d:"…あなたなら、将来も大丈夫そうね",v:"ご、ごめんなさい…勝っちゃいました…"},
+ k7:{w:"rate",t:"為替トレーダー",in:"Hello!ミスター・レートだヨ。ドルで仕入れたら、円で払うとき大損するかもネ!",hit:["Oh!?","ナイスレート!"],ng:["Rate is everything, ボーイ!","そのレート、取引日のじゃないネ!"],d:"Oh no…為替差損ネ…",v:"為替差益、いただきマス!"},
+ k8:{w:"zure",t:"影の調整役",in:"…拙者、ズレ丸。会計と税務のすき間に潜む者でござる。",hit:["…見事でござる","くっ…"],ng:["その一時差異、見逃したでござるな?","繰延税金資産、ずれておるぞ"],d:"…調整、完了でござる。見事",v:"未熟でござる"},
+ k9:{w:"kabu",t:"権蔵の秘書",in:"株主総会を始めます。議題は、代表取締役ヨネの解任です。",hit:["…想定外です","計算を修正します"],ng:["議決権は、数字がすべてです","その準備金、計算が違います"],d:"…計算上、あなたの勝ちです。社長に報告します",v:"解任、可決です"},
+ k10:{w:"anzu",t:"抱き合わせの売り子",in:"いまなら保守サービスもお付けしてぇ〜!よね屋のお客さん、ぜーんぶうちで抱き合わせ!",hit:["えーっ!?","バラされたぁ!"],ng:["売上はぜんぶ一括でいいよね〜?","履行義務、まとめちゃお♪"],d:"バラ売りでも、ちゃんと売れるんだね…",v:"お買い上げありがとうございまーす!"},
+ k11:{w:"ura",t:"二重帳簿のスパイ",in:"はじめまして!まじめな新人のウラです。…ククッ、支店の帳簿は、もう俺のもんだ",hit:["ちっ…","表の顔がもたねぇ…"],ng:["未達取引、見落としてるぜ?","本店と支店、合わないなぁ〜"],d:"…合っちまった。本店と支店が",v:"二重帳簿の勝ちだ"},
+ k12:{w:"gonzo",t:"ラスボス",in:"幹部をすべて倒したか。…ならばワシが相手だ。連結決算で、格の違いを見せてやろう",hit:["ほう…やるではないか","ぬうっ…!"],ng:["甘い!それでは連結できん","非支配株主持分を忘れたか"],d:"…負けたよ。ヨネ、いい弟子を持ったな",v:"この店、ワシがもらう"},
+ k13:{w:"robo",t:"工場ロボ",in:"工場モード起動。材料費・労務費・経費ヲ、正シク分ケテクダサイ。",hit:["分類…完了","ピピッ"],ng:["ソレハ製造間接費デス","賃率ガ違イマス"],d:"製造…完了シマシタ",v:"不良品デス"},
+ k14:{w:"gou",t:"部門長",in:"部門の費用は筋肉と同じ!ちゃんと配ってこそ育つんだ!",hit:["いいぞ!","効いたぜ!"],ng:["配賦が甘い!","補助部門を忘れるな!"],d:"見事な配賦だ…!",v:"もう1セットだ!"},
+ k15:{w:"niya",t:"量産ライン長",in:"大量生産とかチョロいっしょw 仕掛品の計算、ミスってくれよな",hit:["は?合ってんの?","ちょ、早すぎ"],ng:["完成品換算量ちがくて草","平均法と先入先出法、逆www"],d:"…ラインはお前に任せるわ",v:"不良在庫乙www"},
+ k16:{w:"gonzo",t:"師匠の最終試験",in:"最後の試験だ。標準と実際の差、すべて説明してみせろ。手加減はせんぞ",hit:["うむ","…成長したな"],ng:["その差異、どこから来た?","損益分岐点を言ってみろ"],d:"…合格だ。もうワシが教えることはない。ヨネ、お前の店は安泰だな",v:"まだまだだ。出直してこい"}};
+Object.entries(BOSS2).forEach(([k,b])=>{b.nm=b.w==="yone"?"ヨネばあちゃん":CAST[b.w].n});
+const STORY2={
+ k1:[["tencho","今日から、よね屋は<b>株式会社</b>だよ!あんたは今日から経理部長だ。","nikkori"],["pon","社長就任おめでとうだポン!","egao"],["niya","株式会社(笑)とか草w","nichaa"],["tencho","…ふふ。ただ、ちょっと気になる噂があってねぇ。","konwaku"]],
+ k2:[["tencho","銀行の残高と帳簿が合わない…?最近、妙なことが続くねぇ。","konwaku"],["robo","調査シマス。銀行勘定調整表ヲ作成シテクダサイ。","tsujo"]],
+ k3:[["robo","報告。よね屋ノ株ヲ、謎ノ人物ガ買イ集メテイマス。","tsujo"],["tencho","…まさか、あの人かい。","bikkuri"]],
+ k4:[["doza","ゴンゾウ・ホールディングスの解体屋ドーザだぜ!よね屋の古い倉庫、ぶっ壊しに来た!","doya"],["tencho","<b>権蔵</b>…やっぱりあの人の仕業だったんだね。","konwaku"],["me","権蔵って誰?"],["tencho","若いころの…ライバルさ。<b>帳簿の鬼</b>と呼ばれた男だよ。おばあちゃん、一度も勝てなかった。","tsujo"]],
+ k5:[["ren","どーも、借島レン。持つなんてダサくない?よね屋の配達車、全部うちのリースに替えてあげるよ。","doya"],["tencho","リースは借りても資産になることがあるんだよ。だまされるんじゃないよ。","tsujo"]],
+ k6:[["sonae","あ、あの…備ソナエです…よね屋さんの将来が心配で…","bikkuri"],["tencho","おや、ソナエちゃんじゃないか。あんた、権蔵のところに…","bikkuri"],["sonae","ご、ごめんなさい…","naki"]],
+ k7:[["rate","Hello!ミスター・レートだヨ。ドルで仕入れたら、円で払うとき大損するかもネ!","doya"],["pon","あの人、昔うちの駄菓子をよく買ってたポン…","konwaku"]],
+ k8:[["zure","…拙者、ズレ丸。会計と税務のすき間に潜む者でござる。","tsujo"],["tencho","権蔵の一番弟子だね。気をつけな。あの子は強いよ。","ikari"]],
+ k9:[["kabu","株主総会を始めます。議題は、<b>代表取締役ヨネの解任</b>です。","tsujo"],["gonzo","久しぶりだな、ヨネ。この店、ワシがもらう。","doya"],["tencho","…権蔵。あんた、まだあのときのことを…","konwaku"],["tencho","…あんたに任せたよ。よね屋を、守っておくれ。","tsujo"]],
+ k10:[["anzu","いまなら保守サービスもお付けしてぇ〜!よね屋のお客さん、ぜーんぶうちで抱き合わせ!","doya"],["me","商品とサービス、売上はいつ計上するんだっけ…"]],
+ k11:[["tencho","となり町に支店を出すよ。…ただ、支店に怪しい新人が入ったって噂でねぇ。","konwaku"],["ura","はじめまして!まじめな新人のウラです。(ニヤリ)","doya"]],
+ k12:[["gonzo","幹部をすべて倒したか。…ならばワシが相手だ。","ikari"],["tencho","ポン吉商店と一緒に、<b>よね屋グループ</b>で勝負だよ!","nikkori"],["pon","子会社として全力で戦うポン!","egao"],["gonzo","連結決算で、格の違いを見せてやろう。","doya"]],
+ k13:[["gonzo","…負けたよ。ヨネ、いい弟子を持ったな。","nikkori"],["tencho","ふふ。あんたも昔は、いい先輩だったよ。","nikkori"],["gonzo","ついてこい。ワシの<b>工場</b>を見せてやる。工業簿記は、商業簿記より厳しいぞ。","tsujo"]],
+ k14:[["gonzo","注文ごとに原価を出せ。部門の費用も、きっちり分けろ。","tsujo"]],
+ k15:[["gonzo","大量生産こそ工場の真髄だ。月末の<b>仕掛品</b>を見落とすなよ。","tsujo"]],
+ k16:[["gonzo","最後の試験だ。標準と実際の差、すべて説明してみせろ。","ikari"],["tencho","ふふ、あの権蔵が師匠ねぇ…","nikkori"]]};
+const STORY2_TXT={k1:"よね屋は株式会社になった!…でも、ヨネばあちゃんはどこか元気がない。",k2:"銀行の残高と帳簿が合わない。最近、よね屋に妙なことが続く…",k3:"謎の人物が、よね屋の株を買い集めているらしい。",
+ k4:"ゴンゾウ・ホールディングスの刺客、解体屋ドーザが倉庫を狙ってきた!",k5:"リースの貴公子・借島レンが、よね屋の車を乗っ取りに来た。",k6:"心配性の幹部・備ソナエ。将来の備えで勝負!",
+ k7:"為替トレーダー、ミスター・レート登場。ドルの取引でゆさぶってくる!",k8:"権蔵の一番弟子、影の調整役ズレ丸。会計と税のズレを突いてくる。",k9:"株主総会。ついに権蔵が姿を見せ、ヨネの解任を求めてきた!",
+ k10:"抱き合わせの売り子アンズが、よね屋の客をうばいに来た。",k11:"支店に、二重帳簿のスパイ・ウラがまぎれこんだ!",k12:"よね屋グループで、権蔵本人と最終決戦!",
+ k13:"負けを認めた権蔵が、自分の工場で工業簿記を教えてくれることに。",k14:"注文ごとの原価計算と、部門の費用の分け方。権蔵の特訓!",k15:"大量生産の原価計算。月末の仕掛品に注意!",k16:"師匠・権蔵の最終試験。標準原価とCVPで勝負!"};
+ROAD2.forEach(ch=>{if(STORY2_TXT[ch.id])ch.story=STORY2_TXT[ch.id]});
+/* 議決権メーター(2級):第4〜11章のボスで+2%、第12章で+6% */
+function voteRate(){const r=rdInit();let v=34;ROAD2.forEach(ch=>{const n=+ch.id.slice(1);if(r.boss[ch.id]){if(n>=4&&n<=11)v+=2;if(n===12)v+=6}});return v}
+function voteHTML(){if(ROAD!==ROAD2)return"";const v=voteRate(),won=v>=51;
+  return`<div class="vote ${won?"won":""}"><div class="vth"><b>${won?"🏆 株主総会 勝利!":"🗳 よね屋の議決権"}</b><span>${v}%</span></div><div class="vtb"><i style="width:${Math.min(100,v)}%"></i><em style="left:51%"></em></div>
+    <small>${won?"権蔵爺ちゃんに勝った!今は権蔵の工場で修行中":"51%をこえれば、権蔵爺ちゃんから店を守れる。ボスを倒して議決権を取りもどそう"}</small></div>`}
+function bossTab(){return ROAD===ROAD3?BOSS3:ROAD===ROAD2?BOSS2:null}
+function boss3(){const T=bossTab();if(!RD||!T)return null;if(RD.o.kind==="boss")return T[ROAD[RD.o.ci].id]||null;if(RD.o.kind==="jump"&&RD.o.ci>0)return T[ROAD[RD.o.ci-1].id]||null;return null}
 function bossImg(w,f){const k=BFACE[w][f]||BFACE[w].b;if(w==="yone")return chCutImg("yone",k)||castImg(castOf("tencho"),"ikari");return castImg(castOf(w),k)||castImg(castOf(w),"main")}
 function bossBg(){const B=boss3(),ov=$("#rdov");if(!B||!ov)return;ov.classList.add("bossmode");ov.classList.toggle("lastboss",B.w==="yone");
   let bg=ov.querySelector(".bossbg");if(!bg){bg=document.createElement("div");bg.className="bossbg "+(B.w==="yone"?"full":"");bg.innerHTML=`<img alt="">`;ov.prepend(bg)}
@@ -4638,6 +4708,7 @@ function rdDone(){
 
 /* ================= アバター ================= */
 const AVS={"yone_main": ["にっこり(全身)", "img/av/yone_main.webp"], "yone_tsujo": ["通常", "img/av/yone_tsujo.webp"], "yone_nikkori": ["にっこり", "img/av/yone_nikkori.webp"], "yone_odoroki": ["驚き", "img/av/yone_odoroki.webp"], "yone_konwaku": ["困惑", "img/av/yone_konwaku.webp"], "yone_aramaa": ["あらまぁ…", "img/av/yone_aramaa.webp"], "yone_ikari": ["怒り", "img/av/yone_ikari.webp"], "yone_nemui": ["眠い", "img/av/yone_nemui.webp"], "yone_okashi": ["お菓子缶…!", "img/av/yone_okashi.webp"], "pon_main": ["通常(全身)", "img/av/pon_main.webp"], "pon_tsujo": ["通常", "img/av/pon_tsujo.webp"], "pon_egao": ["笑顔", "img/av/pon_egao.webp"], "pon_takuramu": ["企んでる", "img/av/pon_takuramu.webp"], "pon_ikari": ["怒り", "img/av/pon_ikari.webp"], "pon_bikkuri": ["びっくり", "img/av/pon_bikkuri.webp"], "pon_konwaku": ["困惑", "img/av/pon_konwaku.webp"], "pon_naki": ["泣き", "img/av/pon_naki.webp"], "pon_oyasumi": ["おやすみ", "img/av/pon_oyasumi.webp"], "luna_main": ["ふつう", "img/av/luna_main.webp"], "luna_jito": ["ジト目", "img/av/luna_jito.webp"], "luna_akire": ["呆れ", "img/av/luna_akire.webp"], "luna_nemui": ["眠い", "img/av/luna_nemui.webp"], "luna_dokuzetsu": ["毒舌", "img/av/luna_dokuzetsu.webp"], "luna_taoreru": ["赤字で倒れる", "img/av/luna_taoreru.webp"], "luna_odoroki": ["驚き", "img/av/luna_odoroki.webp"], "luna_tere": ["照れ", "img/av/luna_tere.webp"], "luna_keno": ["嫌悪", "img/av/luna_keno.webp"], "gou_main": ["熱血(全身)", "img/av/gou_main.webp"], "gou_nekketsu": ["熱血", "img/av/gou_nekketsu.webp"], "gou_kanrui": ["感涙", "img/av/gou_kanrui.webp"], "gou_bikkuri": ["びっくり", "img/av/gou_bikkuri.webp"], "gou_doya": ["ドヤ", "img/av/gou_doya.webp"], "gou_katsu": ["喝", "img/av/gou_katsu.webp"], "gou_kintore": ["筋トレ中", "img/av/gou_kintore.webp"], "gou_tsukare": ["疲れ", "img/av/gou_tsukare.webp"], "gou_naki": ["泣き", "img/av/gou_naki.webp"], "robo_main": ["通常(全身)", "img/av/robo_main.webp"], "robo_tsujo": ["通常", "img/av/robo_tsujo.webp"], "robo_miss": ["仕訳ミス", "img/av/robo_miss.webp"], "robo_error": ["ERROR", "img/av/robo_error.webp"], "robo_konwaku": ["困惑", "img/av/robo_konwaku.webp"], "robo_seikai": ["正解!", "img/av/robo_seikai.webp"], "robo_odoroki": ["驚き", "img/av/robo_odoroki.webp"], "robo_ochikomi": ["落ち込み", "img/av/robo_ochikomi.webp"], "robo_doya": ["ドヤ", "img/av/robo_doya.webp"], "robo_bug": ["バグ発生", "img/av/robo_bug.webp"], "robo_oyasumi": ["おやすみ", "img/av/robo_oyasumi.webp"], "niya_main": ["ドヤ(全身)", "img/av/niya_main.webp"], "niya_nichaa": ["ニチャア", "img/av/niya_nichaa.webp"], "niya_kusa": ["草ァ!", "img/av/niya_kusa.webp"], "niya_www": ["www", "img/av/niya_www.webp"], "niya_aseri": ["焦り", "img/av/niya_aseri.webp"], "niya_konwaku": ["困惑", "img/av/niya_konwaku.webp"], "niya_gyakugire": ["逆ギレ", "img/av/niya_gyakugire.webp"], "niya_naki": ["泣き", "img/av/niya_naki.webp"], "niya_tsujo": ["通常", "img/av/niya_tsujo.webp"]};
+try{newChAv()}catch(e){}
 const AVCH=[["niya","ニヤ豆","#5f9a2e"],["luna","ルナ","#7b5fb0"],["gou","鉄山 ゴウ","#e0612f"],["robo","カンジョー2号","#3f78c9"],["yone","ヨネばあちゃん","#c45a8c"],["pon","ポン吉","#8a5a3b"]];
 var CUTS={"yone_nikkori2": "img/cut/yone_nikkori2.webp", "yone_yorokobi": "img/cut/yone_yorokobi.webp", "yone_bikkuri": "img/cut/yone_bikkuri.webp", "yone_konwaku2": "img/cut/yone_konwaku2.webp", "yone_fuman": "img/cut/yone_fuman.webp", "yone_naki": "img/cut/yone_naki.webp", "yone_ikari2": "img/cut/yone_ikari2.webp", "yone_nemui2": "img/cut/yone_nemui2.webp", "yone_manzoku": "img/cut/yone_manzoku.webp", "yone_okashi2": "img/cut/yone_okashi2.webp"};
 chSkinVars();
