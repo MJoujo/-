@@ -1231,7 +1231,7 @@ button{font-family:inherit;cursor:pointer}
 /* レッスン後シーケンス */
 #rdov.sqov{background:#151b2e}
 .sq{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:calc(30px + env(safe-area-inset-top)) 22px calc(24px + env(safe-area-inset-bottom));text-align:center;color:#fff;animation:sqin .35s;overflow:auto}
-@keyframes sqin{from{opacity:0;transform:translateY(20px)}}
+@keyframes sqin{from{opacity:0;transform:translateY(20px)}}@keyframes bsay{from{opacity:0;transform:translateY(-50%) scale(.8)}}
 .sq .big{width:100%;max-width:420px;margin-top:auto}.sq .big+.big{margin-top:0}
 .sq .big.blue{background:#6cc0f5;color:#13324d;box-shadow:0 5px 0 #3d8fc4}.sq .big.wht{background:#fff;color:#7b4fc9;box-shadow:0 5px 0 #d8c8f5}
 .sqh{font-size:30px;font-weight:900;line-height:1.25;margin:0}.sqh.fire{color:#ff9a3d;font-size:36px}.sqh.pink{color:#e15aa6;font-size:34px}
@@ -1338,6 +1338,33 @@ button{font-family:inherit;cursor:pointer}
 .tfm{margin:6px 0 2px;min-width:min(270px,70vw)}.tfh,.tfb{display:grid;grid-template-columns:1fr 1fr}.tfh span{text-align:center;font-weight:900;font-size:13px;padding:2px 0;border-bottom:3px solid currentColor}
 .tfh span:first-child{color:#7cc4ff}.tfh span:last-child{color:#ff9fb3}.tfb span{text-align:center;padding:8px 4px;font-weight:900;font-size:15px;line-height:1.4}.tfb span:first-child{border-right:3px solid #cfd8f0}
 .tfb small{font-size:11px;font-weight:700;opacity:.8}.tfc{text-align:center;font-size:11.5px;color:var(--mute);margin-top:2px}
+
+/* ボス戦 */
+#rdov.bossmode{background:radial-gradient(ellipse at 50% 30%,#3a1020 0%,#14091a 55%,#0b0d18 100%)}
+#rdov.bossmode.lastboss{background:radial-gradient(ellipse at 50% 30%,#4a1838 0%,#1a0a24 55%,#0b0d18 100%)}
+#rdov.bossmode .rdin{position:relative;z-index:1}
+.bossbg{position:fixed;left:50%;top:52%;transform:translate(-50%,-50%);width:min(88vw,460px);aspect-ratio:1;z-index:0;pointer-events:none;opacity:.17;filter:saturate(1.2) drop-shadow(0 0 40px rgba(255,60,90,.6));animation:bbr 4s ease-in-out infinite}
+.bossbg img{width:100%;height:100%;object-fit:contain;image-rendering:auto}.bossbg.full img,.bint.last .binti img,.bdef.last .bdefi img,.bfail img{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 10%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 10%,#000 88%,transparent)}.bossbg.full{width:min(70vw,360px);aspect-ratio:104/180;opacity:.2}
+.bossbg.bhit{animation:bbh .45s}@keyframes bbh{0%{filter:brightness(3)}30%{transform:translate(-52%,-50%) rotate(-3deg)}60%{transform:translate(-48%,-50%) rotate(2deg)}}
+@keyframes bbr{50%{transform:translate(-50%,-51.5%) scale(1.02)}}
+.rdboss{position:relative}.rdbface{width:34px;height:34px;object-fit:contain;flex:none;filter:drop-shadow(0 0 6px rgba(255,80,100,.8))}
+.rdbn small{display:block;font-size:10px;color:#ff9fb0;font-weight:800;line-height:1.1}
+.bossay{position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:6;max-width:calc(100% - 120px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#2a0f1c;border:2px solid #ff5d6c;color:#fff;font-weight:900;font-size:12.5px;border-radius:12px;padding:4px 10px;animation:bsay .25s;pointer-events:none}
+.bossay.st{transform:none;white-space:normal}.bossay.hit{border-color:#ffd23f;background:#2a2008}.bossay.st{position:static;display:inline-block;max-width:none;margin-top:8px;font-size:14px}
+.bint{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;color:#fff;background:radial-gradient(circle at 50% 40%,#5a1426,#120612 70%)}
+.bint.last{background:radial-gradient(circle at 50% 40%,#6a1a52,#12061a 70%)}
+.bintc{font-weight:900;color:#ff9fb0;letter-spacing:3px;animation:sqin .4s}.bintc b{font-size:34px;color:#ffd23f;letter-spacing:6px;text-shadow:0 0 20px #ff3b4f}
+.binti{width:min(60vw,240px);aspect-ratio:1;display:flex;align-items:center;justify-content:center;animation:bvl .6s .15s cubic-bezier(.2,1.3,.5,1) both;filter:drop-shadow(0 0 30px rgba(255,60,90,.7))}
+.bint.last .binti{aspect-ratio:104/180;width:min(46vw,200px)}.binti img{width:100%;height:100%;object-fit:contain}
+.bintn{font-size:28px;font-weight:900;animation:sqin .4s .5s both}.bintn small{display:block;font-size:13px;color:#ff9fb0}
+.bints{font-weight:800;font-size:15px;line-height:1.6;background:rgba(0,0,0,.35);border:1.5px solid #ff5d6c;border-radius:14px;padding:10px 14px;animation:sqin .4s .8s both}
+.bint .big{max-width:420px;animation:sqin .4s 1s both}
+.bdef{position:fixed;inset:0;z-index:180;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(10,4,12,.88);color:#fff;text-align:center;padding:24px;cursor:pointer;animation:sqin .3s}
+.bdef.out{animation:bvo .3s forwards}.bdefi{width:min(50vw,200px);aspect-ratio:1;animation:bdi 1s both}.bdef.last .bdefi{aspect-ratio:104/180;width:min(40vw,170px)}.bdefi img{width:100%;height:100%;object-fit:contain}
+@keyframes bdi{0%{filter:brightness(4);transform:scale(1.2)}20%{transform:translateX(-8px)}30%{transform:translateX(8px)}40%{transform:none;filter:none}}
+.bdeft{font-size:40px;font-weight:900;font-style:italic;color:#ffd23f;-webkit-text-stroke:2px #7a4a00;text-shadow:0 0 24px #ffb000;animation:bkt .7s .3s cubic-bezier(.2,1.5,.5,1) both}
+.bdefs{font-weight:800;font-size:15px;line-height:1.6;max-width:420px;animation:sqin .4s .8s both}.bdef small{color:var(--mute);animation:sqin .4s 1.5s both}
+.bfail{display:flex;flex-direction:column;align-items:center}.bfail img{width:120px;height:120px;object-fit:contain}
 </style>
 </head>
 <body>
@@ -3767,7 +3794,7 @@ function rdJumpModal(ci){
 function rdStartModal(ci,li){
   const ch=ROAD[ci],r=rdInit();
   if(li===-1){
-    const m=modal(`<div class="rdmh">⚔️ ボス戦</div><div class="rdmt">vs ${BOSSN[ch.id]}</div><div class="rdmd">第${ch.no}章の問題が8問。ハートは3つ。<br>正解するたびにボスにダメージ!</div><button class="big gold" id="rgo">挑戦する</button><button class="big sec" id="rno">やめる</button>`);
+    const m=modal(`<div class="rdmh">⚔️ ボス戦</div><div class="rdmt">vs ${ROAD===ROAD3&&BOSS3[ch.id]?`${BOSS3[ch.id].t} ${BOSS3[ch.id].nm}`:BOSSN[ch.id]}</div><div class="rdmd">第${ch.no}章の問題が8問。ハートは3つ。<br>正解するたびにボスにダメージ!</div><button class="big gold" id="rgo">挑戦する</button><button class="big sec" id="rno">やめる</button>`);
     m.querySelector("#rgo").onclick=()=>{m.remove();rdRun({kind:"boss",ci})};m.querySelector("#rno").onclick=()=>m.remove();return;
   }
   const l=ch.lessons[li],cr=r.done[l.id]||0;
@@ -3796,10 +3823,59 @@ function rdRun(o){
   RD={o,steps,i:0,hp,hp0:hp,ok:0,ng:0,title,t0:Date.now(),retry:[],total:steps.filter(s=>s.t!=="talk").length,cleared:[],combo:0,useBatt:o.kind==="lesson",earnBatt:o.kind==="rv"||o.kind==="nt"};
   const old=$("#rdov");if(old)old.remove();const ov=document.createElement("div");ov.className="rd";ov.id="rdov";document.body.appendChild(ov);
   if(o.kind==="exam"){const E=EXAMS[o.gr];RD.exam={t0:Date.now(),lim:E.lim,gr:o.gr,got:Object.fromEntries(E.secs.map((_,i)=>[i+1,0]))};RD.tick=setInterval(()=>{const el=$("#rdtime");if(!RD||!RD.exam){return}const left=RD.exam.lim-Math.floor((Date.now()-RD.exam.t0)/1000);if(el)el.textContent=fmtMS(left);if(left<=0)rdExamEnd(true)},500)}
-  rdRender();
+  if(o.kind==="boss"&&boss3())bossIntro(rdRender);else rdRender();
 }
 function fmtMS(t){t=Math.max(0,t);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0")}
 function rdClose(){if(RD&&RD.tick)clearInterval(RD.tick);const xp=$("#rdxp");if(xp)xp.remove();const ov=$("#rdov");if(ov)ov.remove();RD=null;roadScreen()}
+
+/* ================= 3級ボキロードのボス(キャラクター) =================
+   b:ふだん h:ダメージ t:あおり d:たおされた v:勝った */
+const BFACE={pon:{b:"ikari",h:"bikkuri",t:"takuramu",d:"naki",v:"egao"},robo:{b:"doya",h:"error",t:"doya",d:"ochikomi",v:"seikai"},
+  niya:{b:"nichaa",h:"aseri",t:"www",d:"naki",v:"kusa"},luna:{b:"jito",h:"odoroki",t:"dokuzetsu",d:"taoreru",v:"akire"},
+  gou:{b:"nekketsu",h:"bikkuri",t:"katsu",d:"naki",v:"doya"},yone:{b:"ikari2",h:"bikkuri",t:"okashi2",d:"naki",v:"manzoku"}};
+const BOSS3={
+ c1:{w:"pon",t:"開業の壁",in:"このあたりで店を開くなら、まずオイラの問題を解いてみな!",hit:["ぐぬぬ…やるな!","うわっ、正解かよ!"],ng:["へっへーん、まだまだだな!","それじゃ開業できないぞ〜"],d:"ま、まいった…開業おめでとう!",v:"出直してきな!"},
+ c2:{w:"robo",t:"金庫番",in:"ピピッ。金庫ニ近ヅク者ハ、現金ノ仕訳デ認証シテクダサイ。",hit:["ERROR…認証サレマシタ…","ピ…ピピッ!?"],ng:["認証失敗。ザンネンデシタ","ソノ現金、合ッテマセン"],d:"金庫…開放シマス…ガクッ",v:"アクセス拒否。マタノオ越シヲ"},
+ c3:{w:"niya",t:"仕入先の番頭",in:"仕入れたいならオレを通せよw 掛けの仕訳、わかってんの?",hit:["は?まぐれだろ","ちょ、待てって!"],ng:["買掛金どこいったwww","エアプ乙wwww"],d:"…チッ、今回は仕入れさせてやるよ",v:"はい論破www 出直してこい"},
+ c4:{w:"luna",t:"取り立て屋",in:"…売掛金、回収しにきた。めんどくさいから、早く終わらせて。",hit:["…へぇ","…ちょっと、びっくりした"],ng:["…はぁ。ちがう","…それで回収できると思ってる?"],d:"…負けた。もう寝る",v:"…取り立て完了。おつかれ"},
+ c5:{w:"robo",t:"手形の番人",in:"手形ノ受取ト支払、混同スル者ハ通シマセン。",hit:["ピピッ!?想定外デス","計算…合ッテイマス…"],ng:["受取手形ト支払手形、逆デス","エラー。ヤリナオシ"],d:"手形…決済…完了…プシュー",v:"不渡リ、デスネ"},
+ c6:{w:"gou",t:"減価償却の鬼コーチ",in:"建物も筋肉も、毎年少しずつ衰える!それが減価償却だ!ついてこい!",hit:["いいぞ!その調子だ!","ぐおっ…効いたぜ!"],ng:["ドンマイ!もう1セットだ!","計算が甘い!腕立て10回!"],d:"見事だ…!オレの完敗だ!",v:"まだまだ鍛え直しだな!"},
+ c7:{w:"niya",t:"税の門番",in:"税金の仕訳とか、どうせわかんねーだろw",hit:["うっ…なんでわかるんだよ","は?ズルしてね?"],ng:["租税公課どこwww","税金払えてなくて草"],d:"…くそ、通っていいよ",v:"脱税乙www"},
+ c8:{w:"luna",t:"うるさい株主",in:"…株主として言わせて。資本金の仕訳、ちゃんとできる?",hit:["…まあまあね","…ふーん、悪くない"],ng:["…株主総会で問題にする","…見てられない"],d:"…合格。配当、期待してる",v:"…解任ね"},
+ c9:{w:"pon",t:"伝票の山",in:"見ろ、この伝票の山!全部さばけるかな?",hit:["おおっ、どんどん減ってく!","はやい!?"],ng:["あーあ、伝票が増えちゃった","そこ、起票ミスだぞ"],d:"伝票の山が…きれいになった…",v:"山に埋もれちまえ!"},
+ c10:{w:"gou",t:"決算の大魔王",in:"ここまでの全部をぶつけてこい!決算は総力戦だ!!",hit:["ぐはっ!いい一撃だ!","やるじゃないか!!"],ng:["気合いが足りん!","決算は待ってくれないぞ!"],d:"最高の決算だった…!感動した!!",v:"決算やり直しだ!"},
+ c11:{w:"niya",t:"小口の小鬼",in:"小口現金ちょろまかしてもバレねーよなw",hit:["げっ、バレた","細かすぎだろお前"],ng:["補給の仕訳ミスってて草","雑費どこいったwww"],d:"…わかったよ、全部返すよ",v:"ちょろまかし成功www"},
+ c12:{w:"robo",t:"貸倒れゾンビ",in:"カシ…ダオレ…ウリカケキン…カエセ…",hit:["グ…グギギ…","ピ…ガガッ"],ng:["貸倒引当金…足リナイ…","ゾンビ…増殖…"],d:"引当…十分…成仏…シマス",v:"アナタモ…貸倒レ…"},
+ c13:{w:"luna",t:"在庫の迷宮",in:"…しいくりくりしの迷宮へようこそ。迷子になっても知らない。",hit:["…出口、見つけた?","…やるじゃん"],ng:["…売上原価、ずれてる","…迷子"],d:"…抜けたんだ。すごいね",v:"…一生ここで棚卸ししてて"},
+ c14:{w:"yone",t:"ラスボス",in:"よくここまで来たねぇ。でもね、精算表は甘くないよ。おばあちゃん、本気でいくからね!",hit:["あらまぁ…やるじゃないか","くっ…成長したねぇ"],ng:["まだまだ甘いねぇ!","そんなんじゃ店は任せられないよ!"],d:"…ふふ、合格だよ。もう、あんたに教えることは何もないねぇ",v:"出直しておいで。おばあちゃんは逃げないからね"}};
+Object.entries(BOSS3).forEach(([k,b])=>{b.nm=b.w==="yone"?"ヨネばあちゃん":CAST[b.w].n});
+function boss3(){if(!RD||RD.o.kind!=="boss"||ROAD!==ROAD3)return null;return BOSS3[ROAD[RD.o.ci].id]||null}
+function bossImg(w,f){const k=BFACE[w][f]||BFACE[w].b;if(w==="yone")return chCutImg("yone",k)||castImg(castOf("tencho"),"ikari");return castImg(castOf(w),k)||castImg(castOf(w),"main")}
+function bossBg(){const B=boss3(),ov=$("#rdov");if(!B||!ov)return;ov.classList.add("bossmode");ov.classList.toggle("lastboss",B.w==="yone");
+  let bg=ov.querySelector(".bossbg");if(!bg){bg=document.createElement("div");bg.className="bossbg "+(B.w==="yone"?"full":"");bg.innerHTML=`<img alt="">`;ov.prepend(bg)}
+  if(!bg._f)bg.querySelector("img").src=bossImg(B.w,"b")}
+function bossFace(f,ms){const B=boss3(),bg=$("#rdov .bossbg");if(!B||!bg)return;bg._f=1;bg.querySelector("img").src=bossImg(B.w,f);
+  clearTimeout(bossFace.t);bossFace.t=setTimeout(()=>{bg._f=0;const x=$("#rdov .bossbg img");if(x&&B)x.src=bossImg(B.w,"b")},ms||1400)}
+function bossSay(txt,hit){const B=boss3(),ov=$("#rdov");if(!B||!ov)return;ov.querySelectorAll(".bossay").forEach(x=>x.remove());
+  const hd=ov.querySelector(".rdboss");if(!hd)return;const d=document.createElement("div");d.className="bossay"+(hit?" hit":"");d.textContent=txt;hd.appendChild(d);setTimeout(()=>d.remove(),2200);
+  try{vSay(B.w==="yone"?"yone":B.w,txt)}catch(e){}}
+function bossReact(ok){const B=boss3();if(!B)return;const bg=$("#rdov .bossbg");
+  if(ok){bossFace("h",1200);if(bg){bg.classList.remove("bhit");void bg.offsetWidth;bg.classList.add("bhit")}if(Math.random()<.6)bossSay(B.hit[Math.floor(Math.random()*B.hit.length)],1)}
+  else{bossFace("t",1500);bossSay(B.ng[Math.floor(Math.random()*B.ng.length)])}}
+/* 登場シーン */
+function bossIntro(cb){const B=boss3(),ov=$("#rdov");if(!B||!ov){cb();return}
+  const ch=ROAD[RD.o.ci],last=B.w==="yone";
+  ov.innerHTML=`<div class="bint ${last?"last":""}"><div class="bintc">第${ch.no}章 ボス${last?"<br><b>FINAL</b>":""}</div>
+    <div class="binti"><img src="${bossImg(B.w,"b")}" alt=""></div><div class="bintn"><small>${B.t}</small>${B.nm}</div>
+    <div class="bints">「${B.in}」</div><button class="big" id="bgo">⚔️ たたかう</button></div>`;
+  se(last?"phase":"atk");hap("boost");setTimeout(()=>{try{vSay(last?"yone":B.w,B.in)}catch(e){}},700);
+  $("#bgo").onclick=()=>{hap("tap");cb()}}
+/* 撃破シーン(結果画面の上に重ねる) */
+function bossDefeat(){const B=boss3();if(!B)return;const last=B.w==="yone";
+  const d=document.createElement("div");d.className="bdef "+(last?"last":"");
+  d.innerHTML=`<div class="bdefi"><img src="${bossImg(B.w,"d")}" alt=""></div><div class="bdeft">${last?"ラスボス撃破!!":"ボス撃破!"}</div><div class="bdefs">「${B.d}」</div><small>タップでつづける</small>`;
+  document.body.appendChild(d);hap("clear");setTimeout(()=>{try{vSay(last?"yone":B.w,B.d)}catch(e){}},500);
+  d.onclick=()=>{d.classList.add("out");setTimeout(()=>d.remove(),300)}}
 function rdRender(){setTimeout(()=>{if(RD&&RD.combo>=2&&!$("#rdov .cmbtag")){const t=$("#rdov .rdtop");if(t)t.insertAdjacentHTML("beforeend",`<div class="cmbtag still ${RD.combo>=3?"hot":""}">コンボ×${RD.combo}</div>`)}},0);
   const ov=$("#rdov");if(!ov||!RD)return;
   RDCALC=null;
@@ -3811,9 +3887,10 @@ function rdRender(){setTimeout(()=>{if(RD&&RD.combo>=2&&!$("#rdov .cmbtag")){con
    <div class="rdtop"><button class="rdx" id="rdx" aria-label="やめる">✕</button><div class="rdpb"><i style="width:${prog}%"></i></div>${RD.exam?`<div class="rdtime">⏱ <b id="rdtime">${fmtMS(RD.exam.lim-Math.floor((Date.now()-RD.exam.t0)/1000))}</b></div>`:`<div class="rdhp">${RD.useBatt?battHTML():`❤️<b>${RD.hp}</b>`}</div>`}</div>
    ${RD.exam?`<div class="rdexh">${(()=>{const sc=EXAMS[RD.exam.gr].secs[s.sec-1];return`${sc.n}${sc.name!==sc.n?" "+sc.name:""}${s.of>1?` ${s.no}/${s.of}`:""}(${sc.pts}点)`})()}<button class="rdskip" id="rdskip">${RD.i>=RD.steps.length-1?"提出する":"とばす"}</button></div>`:""}
    ${RD.o.kind==="jump"?`<div class="rdexh">⏩ 第${ROAD[RD.o.ci-1].no}章の確認テスト ${Math.min(RD.i+1,RD.steps.length)}/${RD.steps.length}<span style="margin-left:auto;color:var(--mute);font-size:12px">ミスあと${Math.max(0,RD.hp-1)}回</span></div>`:""}
-   ${boss?`<div class="rdboss"><div class="rdbn">👹 ${BOSSN[ROAD[RD.o.ci].id]}</div><div class="rdbh"><i style="width:${100-RD.ok/RD.total*100}%"></i></div></div>`:""}
+   ${boss?`<div class="rdboss">${boss3()?`<img class="rdbface" src="${bossImg(boss3().w,"b")}" alt="">`:""}<div class="rdbn">${boss3()?`<small>${boss3().t}</small>${boss3().nm}`:"👹 "+BOSSN[ROAD[RD.o.ci].id]}</div><div class="rdbh"><i style="width:${100-RD.ok/RD.total*100}%"></i></div></div>`:""}
    <div class="rdbody" id="rdbody"></div>
    <div class="rdft"><button class="big" id="rdchk" disabled>チェック</button></div></div>`;
+  bossBg();
   $("#rdx").onclick=()=>{if(confirm(RD.exam?"試験をやめる?(採点されません)":"レッスンをやめる?(進み具合は保存されません)"))rdClose()};
   const sk=$("#rdskip");if(sk)sk.onclick=()=>{se("key","IN");rdExamRecord(s,null);rdNext()};
   const body=$("#rdbody"),chk=$("#rdchk");
@@ -3906,7 +3983,7 @@ function rdRender(){setTimeout(()=>{if(RD&&RD.combo>=2&&!$("#rdov .cmbtag")){con
 }
 function rdChId(){return RD&&RD.o&&RD.o.ci!=null?ROAD[RD.o.ci].id:null}
 function rdSpotWho(s){const c=CHCAST[rdChId()];return (c&&c.spot)||s.who||"robo"}
-function rdReact(ok){const c=CHCAST[rdChId()];const who=(c&&c.react)||rpick(Object.keys(REACT));const R=REACT[who];if(!R)return"";const [t,f]=rpick(ok?R.ok:R.ng);
+function rdReact(ok){if(boss3())return"";const c=CHCAST[rdChId()];const who=(c&&c.react)||rpick(Object.keys(REACT));const R=REACT[who];if(!R)return"";const [t,f]=rpick(ok?R.ok:R.ng);
   return`<div class="rdrx">${castFace(who,f,"sm")}<div class="rdbb">${t}</div></div>`}
 function rdRowName(s,r){const row=s.rows[r];return s.cols[0]==="日付"?`${row[0]}日 ${row[1]}`:(row[0]||row[1]||"")}
 function rdTblScore(s,v){let ok=0,n=0;s.rows.forEach((row,ri)=>row.forEach((c,ci)=>{if(c&&typeof c==="object"){n++;if(v&&Math.abs((v[ri+"-"+ci]??NaN)-c.a)<0.5)ok++}}));return[ok,n]}
@@ -4320,14 +4397,15 @@ function rdCheck(){
    $("#rdxd").onclick=()=>open();$("#rdnb").onclick=()=>{const el=open();const ta=el.querySelector("#rdxta");el.querySelector(".rdxn").scrollIntoView({block:"start"});setTimeout(()=>ta&&ta.focus(),250)}}
   ov.querySelectorAll(".rdbody button").forEach(b=>b.disabled=true);
   const hpw=ov.querySelector(".rdhp");if(hpw)hpw.innerHTML=RD.useBatt?battHTML():`❤️<b>${RD.hp}</b>`;
-  if(RD.o.kind==="boss"){const bh=ov.querySelector(".rdbh i");if(bh)bh.style.width=(100-RD.ok/RD.total*100)+"%";if(ok){const bn=ov.querySelector(".rdboss");bn.classList.remove("hit");void bn.offsetWidth;bn.classList.add("hit")}}
+  if(RD.o.kind==="boss"){const bh=ov.querySelector(".rdbh i");if(bh)bh.style.width=(100-RD.ok/RD.total*100)+"%";if(ok){const bn=ov.querySelector(".rdboss");bn.classList.remove("hit");void bn.offsetWidth;bn.classList.add("hit")}bossReact(ok)}
   $("#rdnx").onclick=()=>{se("key","IN");const xp=$("#rdxp");if(xp)xp.remove();if(RD.hp<=0)return rdFail();if(RD.healPend){RD.healPend=0;return rdHealScene(1,rdNext)}rdNext()};
 }
 function rdNext(){RD.i++;if(RD.i>=RD.steps.length)return RD.exam?rdExamEnd(false):rdDone();rdRender()}
 function rdFail(){
-  const ov=$("#rdov"),o=RD.o;se("lose");
+  const ov=$("#rdov"),o=RD.o;se("lose");const B=boss3();
   ov.innerHTML=`<div class="rdin rdend"><div class="rdei">💔</div><div class="rdet ng">ハートがなくなった…</div><div class="rdes">${o.kind==="jump"?`飛び級は不合格…(ミスは${JUMP_MISS}回まで)。第${ROAD[o.ci-1].no}章のレッスンで復習してから、また挑戦しよう!`:o.kind==="boss"?"ボスに負けてしまった。レッスンで復習してから再挑戦しよう!":"まちがえた問題は復習カードに入ったよ。"}</div>
     <button class="big" id="rdre">もう一度</button><button class="big sec" id="rdbk">ロードにもどる</button></div>`;
+  if(B){const ei=ov.querySelector(".rdei");if(ei)ei.outerHTML=`<div class="bfail"><img src="${bossImg(B.w,"v")}" alt=""><div class="bossay st">「${B.v}」</div></div>`;setTimeout(()=>{try{vSay(B.w,B.v)}catch(e){}},400)}
   $("#rdre").onclick=()=>{ov.remove();RD=null;rdRun(o)};$("#rdbk").onclick=rdClose;
 }
 function rdDone(){
@@ -4341,6 +4419,7 @@ function rdDone(){
   if(o.kind!=="exam"&&o.kind!=="tut"){rq.l++;rq.sec+=sec;rq.m=Math.floor(rq.sec/60);if(acc>=80)rq.a++}
   if(o.kind==="lesson"){const l=ROAD[o.ci].lessons[o.li];const first=!r.done[l.id];r.done[l.id]=(r.done[l.id]||0)+1;coin=first?40:15;
     const c=Math.min(r.done[l.id],5);star=`<div class="rdesb"><b>王冠 ${c} / 5</b><div class="rdcr big">${"★".repeat(c)}${"☆".repeat(5-c)}</div><small>${c>=2?"王冠2以上は端数のある数字が出るよ":"もう一度やると王冠アップ"}</small></div>`}
+  if(o.kind==="boss"&&boss3())setTimeout(bossDefeat,50);
   if(o.kind==="boss"){const ch=ROAD[o.ci];const first=!r.boss[ch.id];r.boss[ch.id]=1;coin=first?100:30;xp+=20;if(first){REC.tix=(REC.tix||0)+1;extra=`<div class="rdrw">🎟️ ガチャチケット ×1</div>`}}
   if(o.kind==="jump"){for(let i=0;i<o.ci;i++){ROAD[i].lessons.forEach(l=>{if(!r.done[l.id])r.done[l.id]=1});r.boss[ROAD[i].id]=1}coin=50;xp+=10}
   if(o.kind==="rv"){const keys=new Set(RD.cleared.map(s=>s.t+"|"+s.q+"|"+(s.acct||"")));r.rv=r.rv.filter(s=>!keys.has(s.t+"|"+s.q+"|"+(s.acct||"")));coin=10}

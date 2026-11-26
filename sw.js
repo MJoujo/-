@@ -1,5 +1,5 @@
-/* ボキバトル service worker  ver 0892e5130e */
-const VER="0892e5130e",CORE="core-"+VER,IMG="img-v1",LIB="lib-v1";
+/* ボキバトル service worker  ver 943252b519 */
+const VER="943252b519",CORE="core-"+VER,IMG="img-v1",LIB="lib-v1";
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CORE).then(c=>c.addAll(["./","index.html","manifest.webmanifest","img/icon-192.png"])).catch(()=>{}))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("core-")&&k!==CORE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener("message",e=>{if(e.data==="skip")self.skipWaiting()});
