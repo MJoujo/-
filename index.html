@@ -1398,6 +1398,11 @@ button{font-family:inherit;cursor:pointer}
 
 .rdl.tw,.rdcard.tw{display:none}.rdbb.typing::after,.tutx.typing::after{content:"▍";opacity:.6;animation:mkb .5s infinite alternate}
 .bintc small{display:block;font-size:12px;letter-spacing:0;color:#ffd0d8;margin-top:4px}
+
+.rdskipb{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:900;color:#ffd23f;border:1.5px solid #8a7426;border-radius:6px;padding:0 5px;vertical-align:1px}
+.rvpk h3{margin:0 0 6px}.rvrow{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;background:#151b33;border:2px solid #2a3560;border-radius:12px;color:#eef3ff;padding:10px 12px;margin:6px 0;font-size:13.5px}
+.rvrow b{font-weight:800}.rvrow span{color:#c79bff;font-weight:900;white-space:nowrap;margin-left:8px}.rvrow.all{border-color:#7a5ad8}
+.rvpk{max-height:75vh;overflow:auto}
 </style>
 </head>
 <body>
@@ -3767,9 +3772,27 @@ function castFace(who,face,cls){const c=castOf(who),img=castImg(c,face);
 
 /* ---------- 進行データ ---------- */
 function rdInit(){REC.road=REC.road||{done:{},boss:{},rv:[],st:{d:"",n:0},xp:0};const r=REC.road;ROAD=r.grade==="2"?ROAD2:r.grade==="1"?ROAD1:ROAD3;r.done=r.done||{};r.boss=r.boss||{};r.rv=r.rv||[];r.st=r.st||{d:"",n:0};return r}
+/* 飛び級で先の章まで行っていれば、手前の章も(クリア扱いにはせず)遊べる */
+function rdReached(ci){const r=rdInit(),J=r.jump||{};for(let k=ci+1;k<ROAD.length;k++)if(J[ROAD[k].id]||r.boss[ROAD[k-1].id])return true;return false}
+
+/* ===== 復習カードの単元 ===== */
+function rvChOf(s){if(!RD)return"etc";const o=RD.o;if(o.kind==="jump"&&o.ci>0)return ROAD[o.ci-1].id;if(o.ci!=null&&ROAD[o.ci])return ROAD[o.ci].id;return"etc"}
+function rvChFind(id){for(const [g,R] of [["3級",ROAD3],["2級",ROAD2],["1級",ROAD1]]){const c=R.find(x=>x.id===id);if(c)return{g,c}}return null}
+function rvChName(id){if(/^exam/.test(id))return`${id.slice(4)}級 模擬試験`;const f=rvChFind(id);return f?`${f.g} 第${f.c.no}章 ${f.c.title}`:"その他"}
+function rvPick(){
+  const r=rdInit(),cnt={};r.rv.forEach(x=>{const k=x.ch||"etc";cnt[k]=(cnt[k]||0)+1});
+  const order=k=>{if(k==="etc")return 9e3;if(/^exam/.test(k))return 8e3+ +k.slice(4);const f=rvChFind(k);return f?({"3級":0,"2級":1000,"1級":2000}[f.g]+f.c.no):9e3};
+  const keys=Object.keys(cnt).sort((a,b)=>order(a)-order(b));
+  const m=modal(`<div class="rvpk"><h3>🃏 復習カード</h3><div class="dwarn">まちがえた問題がたまっているよ。単元を選んで復習しよう。<br><small>正解したカードはなくなるよ(1回10問まで)</small></div>
+    <button class="rvrow all" data-k=""><b>すべて</b><span>${r.rv.length}枚</span></button>
+    ${keys.map(k=>`<button class="rvrow" data-k="${k}"><b>${rvChName(k)}</b><span>${cnt[k]}枚</span></button>`).join("")}
+    <button class="big sec" id="rvx">とじる</button></div>`);
+  m.querySelectorAll(".rvrow").forEach(b=>b.onclick=()=>{m.remove();rdRun({kind:"rv",ch:b.dataset.k||null})});
+  m.querySelector("#rvx").onclick=()=>m.remove();
+}
 function rdUnlocked(ci,li){/* li=-1 ボス */
   const r=rdInit();
-  if(ci>0&&!r.boss[ROAD[ci-1].id])return false;
+  if(ci>0&&!r.boss[ROAD[ci-1].id]&&!rdReached(ci))return false;
   const ch=ROAD[ci];
   if(li===-1)return ch.lessons.every(l=>r.done[l.id]);
   for(let i=0;i<li;i++)if(!r.done[ch.lessons[i].id])return false;
@@ -3788,11 +3811,12 @@ function roadScreen(){
     <div class="rdh"><div class="rdtt"><b>日商${gr}級ロード</b><small>${gr==="1"?"商業簿記・会計学12章+工業簿記・原価計算4章":gr==="2"?"商業簿記12章+工業簿記4章":"1レッスン2〜3分"}</small></div>
     <div class="rdst ${today?"on":""}">🔥<b>${r.st.n||0}</b><small>日連続</small></div></div>
     <div class="rdbatt" id="rdbatt">${battHTML()}<small>${batt()>=BATT_MAX?"バッテリー満タン":`次の回復まで ${fmtMS(Math.ceil(battNext()/1000))}`} ・ 3問連続正解で+1</small></div>
-    ${r.rv.length?`<button class="rdrv" id="rdrv">🃏 復習カード <b>${r.rv.length}</b>枚 <span>まとめて解く ›</span></button>`:""}
+    ${r.rv.length?`<button class="rdrv" id="rdrv">🃏 復習カード <b>${r.rv.length}</b>枚 <span>単元を選ぶ ›</span></button>`:""}
     <button class="rdrv nt" id="rdnt">📝 まちがいノート <b>${(r.notes||[]).length}</b>件 <span>見る ›</span></button>`;
   ROAD.forEach((ch,ci)=>{
     const open=rdUnlocked(ci,0);
-    html+=`<div class="rdch ${open?"":"lk"}" style="--cc:${ch.color}"><div class="rdcm">第${ch.no}章 ・ ${ch.month}</div><div class="rdct">${ch.title}</div><div class="rdcs">${ch.story}</div>${!open&&ci>0?`<button class="rdjump" data-c="${ci}">⏩ ここまで飛び級</button>`:""}</div><div class="rdpath">`;
+    const skip=open&&!r.boss[ch.id]&&rdReached(ci);
+    html+=`<div class="rdch ${open?"":"lk"}" style="--cc:${ch.color}"><div class="rdcm">第${ch.no}章 ・ ${ch.month}${skip?` <span class="rdskipb">⏩ 飛び級でとばした章</span>`:""}</div><div class="rdct">${ch.title}</div><div class="rdcs">${ch.story}</div>${!open&&ci>0?`<button class="rdjump" data-c="${ci}">⏩ ここまで飛び級</button>`:""}</div><div class="rdpath">`;
     const offs=[0,-56,40,-20];
     ch.lessons.forEach((l,li)=>{
       const un=rdUnlocked(ci,li),cr=r.done[l.id]||0,cur=un&&!cr;
@@ -3811,7 +3835,7 @@ function roadScreen(){
   app.innerHTML=shell("road",html);bindShell();
   app.querySelectorAll(".rdb").forEach(b=>b.onclick=()=>{const ci=+b.dataset.c,li=+b.dataset.l;rdStartModal(ci,li)});
   app.querySelectorAll(".rdbch").forEach(c=>c.onclick=()=>{const b=c.parentElement.querySelector(".rdb.bs");if(b&&!b.disabled)b.click();else{c.classList.remove("bshk");void c.offsetWidth;c.classList.add("bshk");toast("前のレッスンをクリアすると挑戦できるよ")}});
-  const rv=$("#rdrv");if(rv)rv.onclick=()=>rdRun({kind:"rv"});nagApply();
+  const rv=$("#rdrv");if(rv)rv.onclick=rvPick;nagApply();
   $("#rdnt").onclick=()=>{se("key","IN");rdNoteScreen("")};
   app.querySelectorAll(".rdjump").forEach(b=>b.onclick=()=>rdJumpModal(+b.dataset.c));
   app.querySelectorAll(".rdgt button").forEach(b=>b.onclick=()=>{r.grade=b.dataset.g;saveRec();se("key","IN");roadScreen()});
@@ -3855,7 +3879,7 @@ function rdRun(o){
     steps=rshuf(pool).slice(0,JUMP_N);title="飛び級テスト";hp=JUMP_MISS+1}
   else if(o.kind==="nt"){const N=rdNotes();steps=(o.ids||[]).map(id=>N.find(n=>n.id===id)).filter(Boolean).map(n=>JSON.parse(JSON.stringify(n.s)));title="まちがいノート";if(!steps.length)return}
   else if(o.kind==="tut"){steps=tutRoadSteps();title="チュートリアル";hp=99}
-  else{steps=r.rv.slice(0,10).map(x=>JSON.parse(JSON.stringify(x)));title="復習";if(!steps.length)return}
+  else{const pool=o.ch?r.rv.filter(x=>(x.ch||"etc")===o.ch):r.rv;steps=pool.slice(0,10).map(x=>JSON.parse(JSON.stringify(x)));title=o.ch?`復習:${rvChName(o.ch)}`:"復習";if(!steps.length)return}
   if(o.kind!=="exam"&&o.kind!=="tut")steps=steps.flatMap(rdTblSplit);
   RD={o,steps,i:0,hp,hp0:hp,ok:0,ng:0,title,t0:Date.now(),retry:[],total:steps.filter(s=>s.t!=="talk").length,cleared:[],combo:0,useBatt:o.kind==="lesson",earnBatt:o.kind==="rv"||o.kind==="nt"};
   const old=$("#rdov");if(old)old.remove();const ov=document.createElement("div");ov.className="rd";ov.id="rdov";document.body.appendChild(ov);
@@ -4135,7 +4159,7 @@ function rdGrade(s,v){
 }
 function rdExamRecord(s,v){
   let pts=0;if(v!=null){if(s.t==="tbl"){const [a,b]=rdTblScore(s,v);pts=Math.round(s.pts*a/b*10)/10}else pts=rdGrade(s,v)?s.pts:0}
-  RD.exam.got[s.sec]+=pts;if(v==null||pts<s.pts){RD.ng++;if(s.t==="jr"){const r=rdInit();if(!r.rv.some(x=>x.q===s.q)){const c=JSON.parse(JSON.stringify(s));delete c.sec;delete c.pts;delete c.no;r.rv.unshift(c);r.rv=r.rv.slice(0,30)}}}else RD.ok++;
+  RD.exam.got[s.sec]+=pts;if(v==null||pts<s.pts){RD.ng++;if(s.t==="jr"){const r=rdInit();if(!r.rv.some(x=>x.q===s.q)){const c=JSON.parse(JSON.stringify(s));delete c.sec;delete c.pts;delete c.no;c.ch="exam"+RD.exam.gr;r.rv.unshift(c);r.rv=r.rv.slice(0,40)}}}else RD.ok++;
 }
 function rdExamEnd(timeup){
   if(!RD||!RD.exam||RD.exam.done)return;RD.exam.done=true;clearInterval(RD.tick);
@@ -4507,7 +4531,7 @@ function rdCheck(){
     setTimeout(()=>rdCombo(true),80)}
   else{RD.ng++;RD.hp--;se("ng");RD.combo=0;hap("ng");rdCombo(false);if(RD.useBatt)battAdd(-1);
     if(RD.o.kind==="lesson"||RD.o.kind==="rv"||RD.o.kind==="nt")RD.steps.push(s);/* 間違えた問題は最後にもう一度 */
-    if(RD.o.kind!=="rv"&&!r.rv.some(x=>x.q===s.q&&x.t===s.t&&x.acct===s.acct)){r.rv.unshift(JSON.parse(JSON.stringify(s)));r.rv=r.rv.slice(0,30);saveRec()}}
+    if(RD.o.kind!=="rv"&&!r.rv.some(x=>x.q===s.q&&x.t===s.t&&x.acct===s.acct)){const c=JSON.parse(JSON.stringify(s));c.ch=c.ch||rvChOf(s);r.rv.unshift(c);r.rv=r.rv.slice(0,40);saveRec()}}
   const praise=rpick(["正解!","すばらしい!","その調子!","完ぺき!","ナイス!"]);
   const fb=document.createElement("div");fb.className="rdfb "+(ok?"ok":"ng");
   fb.innerHTML=`${rdReact(ok)}<div class="rdfbt">${ok?"✓ "+praise:"✕ おしい!"}</div>
@@ -4544,7 +4568,7 @@ function rdDone(){
     const c=Math.min(r.done[l.id],5);star=`<div class="rdesb"><b>王冠 ${c} / 5</b><div class="rdcr big">${"★".repeat(c)}${"☆".repeat(5-c)}</div><small>${c>=2?"王冠2以上は端数のある数字が出るよ":"もう一度やると王冠アップ"}</small></div>`}
   if((o.kind==="boss"||o.kind==="jump")&&boss3())setTimeout(bossDefeat,50);
   if(o.kind==="boss"){const ch=ROAD[o.ci];const first=!r.boss[ch.id];r.boss[ch.id]=1;coin=first?100:30;xp+=20;if(first){REC.tix=(REC.tix||0)+1;extra=`<div class="rdrw">🎟️ ガチャチケット ×1</div>`}}
-  if(o.kind==="jump"){for(let i=0;i<o.ci;i++){ROAD[i].lessons.forEach(l=>{if(!r.done[l.id])r.done[l.id]=1});r.boss[ROAD[i].id]=1}coin=50;xp+=10}
+  if(o.kind==="jump"){const pv=ROAD[o.ci-1];pv.lessons.forEach(l=>{if(!r.done[l.id])r.done[l.id]=1});r.boss[pv.id]=1;r.jump=r.jump||{};r.jump[ROAD[o.ci].id]=1;coin=50;xp+=10}
   if(o.kind==="rv"){const keys=new Set(RD.cleared.map(s=>s.t+"|"+s.q+"|"+(s.acct||"")));r.rv=r.rv.filter(s=>!keys.has(s.t+"|"+s.q+"|"+(s.acct||"")));coin=10}
   const mul=xpMul();xp=addXp(xp);r.xp=(r.xp||0)+xp;addCoins(coin);saveRec();se(o.kind==="boss"?"win":"clear");hap("clear");
   const tt=o.kind==="boss"?"ボス撃破!":o.kind==="jump"?"飛び級 合格!":o.kind==="rv"?"復習クリア!":o.kind==="nt"?"ノート復習クリア!":"レッスンクリア!";
