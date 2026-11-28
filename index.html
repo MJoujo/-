@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" data-ver="be5b2377d8">
+<html lang="ja" data-ver="fee0f48b0d">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -4603,7 +4603,7 @@ const BRULES={c2:{qtime:60},c3:{ink:1},c4:{time:240},c5:{qtime:50},c6:{heal:1},c
 function bossRule(){if(!RD||RD.o.kind!=="boss"||!boss3())return null;return BRULES[ROAD[RD.o.ci].id]||null}
 function ruleHTML(R){if(!R)return"";return`<div class="brl">${Object.entries(R).map(([k,v])=>`<span>${BRULE[k].i} ${BRULE[k].t(v)}</span>`).join("")}</div>`}
 function ruleStart(){const R=bossRule();if(!R||RD.rt)return;RD.rt={t0:Date.now()};if(R.hp2){RD.hp=RD.hp0=2}
-  RD.rtick=setInterval(()=>{if(!RD||!$("#rdov")||RD.over){clearInterval(RD&&RD.rtick);return}const R=bossRule();if(!R)return;
+  const me=RD;me.rtick=setInterval(()=>{if(RD!==me||!$("#rdov")||me.over||!me.rt){clearInterval(me.rtick);return}const R=bossRule();if(!R)return;
     let txt="";if(R.time){const left=R.time-(Date.now()-RD.rt.t0)/1000;txt=`⏱ ${fmtMS(Math.max(0,Math.ceil(left)))}`;if(left<=0){RD.over=1;clearInterval(RD.rtick);toast("⏱ 時間切れ!");return rdFail()}}
     if(R.qtime&&RD.qt0&&!$("#rdov .rdfb")){const ql=R.qtime-(Date.now()-RD.qt0)/1000;txt+=(txt?" ":"")+`⚡ ${Math.max(0,Math.ceil(ql))}`;if(ql<=0){RD.qt0=0;ruleTimeout()}}
     const el=$("#rdbt");if(el){el.textContent=txt;el.classList.toggle("hot",/⏱ 0:[0-2]\d|⚡ [0-9]$/.test(txt))}},250)}
