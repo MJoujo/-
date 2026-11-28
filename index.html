@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" data-ver="f11aec7451">
+<html lang="ja" data-ver="be5b2377d8">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1464,6 +1464,17 @@ button{font-family:inherit;cursor:pointer}
 .xpc.exd{border-color:#8a7426}
 .exc{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:linear-gradient(135deg,rgba(255,210,63,.12),rgba(255,93,108,.08));border:2px solid #8a7426;border-radius:14px;padding:10px 12px;margin-bottom:10px;color:#eef3ff}
 .exc.hot{border-color:#ff5d6c;animation:ngs 2.4s infinite}.exn{text-align:center;flex:none}.exn small{display:block;font-size:10px;color:var(--mute);font-weight:800}.exn b{font-size:26px;color:#ffd23f}.exm{font-size:13px;line-height:1.5;font-weight:700}.exm b{color:#ffd23f}.exm small{color:var(--mute)}
+
+.brl{display:flex;flex-direction:column;gap:4px;animation:sqin .4s .9s both}.brl span{background:rgba(255,93,108,.15);border:1.5px solid #ff5d6c;border-radius:10px;padding:4px 10px;font-weight:900;font-size:13px}
+.rdbt{margin-left:auto;font-weight:900;font-size:13px;color:#ffd23f;white-space:nowrap;font-family:ui-monospace,monospace}.rdbt.hot{color:#ff5d6c;animation:mkb .3s infinite alternate}
+.bink{position:absolute;inset:-4px;z-index:5;border-radius:14px;background:radial-gradient(circle at 30% 40%,#000 0 30%,#120c1a 60%,#000);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;cursor:pointer;animation:sqin .25s}
+.bink small{color:#b9a8d8;font-weight:800}
+.rdboss.bheal{animation:bheal .6s}@keyframes bheal{40%{box-shadow:0 0 0 6px rgba(57,255,154,.6)}}
+.bshr{background:#fff;color:#2a0f1c;border:none;border-radius:999px;padding:8px 22px;font-weight:900;font-size:15px;animation:sqin .4s 1.2s both}
+.lgb{display:inline-flex;flex-direction:column;background:#151b33;border:2px solid var(--lc);color:var(--lc);border-radius:12px;padding:6px 12px;font-weight:900;margin:4px 0 8px}.lgb small{color:var(--mute);font-size:10.5px;font-weight:700}
+.lgz{font-size:11px;font-weight:900;text-align:center;margin:4px 0;padding:2px;border-radius:6px}.lgz.up{color:#39ff9a;border-top:2px dashed #39ff9a}.lgz.dn{color:#ff5d6c;border-top:2px dashed #ff5d6c}
+.fq{background:linear-gradient(135deg,rgba(61,127,209,.2),rgba(255,210,63,.1));border:2px solid #3d7fd1;border-radius:14px;padding:10px 12px;margin:10px 0}.fq .fqh{display:flex;justify-content:space-between;font-weight:900}.fq .fqh span{color:#ffd23f}
+.fq small{color:var(--mute);font-size:11.5px}.fqb{height:12px;background:#2a3355;border-radius:99px;overflow:hidden;margin:6px 0}.fqb i{display:block;height:100%;background:linear-gradient(90deg,#3d7fd1,#8db8ff)}
 </style>
 </head>
 <body>
@@ -3981,7 +3992,7 @@ function rdRun(o){
   if((o.kind==="boss"||o.kind==="jump")&&boss3())bossIntro(rdRender);else rdRender();
 }
 function fmtMS(t){t=Math.max(0,t);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0")}
-function rdClose(){const db=$("#drawbtn");if(db)db.remove();if(RD&&RD.tick)clearInterval(RD.tick);const xp=$("#rdxp");if(xp)xp.remove();const ov=$("#rdov");if(ov)ov.remove();RD=null;roadScreen()}
+function rdClose(){if(RD&&RD.rtick)clearInterval(RD.rtick);const db=$("#drawbtn");if(db)db.remove();if(RD&&RD.tick)clearInterval(RD.tick);const xp=$("#rdxp");if(xp)xp.remove();const ov=$("#rdov");if(ov)ov.remove();RD=null;roadScreen()}
 
 /* ================= 3級ボキロードのボス(キャラクター) =================
    b:ふだん h:ダメージ t:あおり d:たおされた v:勝った */
@@ -4085,15 +4096,16 @@ function bossIntro(cb){const B=boss3(),ov=$("#rdov");if(!B||!ov){cb();return}
   const jp=RD.o.kind==="jump";
   ov.innerHTML=`<div class="bint ${last?"last":""}"><div class="bintc">${jp?`⏩ 飛び級テスト<br><small>第${ROAD[RD.o.ci-1].no}章のボスを倒せば第${ch.no}章へ</small>`:`第${ch.no}章 ボス${last?"<br><b>FINAL</b>":""}`}</div>
     <div class="binti"><img src="${bossImg(B.w,"b")}" alt=""></div><div class="bintn"><small>${B.t}</small>${B.nm}</div>
-    <div class="bints">「${B.in}」</div><button class="big" id="bgo">⚔️ たたかう</button></div>`;
+    <div class="bints">「${B.in}」</div>${jp?"":ruleHTML(BRULES[ch.id])}<button class="big" id="bgo">⚔️ たたかう</button></div>`;
   se(last?"phase":"atk");hap("boost");setTimeout(()=>{try{vSay(last?"yone":B.w,B.in)}catch(e){}},700);
   $("#bgo").onclick=()=>{hap("tap");cb()}}
 /* 撃破シーン(結果画面の上に重ねる) */
 function bossDefeat(){const B=boss3();if(!B)return;const last=B.w==="yone";
   const d=document.createElement("div");d.className="bdef "+(last?"last":"");const jp=RD&&RD.o.kind==="jump";
-  d.innerHTML=`<div class="bdefi"><img src="${bossImg(B.w,"d")}" alt=""></div><div class="bdeft">${jp?"飛び級成功!":last?"ラスボス撃破!!":"ボス撃破!"}</div><div class="bdefs">「${B.d}」</div><small>タップでつづける</small>`;
+  d.innerHTML=`<div class="bdefi"><img src="${bossImg(B.w,"d")}" alt=""></div><div class="bdeft">${jp?"飛び級成功!":last?"ラスボス撃破!!":"ボス撃破!"}</div><div class="bdefs">「${B.d}」</div><button class="bshr" id="bshr">📤 シェアする</button><small>タップでつづける</small>`;
   document.body.appendChild(d);hap("clear");setTimeout(()=>{try{vSay(last?"yone":B.w,B.d)}catch(e){}},500);
-  d.onclick=()=>{d.classList.add("out");setTimeout(()=>d.remove(),300)}}
+  d.onclick=()=>{d.classList.add("out");setTimeout(()=>d.remove(),300)};
+  d.querySelector("#bshr").onclick=e=>{e.stopPropagation();const ch=ROAD[jp?RD.o.ci-1:RD.o.ci];shareCard({title:jp?"飛び級成功!":last?"ラスボス撃破!!":"ボス撃破!",sub:`${{"3":"日商3級","2":"日商2級","1":"日商1級"}[rdInit().grade||"3"]} 第${ch.no}章 ${B.t} ${B.nm}`,img:bossImg(B.w,"d"),c1:last?"#5a3e14":"#5a1426"})}}
 
 /* ===== 大きな表は「1問=空欄4つまで」に分ける(模擬試験は分けない) ===== */
 const TBL_MAX=4,TBL_PARTS=3;
@@ -4180,7 +4192,7 @@ function rdRender(){setTimeout(()=>{if(RD&&RD.combo>=2&&!$("#rdov .cmbtag")){con
    ${boss?`<div class="rdboss">${boss3()?`<img class="rdbface" src="${bossImg(boss3().w,"b")}" alt="">`:""}<div class="rdbn">${boss3()?`<small>${boss3().t}</small>${boss3().nm}`:"👹 "+BOSSN[ROAD[RD.o.ci].id]}</div><div class="rdbh"><i style="width:${100-RD.ok/RD.total*100}%"></i></div></div>`:""}
    <div class="rdbody" id="rdbody"></div>
    <div class="rdft"><button class="big" id="rdchk" disabled>チェック</button></div></div>`;
-  bossBg();
+  bossBg();try{ruleOnRender()}catch(e){}
   $("#rdx").onclick=()=>{if(confirm(RD.exam?"試験をやめる?(採点されません)":"レッスンをやめる?(進み具合は保存されません)"))rdClose()};
   const sk=$("#rdskip");if(sk)sk.onclick=()=>{se("key","IN");rdExamRecord(s,null);rdNext()};
   const body=$("#rdbody"),chk=$("#rdchk");
@@ -4329,8 +4341,8 @@ function rdExamEnd(timeup){
     <div class="rdstat ex">${E.secs.map((x,i)=>`<div style="--sc:${cols[i%cols.length]}"><small>${x.n}${E.secs.length<=3?" "+x.name:""}</small><b>${sc[i]}<em>/${x.pts}</em></b></div>`).join("")}</div>
     <div class="rdesb"><b>ベスト ${ex.best}点 ・ 受験 ${ex.n}回</b><small>まちがえた仕訳は復習カードに入ったよ</small></div>
     <div class="rdrw">🪙 +${coin}${first?` ・ 🎟️ ガチャチケット×3(初合格ボーナス)`:""}</div>
-    <button class="big" id="rdbk">ロードにもどる</button></div>`;
-  $("#rdbk").onclick=rdClose;
+    ${pass?`<button class="big sec" id="rdshx">📤 合格をシェア</button>`:""}<button class="big" id="rdbk">ロードにもどる</button></div>`;
+  $("#rdbk").onclick=rdClose;{const b=$("#rdshx");if(b)b.onclick=()=>shareCard({title:"模擬試験 合格!",sub:`日商${RD.exam.gr}級 ${tot}点`,img:castImg(castOf("tencho"),"nikkori"),c1:"#1f5a3a"})}
 }
 /* ================= くわしい解説 & まちがいノート ================= */
 const ACCT_X=Object.assign({},ACCT,{
@@ -4580,9 +4592,54 @@ function boostBar(){
 setInterval(boostBar,1000);
 /* --- 週間XP --- */
 function weekKey(d){d=new Date((d||new Date()).getTime()+9*3600e3);const day=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-day);return d.toISOString().slice(0,10)}
-function wxp(){const k=weekKey();if(!REC.wxp||REC.wxp.wk!==k)REC.wxp={wk:k,xp:0};return REC.wxp}
+function wxp(){const k=weekKey();if(!REC.wxp||REC.wxp.wk!==k){if(REC.wxp&&REC.wxp.wk&&REC.wxp.xp>0)REC.lgPend={wk:REC.wxp.wk,lg:league()};else if(REC.wxp&&REC.wxp.wk)REC.league=Math.max(0,league()-1);REC.wxp={wk:k,xp:0}}return REC.wxp}
 
 
+
+/* ================= ボス戦の特殊ルール ================= */
+const BRULE={time:{i:"⏱",t:s=>`全体の制限時間 ${Math.round(s/60)}分`},qtime:{i:"⚡",t:s=>`1問 ${s}秒以内に答える`},ink:{i:"🖤",t:()=>"インク攻撃(ときどき問題が隠れる)"},heal:{i:"💚",t:()=>"まちがえるとボスが回復(問題が1問増える)"},hp2:{i:"💀",t:()=>"ミス2回で負け"}};
+const BRULES={c2:{qtime:60},c3:{ink:1},c4:{time:240},c5:{qtime:50},c6:{heal:1},c7:{ink:1},c8:{time:210},c9:{heal:1},c10:{hp2:1},c11:{ink:1},c12:{heal:1},c13:{time:240},c14:{time:300,heal:1},
+  k2:{qtime:70},k3:{time:300},k4:{hp2:1},k5:{ink:1},k6:{heal:1},k7:{qtime:50},k8:{ink:1},k9:{time:300},k10:{heal:1},k11:{ink:1},k12:{time:360,heal:1},k13:{qtime:70},k14:{heal:1},k15:{ink:1},k16:{time:360,hp2:1}};
+function bossRule(){if(!RD||RD.o.kind!=="boss"||!boss3())return null;return BRULES[ROAD[RD.o.ci].id]||null}
+function ruleHTML(R){if(!R)return"";return`<div class="brl">${Object.entries(R).map(([k,v])=>`<span>${BRULE[k].i} ${BRULE[k].t(v)}</span>`).join("")}</div>`}
+function ruleStart(){const R=bossRule();if(!R||RD.rt)return;RD.rt={t0:Date.now()};if(R.hp2){RD.hp=RD.hp0=2}
+  RD.rtick=setInterval(()=>{if(!RD||!$("#rdov")||RD.over){clearInterval(RD&&RD.rtick);return}const R=bossRule();if(!R)return;
+    let txt="";if(R.time){const left=R.time-(Date.now()-RD.rt.t0)/1000;txt=`⏱ ${fmtMS(Math.max(0,Math.ceil(left)))}`;if(left<=0){RD.over=1;clearInterval(RD.rtick);toast("⏱ 時間切れ!");return rdFail()}}
+    if(R.qtime&&RD.qt0&&!$("#rdov .rdfb")){const ql=R.qtime-(Date.now()-RD.qt0)/1000;txt+=(txt?" ":"")+`⚡ ${Math.max(0,Math.ceil(ql))}`;if(ql<=0){RD.qt0=0;ruleTimeout()}}
+    const el=$("#rdbt");if(el){el.textContent=txt;el.classList.toggle("hot",/⏱ 0:[0-2]\d|⚡ [0-9]$/.test(txt))}},250)}
+function ruleTimeout(){if(!RD)return;const s=RD.steps[RD.i];toast("⚡ 時間切れ!ミス1回");RD.ng++;RD.hp--;RD.combo=0;se("ng");hap("ng");bossReact(false);
+  if(RD.hp<=0)return rdFail();RD.steps.splice(RD.i,1);RD.steps.push(s);rdRender()}
+function ruleOnRender(){const R=bossRule();if(!R)return;ruleStart();
+  const hd=$("#rdov .rdboss");if(hd&&!$("#rdbt")){const t=document.createElement("span");t.id="rdbt";t.className="rdbt";hd.appendChild(t)}
+  if(R.qtime)RD.qt0=Date.now();
+  if(R.ink&&RD.i>0&&Math.random()<.45)setTimeout(()=>{const q=$("#rdov .rdq");if(q&&!q.querySelector(".bink")){const k=document.createElement("div");k.className="bink";k.innerHTML=`<b>🖤 インク攻撃!</b><small>3回タップしてふき取ろう</small>`;q.style.position="relative";q.appendChild(k);let n=0;
+    setTimeout(()=>{bossSay("見えないでしょ?");hap("ng")},200);k.onclick=e=>{e.stopPropagation();n++;hap("tap");k.style.opacity=String(1-n/3);if(n>=3)k.remove()}}},30)}
+function ruleOnWrong(s){const R=bossRule();if(!R||!R.heal)return;const st=similarStep(s)||JSON.parse(JSON.stringify(s));delete st._seen;RD.steps.push(st);RD.total++;setTimeout(()=>{bossSay("ふふ、回復させてもらうよ");const bn=$("#rdov .rdboss");if(bn){bn.classList.remove("bheal");void bn.offsetWidth;bn.classList.add("bheal")}},300)}
+/* ================= シェア画像 ================= */
+function loadImg(src){return new Promise(res=>{if(!src){res(null);return}const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=src})}
+async function shareCard(o){
+  const W=1080,H=1080,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,o.c1||"#2a0f3a");g.addColorStop(1,o.c2||"#0e1424");x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.fillStyle="rgba(255,255,255,.06)";for(let i=0;i<14;i++){x.beginPath();x.arc(Math.random()*W,Math.random()*H,20+Math.random()*120,0,7);x.fill()}
+  const im=await loadImg(o.img);if(im){const s=Math.min(520/im.width,520/im.height);x.drawImage(im,(W-im.width*s)/2,170,im.width*s,im.height*s)}
+  x.textAlign="center";x.fillStyle="#ffd23f";x.font="900 96px sans-serif";x.fillText(o.title,W/2,800);
+  x.fillStyle="#fff";x.font="800 46px sans-serif";x.fillText(o.sub||"",W/2,880);
+  x.fillStyle="rgba(255,255,255,.7)";x.font="700 34px sans-serif";x.fillText(`${REC.name||"プレイヤー"} ・ ${new Date().toLocaleDateString("ja-JP")}`,W/2,950);
+  x.fillStyle="#39ff9a";x.font="900 40px sans-serif";x.fillText("ボキバトル",W/2,110);
+  x.fillStyle="rgba(255,255,255,.5)";x.font="600 28px sans-serif";x.fillText(location.host+location.pathname,W/2,1030);
+  const blob=await new Promise(r=>c.toBlob(r,"image/png"));const file=new File([blob],"bokibattle.png",{type:"image/png"});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:`${o.title} ${o.sub||""} #ボキバトル`});return}}catch(e){if(e&&e.name==="AbortError")return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="bokibattle.png";a.click();toast("画像を保存したよ")}
+/* ================= リーグ ================= */
+const LEAGUES=["ブロンズ","シルバー","ゴールド","サファイア","ルビー","エメラルド","ダイヤ"],LG_UP=5,LG_DOWN=5;
+const LGCOL=["#cd7f32","#c0c8d8","#ffd23f","#4a90ff","#ff4d6d","#2fd17f","#9fe8ff"];
+function league(){return REC.league||0}
+async function leagueSettle(){const p=REC.lgPend;if(!p)return;const sb=sbClient();if(!sb||!CLOUD.user)return;
+  try{const{data,error}=await sb.from("xp_board").select("user_id,xp").eq("week",p.wk).eq("league",p.lg).order("xp",{ascending:false}).limit(200);if(error)throw error;
+    delete REC.lgPend;const rows=data||[],mi=rows.findIndex(x=>x.user_id===CLOUD.user.id);if(mi<0){saveRec();return}
+    const n=rows.length,my=rows[mi].xp;let d=0;if(mi<LG_UP&&my>0&&n>=3)d=1;else if((n>=10&&mi>=n-LG_DOWN)||my===0)d=-1;
+    const nl=Math.max(0,Math.min(LEAGUES.length-1,p.lg+d));REC.league=nl;saveRec();
+    modal(`<div class="tutm">${castFace("tencho",d>0?"nikkori":d<0?"konwaku":"tsujo","tutf")}<h3>${d>0?"🎉 昇格!":d<0?"😢 降格…":"🛡 残留"}</h3><div class="dwarn">先週は${LEAGUES[p.lg]}リーグで <b>${mi+1}位</b>(${n}人中)。<br>今週は <b style="color:${LGCOL[nl]}">${LEAGUES[nl]}リーグ</b> だよ。</div><button class="big" onclick="this.closest('.mdl').remove()">がんばる!</button></div>`)}catch(e){}}
 /* ================= エラー自動記録 & 不具合報告 ================= */
 const ERRLOG=[];let _errSent=0;
 function errPush(msg,src){msg=String(msg||"").slice(0,300);if(!msg||/ResizeObserver|Script error/.test(msg))return;
@@ -4709,6 +4766,9 @@ async function frScreen(){
     <div class="fradd"><input id="frin" placeholder="友達のコード(BK-XXXX)" maxlength="7" autocapitalize="characters"><button class="frbtn go" id="frgo">追加</button></div>
     ${list.length?`<h3 class="h3">🏆 今週のフレンドランキング</h3>${nextTxt?`<div class="xpn">${nextTxt}</div>`:""}
       <div class="rklist">${rank.map((x,i)=>`<div class="rkrow ${x.me?"me":""} ${i<3?"top":""}"><span class="rkn">${["🥇","🥈","🥉"][i]||i+1}</span><img src="${avSrc(x.av)}" alt=""><b>${esc(x.name)}</b><span class="rkp mono">${x.wxp} XP</span></div>`).join("")}</div>
+      ${(()=>{const tgt=150*(1+Math.min(3,list.length)),sum=rank.reduce((a,x)=>a+(x.wxp||0),0),fq=REC.fq&&REC.fq.wk===w.wk?REC.fq:{wk:w.wk,got:0},done=sum>=tgt;
+        return`<div class="fq"><div class="fqh">🤝 フレンドクエスト<span>${Math.min(sum,tgt)} / ${tgt} XP</span></div><div class="fqb"><i style="width:${Math.min(100,sum/tgt*100)}%"></i></div>
+        <small>今週、フォロー中のみんなと合わせて${tgt}XPを集めよう(月曜にリセット)</small>${done&&!fq.got?`<button class="big" id="fqget">🎁 ごほうび:ガチャチケット×2</button>`:fq.got?`<small style="display:block;color:#39ff9a">✓ 今週のごほうび受け取りずみ</small>`:""}</div>`})()}
       <h3 class="h3">👥 フォロー中(${list.length}人)</h3>
       ${list.map(f=>`<div class="frcard" data-u="${f.user_id}"><div class="frtop"><img src="${avSrc(f.av)}" alt=""><div class="frinfo"><b>${esc(f.name)}</b><small>Lv.${f.lv} ・ 🔥${f.streak}日 ・ 今週 ${f.week===w.wk?f.wxp:0} XP</small><small>${f.road?`📍 ${esc(f.road)}`:""}${f.road&&f.last_seen?" ・ ":""}${f.last_seen?agoTxt(f.last_seen):""}</small></div><button class="frx" data-un="${f.user_id}" aria-label="フォローをやめる">⋯</button></div>
         <div class="fract"><button data-c="nice">👏 ナイス</button><button data-c="nudge">🔥 催促</button><button data-c="battle">⚔ 対戦</button></div></div>`).join("")}`
@@ -4718,7 +4778,7 @@ async function frScreen(){
     try{await navigator.clipboard.writeText(txt+"\n"+url);toast("コピーしたよ")}catch(e){toast(code)}};
   const add=async()=>{const v=$("#frin").value;const r=await frFollow(v);
     if(r&&r.ok){toast(`${r.name} をフォローしたよ!`);hap("heal");frScreen()}else toast({login:"ログインしてね",bad:"コードの形がちがうよ(例 BK-7F3Q)",none:"そのコードの人は見つからなかったよ",me:"それはあなたのコードだよ",err:"うまく追加できなかったよ"}[r]||"エラー")};
-  $("#frgo").onclick=add;$("#frin").onkeydown=e=>{if(e.key==="Enter")add()};
+  $("#frgo").onclick=add;{const g=$("#fqget");if(g)g.onclick=()=>{REC.fq={wk:w.wk,got:1};REC.tix=(REC.tix||0)+2;saveRec();hap("clear");se("win");toast("🎟️ ガチャチケット×2 ゲット!");frScreen()}}$("#frin").onkeydown=e=>{if(e.key==="Enter")add()};
   box.querySelectorAll(".frcard").forEach(c=>{const uid=c.dataset.u;
     c.querySelectorAll(".fract button").forEach(b=>b.onclick=async()=>{const k=b.dataset.c;
       if(k==="battle"){const room=newCode();const r=await frCheer(uid,"battle",room);if(r==="ok"){toast("招待を送ったよ!部屋で待とう");lobby(room,REC.name||"プレイヤー")}else toast(r==="wait"?"少し待ってからもう一度":"送れなかったよ");return}
@@ -4731,13 +4791,14 @@ async function frPending(){const code=REC._pendF;if(!code||!CLOUD.user)return;de
 frFromUrl();
 async function xpUpload(){
   const sb=sbClient();if(!sb||!CLOUD.user)return;const w=wxp();
-  try{let{error}=await sb.rpc("submit_xp",{p_week:w.wk,p_xp:w.xp,p_total:REC.xp||0,p_name:(REC.name||"プレイヤー").slice(0,10),p_av:REC.av||""});
+  try{let{error}=await sb.rpc("submit_xp2",{p_week:w.wk,p_xp:w.xp,p_total:REC.xp||0,p_name:(REC.name||"プレイヤー").slice(0,10),p_av:REC.av||"",p_league:league()});
+    if(error&&/PGRST202|42883/.test(error.code||""))({error}=await sb.rpc("submit_xp",{p_week:w.wk,p_xp:w.xp,p_total:REC.xp||0,p_name:(REC.name||"プレイヤー").slice(0,10),p_av:REC.av||""}));
     if(error&&/PGRST202|42883/.test(error.code||""))await sb.from("xp_board").upsert({week:w.wk,user_id:CLOUD.user.id,name:(REC.name||"プレイヤー").slice(0,10),av:REC.av||"",xp:w.xp,total:REC.xp||0,updated_at:new Date().toISOString()})}catch(e){}
 }
 let _xpUpT=0;function xpUploadSoon(){clearTimeout(_xpUpT);_xpUpT=setTimeout(()=>{xpUpload();frSync()},12000)}
 async function xpBoard(){
   const w=wxp();
-  app.innerHTML=shell("home",`<div class="title"><button class="back" id="bk">← もどる</button><div class="pgh">🏆 週間XPランキング</div>
+  app.innerHTML=shell("home",`<div class="title"><button class="back" id="bk">← もどる</button><div class="pgh">🏆 週間XPランキング</div><div class="lgb" style="--lc:${LGCOL[league()]}">🛡 ${LEAGUES[league()]}リーグ<small>上位${LG_UP}人は昇格・下位${LG_DOWN}人は降格</small></div>
     <div class="rksea">${w.wk.slice(5).replace("-","/")}〜 の1週間(毎週月曜にリセット)</div>
     <div class="rkme">今週のあなた:<b>${w.xp} XP</b> ・ 累計 ${REC.xp||0} XP${xpMul()>1?` ・ <b style="color:#ffd23f">⚡2倍中</b>`:""}</div>
     <div id="xpn" class="xpn"></div><div id="rklist" class="rklist"><div class="ls">読み込み中…</div></div></div>`);bindShell();
@@ -4746,12 +4807,15 @@ async function xpBoard(){
   if(!sb){box.innerHTML=`<div class="ls">オンラインにつながらないのでランキングを表示できません</div>`;return}
   if(CLOUD.user)await xpUpload();
   let rows=[];
-  try{const{data,error}=await sb.from("xp_board").select("user_id,name,av,xp").eq("week",w.wk).order("xp",{ascending:false}).limit(100);if(error)throw error;rows=data||[]}
+  await leagueSettle();
+  try{let q=sb.from("xp_board").select("user_id,name,av,xp").eq("week",w.wk);let{data,error}=await q.eq("league",league()).order("xp",{ascending:false}).limit(30);
+    if(error&&/42703|column/.test((error.code||"")+(error.message||""))){({data,error}=await sb.from("xp_board").select("user_id,name,av,xp").eq("week",w.wk).order("xp",{ascending:false}).limit(30))}
+    if(error)throw error;rows=data||[]}
   catch(e){box.innerHTML=`<div class="ls">ランキングを読み込めませんでした${e&&e.code==="42P01"?"(サーバーにXPランキングの表がまだありません)":""}<br><small class="mono">${esc(String(e&&(e.code||e.message)||e))}</small></div>`;return}
   if(!$("#rklist"))return;const me=CLOUD.user&&CLOUD.user.id,mi=rows.findIndex(x=>x.user_id===me);
   const nx=$("#xpn");if(nx)nx.innerHTML=mi>0?`🔥 あと <b>${rows[mi-1].xp-rows[mi].xp+1} XP</b> で ${mi}位(${esc(rows[mi-1].name)})を抜ける!`:mi===0?"👑 いまあなたが1位!このまま逃げ切ろう":"";
   box.innerHTML=(CLOUD.user?"":`<button class="cnudge" id="rklog">☁️ Googleでログインするとランキングにのるよ <b>›</b></button>`)+
-    (rows.length?rows.map((x,i)=>`<div class="rkrow ${x.user_id===me?"me":""} ${i<3?"top":""}"><span class="rkn">${["🥇","🥈","🥉"][i]||i+1}</span><img src="${avSrc(x.av)}" alt=""><b>${esc(x.name||"?")}</b><span class="rkp mono">${x.xp} XP</span></div>`).join(""):`<div class="ls">今週はまだ誰ものっていません。最初の1人になろう!</div>`);
+    (rows.length?rows.map((x,i)=>`${i===LG_UP&&rows.length>LG_UP?`<div class="lgz up">▲ ここまで昇格ゾーン</div>`:""}${i===rows.length-LG_DOWN&&rows.length>=10?`<div class="lgz dn">▼ ここから降格ゾーン</div>`:""}<div class="rkrow ${x.user_id===me?"me":""} ${i<3?"top":""}"><span class="rkn">${["🥇","🥈","🥉"][i]||i+1}</span><img src="${avSrc(x.av)}" alt=""><b>${esc(x.name||"?")}</b><span class="rkp mono">${x.xp} XP</span></div>`).join(""):`<div class="ls">今週はまだ誰ものっていません。最初の1人になろう!</div>`);
   const lg=$("#rklog");if(lg)lg.onclick=cloudLogin;
 }
 /* --- 自社広告(あとで連続記録が長い人だけ他社広告に切り替えられる) --- */
@@ -4930,6 +4994,7 @@ function rdCheck(){
     setTimeout(()=>rdCombo(true),80)}
   else{RD.ng++;RD.hp--;se("ng");RD.combo=0;hap("ng");rdCombo(false);if(RD.useBatt)battAdd(-1);
     if(RD.o.kind==="lesson"||RD.o.kind==="rv"||RD.o.kind==="nt")RD.steps.push(s);/* 間違えた問題は最後にもう一度 */
+    try{ruleOnWrong(s)}catch(e){}
     if(RD.o.kind!=="rv"&&!r.rv.some(x=>x.q===s.q&&x.t===s.t&&x.acct===s.acct)){const c=JSON.parse(JSON.stringify(s));c.ch=c.ch||rvChOf(s);r.rv.unshift(c);r.rv=r.rv.slice(0,40);saveRec()}}
   const praise=rpick(["正解!","すばらしい!","その調子!","完ぺき!","ナイス!"]);
   const fb=document.createElement("div");fb.className="rdfb "+(ok?"ok":"ng");
@@ -4948,6 +5013,7 @@ function rdCheck(){
 }
 function rdNext(){RD.i++;if(RD.i>=RD.steps.length)return RD.exam?rdExamEnd(false):rdDone();rdRender()}
 function rdFail(){
+  if(RD&&RD.rtick)clearInterval(RD.rtick);if(RD)RD.over=1;
   const ov=$("#rdov"),o=RD.o;se("lose");const B=boss3();
   ov.innerHTML=`<div class="rdin rdend"><div class="rdei">💔</div><div class="rdet ng">ハートがなくなった…</div><div class="rdes">${o.kind==="jump"?`飛び級は不合格…(ミスは${JUMP_MISS}回まで)。第${ROAD[o.ci-1].no}章のレッスンで復習してから、また挑戦しよう!`:o.kind==="boss"?"ボスに負けてしまった。レッスンで復習してから再挑戦しよう!":"まちがえた問題は復習カードに入ったよ。"}</div>
     <button class="big" id="rdre">もう一度</button><button class="big sec" id="rdbk">ロードにもどる</button></div>`;
